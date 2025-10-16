@@ -104,9 +104,11 @@ Two intelligent web portals with embedded AI agents, powered by a fully function
 ### High-Level Flow
 
 ```
-Frontend ([Glean](https://www.glean.com/) Agent / HTML)
+Frontend (Glean Conversational Agent / HTML Portals)
     ↓
-[Glean](https://www.glean.com/) Actions / Direct API
+Glean Enterprise Context (Knowledge Retrieval & Contextual Intelligence)
+    ↓
+Glean Actions / Direct API
     ↓
 API Gateway
     ↓
@@ -122,12 +124,12 @@ Amazon Bedrock AgentCore Runtime
         ├── AI Recommendation Engine (confidence scoring)
         └── Amazon Nova (LLM)
     ↓
-┌─────────────────────────────────────────────────────┐
-│  Data & Context Layer                               │
-│  • DynamoDB (State Management)                      │
-│  • [Glean](https://www.glean.com/) Enterprise Context (Knowledge Retrieval)  │
-│  • Amazon Bedrock (Model Inference)                 │
-└─────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│  Data & Context Layer                                        │
+│  • DynamoDB (State Management & Persistence)                 │
+│  • Glean Enterprise Context (Knowledge Retrieval)            │
+│  • Amazon Bedrock (Model Inference - Amazon Nova)            │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 ---
