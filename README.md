@@ -33,6 +33,43 @@ This system automates insurance claim intake, assignment, and review while keepi
 
 ---
 
+## 🎨 What You'll Deploy
+
+Two production-ready web portals with embedded AI agents:
+
+<table>
+<tr>
+<td width="50%">
+
+**Submitter Portal** - Conversational claim filing
+<img src="assets/js/images/submitter-portal-initial-screenshot.png" width="100%">
+
+</td>
+<td width="50%">
+
+**Reviewer Dashboard** - AI-assisted claim review
+<img src="assets/js/images/reviewer-portal-initial-screenshot.png" width="100%">
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+**AI Intake Agent** - Natural language claim processing
+<img src="assets/js/images/submitter-portal-intake-screenshot.png" width="100%">
+
+</td>
+<td width="50%">
+
+**Smart Review Interface** - AI recommendations + human decisions
+<img src="assets/js/images/reviewer-portal-reviewer-screenshot.png" width="100%">
+
+</td>
+</tr>
+</table>
+
+---
+
 ## 🏗️ Architecture
 
 ![Architecture Diagram](assets/js/images/architecture-diagram.png)
@@ -54,6 +91,23 @@ Amazon Bedrock AgentCore Runtime
     ↓
 DynamoDB + Bedrock Models
 ```
+
+---
+
+## 📊 Sample Data
+
+The system includes pre-loaded sample data:
+
+**Claims:**
+- CL-2025-0001: Vehicle accident (hit-and-run) - AI: Approve (94%)
+- CL-2025-0045: Property damage (flooding) - AI: Deny (87%)
+- CL-2025-0067: Vehicle hail damage - AI: Approve (91%)
+- CL-2025-1015012634: Additional test claim
+
+**Reviewers:**
+- Sarah Chen (3 active claims, 247 total reviewed, 96.8% accuracy)
+- Mike Torres (5 active claims, 189 total reviewed, 94.5% accuracy)
+- Lisa Park (7 active claims, 312 total reviewed, 97.2% accuracy)
 
 ---
 
@@ -115,7 +169,7 @@ If using AWS SSO, login first:
 aws sso login --profile your-aws-profile-name
 ```
 
-### Step 3: Deploy AWS Infrastructure
+### Step 3: Deploy AWS Agents & Backend Infrastructure
 
 Run the automated deployment script:
 
@@ -137,7 +191,7 @@ Run the automated deployment script:
 - Generates `config.js` with your API Gateway URL and [Glean](https://www.glean.com/) agent IDs (gitignored)
 - Generates [Glean](https://www.glean.com/)-ready OpenAPI specs in `glean/generated/`
 
-### Step 4: Test the AWS Deployment
+### Step 4: Test the AWS Agents & Backend
 
 Verify that the AWS infrastructure is working correctly:
 
@@ -221,23 +275,6 @@ aws-ai-agent-hackathon/
 └── deployment/
     └── agentcore-deploy/              # AgentCore deployment artifacts
 ```
-
----
-
-## 📊 Sample Data
-
-The system includes pre-loaded sample data:
-
-**Claims:**
-- CL-2025-0001: Vehicle accident (hit-and-run) - AI: Approve (94%)
-- CL-2025-0045: Property damage (flooding) - AI: Deny (87%)
-- CL-2025-0067: Vehicle hail damage - AI: Approve (91%)
-- CL-2025-1015012634: Additional test claim
-
-**Reviewers:**
-- Sarah Chen (3 active claims, 247 total reviewed, 96.8% accuracy)
-- Mike Torres (5 active claims, 189 total reviewed, 94.5% accuracy)
-- Lisa Park (7 active claims, 312 total reviewed, 97.2% accuracy)
 
 ---
 
