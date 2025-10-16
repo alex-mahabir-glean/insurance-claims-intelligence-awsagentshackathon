@@ -34,6 +34,9 @@ const reviewers = {
 function selectRole(role) {
     selectedRole = role;
     
+    // Save state to sessionStorage
+    sessionStorage.setItem('reviewer_state', JSON.stringify({ role: role }));
+    
     // Hide landing page
     document.getElementById('landing-page').classList.add('hidden');
     document.getElementById('back-to-landing').classList.add('visible');
@@ -203,6 +206,7 @@ function returnToLanding() {
     selectedRole = null;
     currentView = 'landing';
     isAdminMode = false;
+    sessionStorage.removeItem('reviewer_state');
 }
 
 // Initialize on page load
@@ -225,7 +229,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load saved agent ID
     loadAgentId();
     
-    // Don't auto-load claims or reviewer - wait for role selection
+    // Restore previous state if exists
+    const savedState = sessionStorage.getItem('reviewer_state');
+    if (savedState) {
+        const state = JSON.parse(savedState);
+        if (state.role) {
+            selectRole(state.role);
+        }
+    }
 });
 
 /**
@@ -1184,6 +1195,45 @@ function handleAIAssessment(claimId) {
     showChatOverlay(`Please provide a comprehensive AI assessment for claim ${claimId} and provide a recommendation, as well as reasoning.`);
 }
 
+/**
+ * Refresh claims data
+ */
+async function refreshClaims() {
+    const refreshBtn = document.querySelector('.refresh-btn');
+    
+    // Add refreshing state
+    if (refreshBtn) {
+        refreshBtn.classList.add('refreshing');
+        refreshBtn.disabled = true;
+    }
+    
+    try {
+        console.log('Refreshing claims data...');
+        
+        // Reload claims from API
+        await loadClaims();
+        
+        // Show success feedback
+        console.log('Claims refreshed successfully');
+        
+        // Brief delay to show the animation
+        setTimeout(() => {
+            if (refreshBtn) {
+                refreshBtn.classList.remove('refreshing');
+                refreshBtn.disabled = false;
+            }
+        }, 500);
+    } catch (error) {
+        console.error('Error refreshing claims:', error);
+        
+        // Remove refreshing state on error
+        if (refreshBtn) {
+            refreshBtn.classList.remove('refreshing');
+            refreshBtn.disabled = false;
+        }
+    }
+}
+
 // Make functions globally accessible
 window.selectRole = selectRole;
 window.returnToLanding = returnToLanding;
@@ -1203,3 +1253,4 @@ window.handleApprove = handleApprove;
 window.handleDeny = handleDeny;
 window.handleAIAssessment = handleAIAssessment;
 window.showChatOverlay = showChatOverlay;
+window.refreshClaims = refreshClaims;

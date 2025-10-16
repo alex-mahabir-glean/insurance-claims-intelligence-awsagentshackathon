@@ -14,7 +14,19 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load saved agent ID
     loadAgentId();
     
-    // Don't auto-initialize chat - wait for user selection
+    // Restore previous state if exists
+    const savedState = sessionStorage.getItem('submitter_state');
+    if (savedState) {
+        const state = JSON.parse(savedState);
+        if (state.intent) {
+            currentIntent = state.intent;
+            // Restore the chat view without auto-sending message
+            document.getElementById('landing-page').classList.add('hidden');
+            document.getElementById('chat-container').classList.add('active');
+            document.getElementById('back-button').classList.add('visible');
+            initializeGleanChat();
+        }
+    }
 });
 
 /**
@@ -60,6 +72,7 @@ function updateAgentId() {
  */
 function startNewClaim() {
     currentIntent = 'new-claim';
+    sessionStorage.setItem('submitter_state', JSON.stringify({ intent: 'new-claim' }));
     showChat('I want to file a new insurance claim. What information do you need from me?');
 }
 
@@ -68,6 +81,7 @@ function startNewClaim() {
  */
 function checkExistingClaim() {
     currentIntent = 'check-claim';
+    sessionStorage.setItem('submitter_state', JSON.stringify({ intent: 'check-claim' }));
     showChat('I want to check on an existing claim. What information do you need?');
 }
 
@@ -85,6 +99,7 @@ function returnToLanding() {
     // Reset state
     currentIntent = null;
     gleanChatInitialized = false;
+    sessionStorage.removeItem('submitter_state');
     
     // Clear chat container
     const container = document.getElementById('glean-agent');

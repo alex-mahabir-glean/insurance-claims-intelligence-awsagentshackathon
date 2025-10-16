@@ -17,16 +17,19 @@
     <!-- Shared Breadcrumb Navigation Styles -->
     <link rel="stylesheet" href="/assets/css/breadcrumb.css">
     
+    <!-- Load deployment configuration (gitignored) -->
+    <script src="config.js"></script>
+    
     <!-- Configuration -->
     <script>
         window.demoConfig = window.demoConfig || {};
         window.demoConfig = {
             // Glean Agent Configuration
-            agentId: 'your-glean-agent-id', // Glean agent ID for AI Review Assistant
+            agentId: window.deploymentConfig?.gleanReviewAgentId || 'your-glean-agent-id',
             
             // API Configuration
-            apiBaseUrl: 'https://your-api-gateway-url.execute-api.us-east-1.amazonaws.com/prod', // AWS API Gateway URL
-            authToken: 'demo-token-123',
+            apiBaseUrl: window.deploymentConfig?.apiBaseUrl || 'https://your-api-gateway-url.execute-api.us-east-1.amazonaws.com/prod',
+            authToken: window.deploymentConfig?.authToken || 'demo-token-123',
             
             // Reviewer Configuration
             reviewerId: 'sarah-chen', // Current reviewer ID
@@ -592,6 +595,51 @@
         
         .filter-btn:hover:not(.active) {
             background: var(--bg-light);
+        }
+        
+        /* Refresh Button */
+        .refresh-btn {
+            padding: 0.625rem 1.25rem;
+            background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-left: auto;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+        }
+        
+        .refresh-btn:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        
+        .refresh-btn:active {
+            transform: translateY(0);
+        }
+        
+        .refresh-btn i {
+            transition: transform 0.5s ease;
+        }
+        
+        .refresh-btn:hover i {
+            transform: rotate(180deg);
+        }
+        
+        .refresh-btn.refreshing i {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
         
         /* Claims List */
@@ -1671,6 +1719,9 @@
                         <button class="filter-btn" onclick="filterClaims('pending')">Pending</button>
                         <button class="filter-btn" onclick="filterClaims('review')">Under Review</button>
                         <button class="filter-btn" onclick="filterClaims('completed')">Completed</button>
+                        <button class="refresh-btn" onclick="refreshClaims()" title="Refresh claims data">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
                     </div>
                 </div>
                 

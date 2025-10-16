@@ -17,14 +17,18 @@
     <!-- Shared Breadcrumb Navigation Styles -->
     <link rel="stylesheet" href="/assets/css/breadcrumb.css">
     
+    <!-- Load deployment configuration (gitignored) -->
+    <script src="config.js"></script>
+    
     <!-- Configuration -->
     <script>
         window.demoConfig = window.demoConfig || {};
         window.demoConfig = {
-            agentId: 'your-glean-agent-id', // Glean agent ID for Claims Assistant
-            apiBaseUrl: 'https://your-api-gateway-url.execute-api.us-east-1.amazonaws.com/prod', // AWS API Gateway URL
-            authToken: 'demo-token-123'
-        };window.demoConfig.debug = false;
+            agentId: window.deploymentConfig?.gleanIntakeAgentId || 'your-glean-agent-id',
+            apiBaseUrl: window.deploymentConfig?.apiBaseUrl || 'https://your-api-gateway-url.execute-api.us-east-1.amazonaws.com/prod',
+            authToken: window.deploymentConfig?.authToken || 'demo-token-123'
+        };
+        window.demoConfig.debug = false;
     </script>
     
     <style>
