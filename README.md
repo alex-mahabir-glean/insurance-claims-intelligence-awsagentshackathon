@@ -104,30 +104,30 @@ Two intelligent web portals with embedded AI agents, powered by a fully function
 ### High-Level Flow
 
 ```
-Frontend (Glean Conversational Agent / HTML Portals)
+Frontend (Intelligent Insurance Claim Platform WebApps - Submitter & Reviewer Portals)
     ↓
-Glean Enterprise Context (Knowledge Retrieval & Contextual Intelligence)
+Glean Claims Intake, Insights & Management Conversational Agents
     ↓
-Glean Actions / Direct API
+Custom Glean Actions
     ↓
-API Gateway
-    ↓
-Lambda Functions (Orchestration Layer)
+API Gateway + Lambda Functions (Orchestration Layer)
     ↓
 Amazon Bedrock AgentCore Runtime
     ├── Intake Agent (Strands SDK)
     │   ├── Intelligent Claim Processing
     │   ├── Smart Reviewer Assignment (workload + expertise balancing)
-    │   └── Amazon Nova (LLM)
+    │   ├── Amazon Nova (LLM)
+    │   └── Glean Enterprise Context
     └── Review Agent (Strands SDK)
         ├── Intelligent Claim Assessment
         ├── AI Recommendation Engine (confidence scoring)
-        └── Amazon Nova (LLM)
+        ├── Amazon Nova (LLM)
+        └── Glean Enterprise Context
     ↓
 ┌──────────────────────────────────────────────────────────────┐
-│  Data & Context Layer                                        │
-│  • DynamoDB (State Management & Persistence)                 │
-│  • Glean Enterprise Context (Knowledge Retrieval)            │
+│  Data & State Layer                                          │
+│  • DynamoDB (Claim Storage & State Management)               │
+│  • Accessible by Glean Enterprise Context (Knowledge Retrieval) │
 │  • Amazon Bedrock (Model Inference - Amazon Nova)            │
 └──────────────────────────────────────────────────────────────┘
 ```
