@@ -6,6 +6,33 @@ An intelligent insurance claim management system that combines [Glean](https://w
 
 ---
 
+## 📑 Table of Contents
+
+- [🤖 Deploy with Kiro (AI-Powered)](#-deploy-with-kiro-ai-powered)
+- [🎯 Overview](#-overview)
+- [🎨 What You'll Deploy](#-what-youll-deploy)
+- [🏗️ Architecture](#️-architecture)
+- [📊 Sample Data](#-sample-data)
+- [💡 Key Features](#-key-features)
+- [🚀 Quick Start - Automated Deployment](#-quick-start---automated-deployment)
+  - [Prerequisites](#prerequisites)
+  - [Step 1: Configure Deployment](#step-1-configure-deployment)
+  - [Step 2: Authenticate to AWS](#step-2-authenticate-to-aws)
+  - [Step 3: Deploy AWS Agents & Backend Infrastructure](#step-3-deploy-aws-agents--backend-infrastructure)
+  - [Step 4: Test the AWS Agents & Backend](#step-4-test-the-aws-agents--backend)
+  - [Step 5: Configure Glean Agents](#step-5-configure-glean-agents)
+- [🔧 Manual Configuration](#-manual-configuration)
+- [📁 Project Structure](#-project-structure)
+- [🔧 Advanced Usage](#-advanced-usage)
+- [🌐 Observability](#-observability)
+- [🏆 Hackathon Compliance](#-hackathon-compliance)
+- [🛠️ Technologies Used](#️-technologies-used)
+- [📝 License](#-license)
+- [👥 Team](#-team)
+- [📞 Support](#-support)
+
+---
+
 ## 🤖 Deploy with Kiro (AI-Powered)
 
 Want to deploy this entire system with AI assistance? Use [Kiro](https://kiro.dev/) with this prompt:
@@ -35,7 +62,7 @@ This system automates insurance claim intake, assignment, and review while keepi
 
 ## 🎨 What You'll Deploy
 
-Two web portals with embedded AI agents:
+Two intelligent web portals with embedded AI agents, powered by a fully functional backend that intelligently reviews incoming claims, transparently routes them to the optimal reviewer (balancing expertise and workload), provides AI-powered recommendations with confidence scoring, and manages complete state across the entire claim lifecycle:
 
 <table>
 <tr>
@@ -83,13 +110,24 @@ Frontend ([Glean](https://www.glean.com/) Agent / HTML)
     ↓
 API Gateway
     ↓
-Lambda Functions
+Lambda Functions (Orchestration Layer)
     ↓
 Amazon Bedrock AgentCore Runtime
-    ├── Intake Agent (Strands)
-    └── Review Agent (Strands)
+    ├── Intake Agent (Strands SDK)
+    │   ├── Intelligent Claim Processing
+    │   ├── Smart Reviewer Assignment (workload + expertise balancing)
+    │   └── Amazon Nova (LLM)
+    └── Review Agent (Strands SDK)
+        ├── Intelligent Claim Assessment
+        ├── AI Recommendation Engine (confidence scoring)
+        └── Amazon Nova (LLM)
     ↓
-DynamoDB + Bedrock Models
+┌─────────────────────────────────────────────────────┐
+│  Data & Context Layer                               │
+│  • DynamoDB (State Management)                      │
+│  • [Glean](https://www.glean.com/) Enterprise Context (Knowledge Retrieval)  │
+│  • Amazon Bedrock (Model Inference)                 │
+└─────────────────────────────────────────────────────┘
 ```
 
 ---
