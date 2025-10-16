@@ -108,7 +108,9 @@ Frontend (Intelligent Insurance Claim Platform WebApps - Submitter & Reviewer Po
     ↓
 Glean Claims Intake, Insights & Management Conversational Agents
     ↓
-Custom Glean Actions
+Glean Enterprise Knowledge Graph (Contextual Understanding & Knowledge Retrieval)
+    ↓
+Custom Glean Actions to AgentCore
     ↓
 API Gateway + Lambda Functions (Orchestration Layer)
     ↓
