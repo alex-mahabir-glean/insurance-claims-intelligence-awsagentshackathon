@@ -2,7 +2,23 @@
 
 **AWS AI Agent Global Hackathon 2025 Submission**
 
-An intelligent insurance claim management system that combines Glean's enterprise knowledge capabilities with AWS Bedrock AgentCore's orchestration power.
+An intelligent insurance claim management system that combines [Glean](https://www.glean.com/)'s enterprise knowledge capabilities with AWS Bedrock AgentCore's orchestration power.
+
+---
+
+## 🤖 Deploy with Kiro (AI-Powered)
+
+Want to deploy this entire system with AI assistance? Use [Kiro](https://kiro.dev/) with this prompt:
+
+```
+Deploy the AI-Powered Legal Service Management System from this repository. 
+Configure AWS credentials, set up the config.env file with my AWS region and deployment preferences, 
+run the deploy.sh script, monitor the deployment progress, and guide me through setting up Glean Actions 
+by importing the generated OpenAPI specs from glean/generated/ and configuring the API authentication 
+using the token from AWS Secrets Manager.
+```
+
+Kiro will guide you through the entire deployment and Glean configuration process interactively!
 
 ---
 
@@ -10,7 +26,7 @@ An intelligent insurance claim management system that combines Glean's enterpris
 
 This system automates insurance claim intake, assignment, and review while keeping humans in control of final decisions. It demonstrates the power of combining:
 
-- **Glean Agents** - User-facing conversational interface
+- **[Glean](https://www.glean.com/) Agents** - User-facing conversational interface embedded using [Glean](https://www.glean.com/)'s WebSDK for an intuitive UI experience
 - **Strands Agents SDK** - Agent logic and business rules
 - **AWS Bedrock AgentCore Runtime** - Serverless agent hosting
 - **AWS Infrastructure** - API Gateway, Lambda, DynamoDB
@@ -19,10 +35,14 @@ This system automates insurance claim intake, assignment, and review while keepi
 
 ## 🏗️ Architecture
 
+![Architecture Diagram](assets/js/images/architecture-diagram.png)
+
+### High-Level Flow
+
 ```
-Frontend (Glean Agent / HTML)
+Frontend ([Glean](https://www.glean.com/) Agent / HTML)
     ↓
-Glean Actions / Direct API
+[Glean](https://www.glean.com/) Actions / Direct API
     ↓
 API Gateway
     ↓
@@ -44,7 +64,7 @@ DynamoDB + Bedrock Models
 - **AWS Account** with appropriate permissions
 - **AWS CLI** configured
 - **Python 3.10+** (Python 3.12 recommended for AgentCore)
-- **Glean account** (optional, for conversational interface)
+- **[Glean](https://www.glean.com/) account** (optional, for conversational interface)
 
 ### Step 1: Configure Deployment
 
@@ -61,7 +81,7 @@ AWS_PROFILE=your-aws-profile-name
 STACK_NAME=legal-service-stack
 DEPLOYMENT_ID=legal
 
-# Optional: For Glean embedded agents
+# Optional: For [Glean](https://www.glean.com/) embedded agents
 GLEAN_INTAKE_AGENT_ID=
 GLEAN_REVIEW_AGENT_ID=
 ```
@@ -85,7 +105,7 @@ Run the automated deployment script:
 **That's it!** ☕ The script will:
 - ✅ Deploy all AWS infrastructure (API Gateway, Lambda, DynamoDB)
 - ✅ Load sample data (4 claims, 3 reviewers)
-- ✅ Deploy AI agents to Bedrock AgentCore
+- ✅ Deploy AI agents to Bedrock AgentCore (built with Strands SDK)
 - ✅ Configure all integrations
 - ✅ Update HTML files with your API URLs
 
@@ -93,8 +113,8 @@ Run the automated deployment script:
 
 **Note**: The script automatically:
 - Creates an S3 bucket for CloudFormation templates if needed (template is >51KB)
-- Generates `config.js` with your API Gateway URL and Glean agent IDs (gitignored)
-- Generates Glean-ready OpenAPI specs in `glean/generated/`
+- Generates `config.js` with your API Gateway URL and [Glean](https://www.glean.com/) agent IDs (gitignored)
+- Generates [Glean](https://www.glean.com/)-ready OpenAPI specs in `glean/generated/`
 
 ### Step 4: Test the System
 
@@ -119,13 +139,13 @@ After deployment completes:
    curl $API_URL/claims
    ```
 
-### Step 5: Configure Glean (Optional)
+### Step 5: Configure [Glean](https://www.glean.com/) (Optional)
 
-The deployment automatically generates Glean-ready OpenAPI specifications in `glean/generated/` with your API Gateway URL already configured!
+The deployment automatically generates [Glean](https://www.glean.com/)-ready OpenAPI specifications in `glean/generated/` with your API Gateway URL already configured!
 
 Follow the detailed instructions in **[GLEAN_SETUP.md](GLEAN_SETUP.md)** to:
-- Import Glean Actions
-- Create Glean Agents
+- Import [Glean](https://www.glean.com/) Actions
+- Create [Glean](https://www.glean.com/) Agents
 - Configure authentication
 
 ---
@@ -188,7 +208,7 @@ aws-ai-agent-hackathon/
 ## 💡 Key Features
 
 ### 🤖 Intelligent Automation
-- **Conversational claim filing** - Natural language interaction via Glean or web interface
+- **Conversational claim filing** - Natural language interaction via [Glean](https://www.glean.com/) or web interface
 - **AI-powered analysis** - Automatic claim review with confidence scoring
 - **Smart assignment** - Workload-balanced reviewer assignment
 - **Fraud detection** - AI identifies potential fraud indicators
@@ -296,16 +316,16 @@ https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#gen-ai-observabi
 
 ### ✅ Requirements Met
 
-1. **LLM from AWS Bedrock** ✅ - Uses Claude 3.5 Sonnet via Bedrock
+1. **LLM from AWS Bedrock** ✅ - Uses Amazon Nova via Bedrock
 2. **AWS Services** ✅ - Bedrock AgentCore, Lambda, API Gateway, DynamoDB
 3. **AgentCore Primitive** ✅ - Strands Agents SDK with AgentCore Runtime
-4. **Reasoning LLMs** ✅ - Claude for decision-making
+4. **Reasoning LLMs** ✅ - Amazon Nova for decision-making
 5. **Autonomous Capabilities** ✅ - Auto-assignment, AI recommendations
-6. **External Integrations** ✅ - DynamoDB, Glean API
+6. **External Integrations** ✅ - DynamoDB, [Glean](https://www.glean.com/) API
 
 ### 🎯 Key Differentiators
 
-1. **Integration Excellence** - Seamless Glean + AgentCore integration
+1. **Integration Excellence** - Seamless [Glean](https://www.glean.com/) + AgentCore integration
 2. **Real-World Applicability** - Solves actual enterprise problem
 3. **Clean Architecture** - Simple, reproducible, well-documented
 4. **Intelligent Automation** - Smart reviewer assignment algorithm
@@ -318,12 +338,12 @@ https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#gen-ai-observabi
 
 - **Amazon Bedrock AgentCore Runtime** - Serverless agent hosting
 - **Strands Agents SDK** - Agent framework
-- **Amazon Bedrock** - Claude 3.5 Sonnet LLM
+- **Amazon Bedrock** - Amazon Nova LLM
 - **AWS Lambda** - Serverless compute (Python 3.12)
 - **Amazon API Gateway** - REST API
 - **Amazon DynamoDB** - NoSQL database
 - **AWS CloudFormation** - Infrastructure as Code
-- **Glean API** - Enterprise search and actions (optional)
+- **[Glean](https://www.glean.com/) API** - Enterprise search and actions (optional)
 
 ---
 
@@ -337,27 +357,13 @@ This project is created for the AWS AI Agent Global Hackathon 2025.
 
 ## 👥 Team
 
-Built by Eugene for Glean DemoHub
-
----
-
-## 🙏 Acknowledgments
-
-- AWS Bedrock team for AgentCore
-- Strands Agents SDK contributors
-- Glean for enterprise knowledge capabilities
+Built with <3 by [Glean](https://www.glean.com/) with help from [Kiro](https://kiro.dev/)
 
 ---
 
 ## 📞 Support
 
 For issues or questions:
-1. Check [GLEAN_SETUP.md](GLEAN_SETUP.md) for Glean integration help
+1. Check [GLEAN_SETUP.md](GLEAN_SETUP.md) for [Glean](https://www.glean.com/) integration help
 2. Review CloudWatch logs for errors
 3. Check `deployment-outputs.json` for deployment details
-
----
-
-**Status**: Production Ready ✅
-
-*Last Updated: October 15, 2025*
