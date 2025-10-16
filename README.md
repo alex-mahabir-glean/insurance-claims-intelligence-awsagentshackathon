@@ -57,6 +57,27 @@ DynamoDB + Bedrock Models
 
 ---
 
+## 💡 Key Features
+
+### 🤖 Intelligent Automation
+- **Conversational claim filing** - Natural language interaction via [Glean](https://www.glean.com/) or web interface
+- **AI-powered analysis** - Automatic claim review with confidence scoring
+- **Smart assignment** - Workload-balanced reviewer assignment
+- **Fraud detection** - AI identifies potential fraud indicators
+
+### 🏢 Enterprise-Grade
+- **Serverless architecture** - Scalable and cost-effective
+- **Complete audit trail** - Full compliance tracking in DynamoDB
+- **Session isolation** - Secure multi-user support via AgentCore
+- **Observability** - CloudWatch metrics and traces
+
+### 🎯 Human-in-Loop Design
+- AI provides recommendations, humans make final decisions
+- Confidence scores guide reviewer attention
+- Transparent reasoning for all AI recommendations
+
+---
+
 ## 🚀 Quick Start - Automated Deployment
 
 ### Prerequisites
@@ -81,7 +102,7 @@ AWS_PROFILE=your-aws-profile-name
 STACK_NAME=legal-service-stack
 DEPLOYMENT_ID=legal
 
-# Optional: For [Glean](https://www.glean.com/) embedded agents
+# For [Glean](https://www.glean.com/) embedded agents (configure after AWS deployment)
 GLEAN_INTAKE_AGENT_ID=
 GLEAN_REVIEW_AGENT_ID=
 ```
@@ -94,7 +115,7 @@ If using AWS SSO, login first:
 aws sso login --profile your-aws-profile-name
 ```
 
-### Step 3: Deploy Everything
+### Step 3: Deploy AWS Infrastructure
 
 Run the automated deployment script:
 
@@ -116,30 +137,28 @@ Run the automated deployment script:
 - Generates `config.js` with your API Gateway URL and [Glean](https://www.glean.com/) agent IDs (gitignored)
 - Generates [Glean](https://www.glean.com/)-ready OpenAPI specs in `glean/generated/`
 
-### Step 4: Test the System
+### Step 4: Test the AWS Deployment
 
-After deployment completes:
+Verify that the AWS infrastructure is working correctly:
 
-1. **Start the local web server** (optional but recommended):
-   ```bash
-   ./serve.sh
-   ```
-   Then open:
-   - http://localhost:8000/submitter.html - File claims
-   - http://localhost:8000/reviewer.html - Review and manage claims
-   
-   Or simply open the HTML files directly in your browser.
+```bash
+# Run the verification script to test all endpoints
+./verify-deployment.sh
 
-2. **Test the API**:
-   ```bash
-   # Get your API URL from deployment-outputs.json
-   API_URL=$(python3 -c "import json; print(json.load(open('deployment-outputs.json'))['apiUrl'])")
-   
-   # Test getting claims
-   curl $API_URL/claims
-   ```
+# Or test individual components:
+./deployment/test_api_endpoint.sh
+python3 deployment/test_agent_invocation.py
+```
 
-### Step 5: Configure [Glean](https://www.glean.com/) (Optional)
+You can also test the web portals:
+```bash
+./serve.sh
+```
+Then open:
+- http://localhost:8000/submitter.html - File claims
+- http://localhost:8000/reviewer.html - Review and manage claims
+
+### Step 5: Configure [Glean](https://www.glean.com/) Agents
 
 The deployment automatically generates [Glean](https://www.glean.com/)-ready OpenAPI specifications in `glean/generated/` with your API Gateway URL already configured!
 
@@ -202,27 +221,6 @@ aws-ai-agent-hackathon/
 └── deployment/
     └── agentcore-deploy/              # AgentCore deployment artifacts
 ```
-
----
-
-## 💡 Key Features
-
-### 🤖 Intelligent Automation
-- **Conversational claim filing** - Natural language interaction via [Glean](https://www.glean.com/) or web interface
-- **AI-powered analysis** - Automatic claim review with confidence scoring
-- **Smart assignment** - Workload-balanced reviewer assignment
-- **Fraud detection** - AI identifies potential fraud indicators
-
-### 🏢 Enterprise-Grade
-- **Serverless architecture** - Scalable and cost-effective
-- **Complete audit trail** - Full compliance tracking in DynamoDB
-- **Session isolation** - Secure multi-user support via AgentCore
-- **Observability** - CloudWatch metrics and traces
-
-### 🎯 Human-in-Loop Design
-- AI provides recommendations, humans make final decisions
-- Confidence scores guide reviewer attention
-- Transparent reasoning for all AI recommendations
 
 ---
 
