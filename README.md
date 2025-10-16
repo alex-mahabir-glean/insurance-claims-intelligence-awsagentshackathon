@@ -91,20 +91,12 @@ Run the automated deployment script:
 
 **Deployment time:** ~8-10 minutes
 
-**Note**: The script automatically creates an S3 bucket for CloudFormation templates if needed (template is >51KB).
+**Note**: The script automatically:
+- Creates an S3 bucket for CloudFormation templates if needed (template is >51KB)
+- Generates `config.js` with your API Gateway URL and Glean agent IDs (gitignored)
+- Generates Glean-ready OpenAPI specs in `glean/generated/`
 
-### Step 4: Configure Local Development (Optional)
-
-For local development, create a `config.js` file with your deployment values:
-
-```bash
-cp config.template.js config.js
-# Edit config.js with your API Gateway URL from deployment-outputs.json
-```
-
-The HTML portals will automatically load configuration from `config.js` (which is gitignored).
-
-### Step 5: Test the System
+### Step 4: Test the System
 
 After deployment completes:
 
@@ -127,7 +119,7 @@ After deployment completes:
    curl $API_URL/claims
    ```
 
-### Step 6: Configure Glean (Optional)
+### Step 5: Configure Glean (Optional)
 
 The deployment automatically generates Glean-ready OpenAPI specifications in `glean/generated/` with your API Gateway URL already configured!
 
@@ -135,6 +127,22 @@ Follow the detailed instructions in **[GLEAN_SETUP.md](GLEAN_SETUP.md)** to:
 - Import Glean Actions
 - Create Glean Agents
 - Configure authentication
+
+---
+
+## 🔧 Manual Configuration
+
+If you need to manually update your local configuration:
+
+```bash
+# Copy the template
+cp config.template.js config.js
+
+# Edit config.js with your values from deployment-outputs.json
+nano config.js
+```
+
+The HTML portals automatically load from `config.js` (which is gitignored).
 
 ---
 
