@@ -1,0 +1,59 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual Environments
+venv/
+env/
+ENV/
+agentcore-venv/
+.venv
+
+# AgentCore Deployment Artifacts
+deployment/agentcore-deploy/*/.bedrock_agentcore.yaml
+deployment/agentcore-deploy/*/agent.py
+deployment/agentcore-deploy/*/requirements.txt
+.bedrock_agentcore.yaml
+
+# AWS
+*.pem
+*.key
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment variables
+.env
+.env.local
+
+# Temporary files
+*.tmp
+*.bak
+*.backup
+
+# Generated files
+deployment-outputs.json
+config.env
+glean/generated/
+
+# Backup files
+*.bak
+*.tmp

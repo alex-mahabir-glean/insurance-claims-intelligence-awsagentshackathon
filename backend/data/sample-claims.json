@@ -1,0 +1,265 @@
+{
+  "LegalService-Claims-legal": [
+    {
+      "PutRequest": {
+        "Item": {
+          "claimId": {"S": "CL-2025-0001"},
+          "version": {"S": "v1"},
+          "claimantInfo": {"M": {
+            "name": {"S": "John Doe"},
+            "email": {"S": "john.doe@example.com"},
+            "phone": {"S": "+1-555-0123"},
+            "address": {"S": "123 Main St, Springfield, IL 62701"}
+          }},
+          "policyNumber": {"S": "PL-123456"},
+          "claimType": {"S": "vehicle"},
+          "incidentDate": {"S": "2025-10-13"},
+          "incidentDescription": {"S": "Rear-ended at stoplight by another vehicle. The other driver fled the scene immediately after impact. Police were called and a report was filed. Vehicle sustained significant rear-end damage."},
+          "claimValue": {"N": "8500"},
+          "policeReport": {"S": "SPD-2025-1013"},
+          "injuries": {"BOOL": true},
+          "injuryDescription": {"S": "Mild whiplash, treated at emergency room"},
+          "status": {"S": "assigned"},
+          "assignedTo": {"S": "sarah-chen"},
+          "assignedDate": {"S": "2025-10-14T14:00:00Z"},
+          "aiRecommendation": {"S": "approve"},
+          "aiRecommendationReason": {"S": "Valid claim with comprehensive documentation. Police report SPD-2025-1013 confirms hit-and-run incident. Medical diagnosis of whiplash is consistent with rear-end collision mechanism. Policy includes comprehensive coverage with $500 deductible. No fraud indicators detected. Similar cases in knowledge base show 92% approval rate for hit-and-run claims with police reports."},
+          "aiConfidence": {"N": "0.94"},
+          "submittedDate": {"S": "2025-10-14T13:54:00Z"},
+          "lastUpdated": {"S": "2025-10-14T14:00:00Z"}
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "claimId": {"S": "CL-2025-0045"},
+          "version": {"S": "v1"},
+          "claimantInfo": {"M": {
+            "name": {"S": "Jane Smith"},
+            "email": {"S": "jane.smith@example.com"},
+            "phone": {"S": "+1-555-0456"},
+            "address": {"S": "456 Oak Ave, Springfield, IL 62702"}
+          }},
+          "policyNumber": {"S": "PL-789012"},
+          "claimType": {"S": "property"},
+          "incidentDate": {"S": "2025-10-10"},
+          "incidentDescription": {"S": "Basement flooding from heavy rainfall. Water damage to finished basement including carpet, drywall, and personal belongings. Approximately 3 inches of standing water."},
+          "claimValue": {"N": "12300"},
+          "injuries": {"BOOL": false},
+          "status": {"S": "under_review"},
+          "assignedTo": {"S": "sarah-chen"},
+          "assignedDate": {"S": "2025-10-11T10:00:00Z"},
+          "aiRecommendation": {"S": "deny"},
+          "aiRecommendationReason": {"S": "Policy does not cover flood damage from natural rainfall. Standard homeowners policy excludes flooding unless separate flood insurance is purchased. Claimant's policy (PL-789012) does not include flood coverage rider. Similar weather-related water damage claims without flood coverage have 95% denial rate per company guidelines."},
+          "aiConfidence": {"N": "0.87"},
+          "submittedDate": {"S": "2025-10-11T09:23:00Z"},
+          "lastUpdated": {"S": "2025-10-11T10:00:00Z"}
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "claimId": {"S": "CL-2025-0067"},
+          "version": {"S": "v1"},
+          "claimantInfo": {"M": {
+            "name": {"S": "Mike Johnson"},
+            "email": {"S": "mike.j@example.com"},
+            "phone": {"S": "+1-555-0789"},
+            "address": {"S": "789 Elm St, Springfield, IL 62703"}
+          }},
+          "policyNumber": {"S": "PL-345678"},
+          "claimType": {"S": "vehicle"},
+          "incidentDate": {"S": "2025-10-12"},
+          "incidentDescription": {"S": "Severe hailstorm caused extensive damage to vehicle. Multiple dents on hood, roof, and trunk. Windshield cracked. Vehicle was parked in driveway during storm."},
+          "claimValue": {"N": "4200"},
+          "injuries": {"BOOL": false},
+          "status": {"S": "under_review"},
+          "assignedTo": {"S": "sarah-chen"},
+          "assignedDate": {"S": "2025-10-12T17:00:00Z"},
+          "aiRecommendation": {"S": "approve"},
+          "aiRecommendationReason": {"S": "Comprehensive coverage includes hail damage. Weather service confirms severe hailstorm in Springfield area on October 12, 2025 with hail size up to 2 inches. Damage assessment photos consistent with hail impact patterns. Policy is active with no lapse in coverage. Deductible of $500 applies. Repair estimate of $4,200 is reasonable for described damage."},
+          "aiConfidence": {"N": "0.91"},
+          "submittedDate": {"S": "2025-10-12T16:45:00Z"},
+          "lastUpdated": {"S": "2025-10-12T17:00:00Z"}
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "claimId": {"S": "CL-2025-0023"},
+          "version": {"S": "v1"},
+          "claimantInfo": {"M": {
+            "name": {"S": "Robert Williams"},
+            "email": {"S": "r.williams@example.com"},
+            "phone": {"S": "+1-555-0234"},
+            "address": {"S": "234 Pine St, Springfield, IL 62704"}
+          }},
+          "policyNumber": {"S": "PL-456789"},
+          "claimType": {"S": "property"},
+          "incidentDate": {"S": "2025-10-08"},
+          "incidentDescription": {"S": "Kitchen fire caused by faulty electrical wiring. Fire department responded and contained the blaze. Damage to kitchen cabinets, appliances, and ceiling."},
+          "claimValue": {"N": "18500"},
+          "policeReport": {"S": "SFD-2025-1008"},
+          "injuries": {"BOOL": false},
+          "status": {"S": "assigned"},
+          "assignedTo": {"S": "mike-torres"},
+          "assignedDate": {"S": "2025-10-09T09:00:00Z"},
+          "aiRecommendation": {"S": "approve"},
+          "aiRecommendationReason": {"S": "Fire damage covered under homeowners policy. Fire department report confirms electrical origin. No evidence of negligence or intentional damage. Policy includes dwelling coverage up to $250,000. Repair estimate reasonable for extent of damage."},
+          "aiConfidence": {"N": "0.89"},
+          "submittedDate": {"S": "2025-10-09T08:25:00Z"},
+          "lastUpdated": {"S": "2025-10-09T09:00:00Z"}
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "claimId": {"S": "CL-2025-0034"},
+          "version": {"S": "v1"},
+          "claimantInfo": {"M": {
+            "name": {"S": "Emily Davis"},
+            "email": {"S": "emily.d@example.com"},
+            "phone": {"S": "+1-555-0345"},
+            "address": {"S": "345 Maple Dr, Springfield, IL 62705"}
+          }},
+          "policyNumber": {"S": "PL-567890"},
+          "claimType": {"S": "liability"},
+          "incidentDate": {"S": "2025-10-07"},
+          "incidentDescription": {"S": "Guest slipped on icy walkway and sustained injuries. Walkway had not been salted or cleared of ice. Guest required medical treatment for fractured wrist."},
+          "claimValue": {"N": "15200"},
+          "injuries": {"BOOL": true},
+          "injuryDescription": {"S": "Fractured left wrist requiring surgery"},
+          "status": {"S": "under_review"},
+          "assignedTo": {"S": "mike-torres"},
+          "assignedDate": {"S": "2025-10-08T11:00:00Z"},
+          "aiRecommendation": {"S": "approve"},
+          "aiRecommendationReason": {"S": "Liability claim appears valid. Medical records confirm wrist fracture. Weather records show freezing conditions on incident date. Property owner has duty to maintain safe premises. Policy includes $300,000 liability coverage. Medical expenses and treatment costs are reasonable."},
+          "aiConfidence": {"N": "0.78"},
+          "submittedDate": {"S": "2025-10-08T10:40:00Z"},
+          "lastUpdated": {"S": "2025-10-08T11:00:00Z"}
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "claimId": {"S": "CL-2025-0012"},
+          "version": {"S": "v1"},
+          "claimantInfo": {"M": {
+            "name": {"S": "David Martinez"},
+            "email": {"S": "d.martinez@example.com"},
+            "phone": {"S": "+1-555-0678"},
+            "address": {"S": "678 Cedar Ln, Springfield, IL 62706"}
+          }},
+          "policyNumber": {"S": "PL-234567"},
+          "claimType": {"S": "vehicle"},
+          "incidentDate": {"S": "2025-10-11"},
+          "incidentDescription": {"S": "Vehicle struck by falling tree during windstorm. Tree fell across vehicle while parked on street. Significant damage to roof and windshield."},
+          "claimValue": {"N": "9800"},
+          "injuries": {"BOOL": false},
+          "status": {"S": "assigned"},
+          "assignedTo": {"S": "lisa-park"},
+          "assignedDate": {"S": "2025-10-12T08:00:00Z"},
+          "aiRecommendation": {"S": "approve"},
+          "aiRecommendationReason": {"S": "Comprehensive coverage includes falling object damage. Weather service confirms high winds on October 11. Photos show tree damage consistent with storm conditions. No evidence of pre-existing damage or fraud. Repair estimate aligns with market rates."},
+          "aiConfidence": {"N": "0.93"},
+          "submittedDate": {"S": "2025-10-12T07:40:00Z"},
+          "lastUpdated": {"S": "2025-10-12T08:00:00Z"}
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "claimId": {"S": "CL-2025-0029"},
+          "version": {"S": "v1"},
+          "claimantInfo": {"M": {
+            "name": {"S": "Sarah Thompson"},
+            "email": {"S": "s.thompson@example.com"},
+            "phone": {"S": "+1-555-0890"},
+            "address": {"S": "890 Birch Ave, Springfield, IL 62707"}
+          }},
+          "policyNumber": {"S": "PL-678901"},
+          "claimType": {"S": "vehicle"},
+          "incidentDate": {"S": "2025-10-09"},
+          "incidentDescription": {"S": "Hit-and-run in parking lot. Vehicle sideswiped while parked at shopping center. Security camera footage available showing incident."},
+          "claimValue": {"N": "3200"},
+          "policeReport": {"S": "SPD-2025-1009"},
+          "injuries": {"BOOL": false},
+          "status": {"S": "under_review"},
+          "assignedTo": {"S": "lisa-park"},
+          "assignedDate": {"S": "2025-10-10T13:00:00Z"},
+          "aiRecommendation": {"S": "approve"},
+          "aiRecommendationReason": {"S": "Valid hit-and-run claim with police report and security footage. Comprehensive coverage includes uninsured motorist damage. Damage assessment consistent with sideswiping incident. Policy active with no coverage gaps."},
+          "aiConfidence": {"N": "0.96"},
+          "submittedDate": {"S": "2025-10-10T12:40:00Z"},
+          "lastUpdated": {"S": "2025-10-10T13:00:00Z"}
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "claimId": {"S": "CL-2025-0041"},
+          "version": {"S": "v1"},
+          "claimantInfo": {"M": {
+            "name": {"S": "James Anderson"},
+            "email": {"S": "j.anderson@example.com"},
+            "phone": {"S": "+1-555-0123"},
+            "address": {"S": "123 Willow Rd, Springfield, IL 62708"}
+          }},
+          "policyNumber": {"S": "PL-789012"},
+          "claimType": {"S": "liability"},
+          "incidentDate": {"S": "2025-10-06"},
+          "incidentDescription": {"S": "Dog bite incident involving neighbor's child. Child required stitches and rabies prophylaxis treatment. Incident occurred on property owner's premises."},
+          "claimValue": {"N": "8900"},
+          "policeReport": {"S": "SPD-2025-1006"},
+          "injuries": {"BOOL": true},
+          "injuryDescription": {"S": "Bite wound requiring 12 stitches on left arm"},
+          "status": {"S": "under_review"},
+          "assignedTo": {"S": "lisa-park"},
+          "assignedDate": {"S": "2025-10-07T14:00:00Z"},
+          "aiRecommendation": {"S": "approve"},
+          "aiRecommendationReason": {"S": "Liability coverage includes dog bite incidents. Medical records confirm treatment and expenses. Police report filed. Dog vaccination records current. Policy limit of $300,000 covers claim amount. Similar cases show 85% approval rate."},
+          "aiConfidence": {"N": "0.82"},
+          "submittedDate": {"S": "2025-10-07T13:40:00Z"},
+          "lastUpdated": {"S": "2025-10-07T14:00:00Z"}
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "claimId": {"S": "CL-2025-0053"},
+          "version": {"S": "v1"},
+          "claimantInfo": {"M": {
+            "name": {"S": "Patricia Brown"},
+            "email": {"S": "p.brown@example.com"},
+            "phone": {"S": "+1-555-0456"},
+            "address": {"S": "456 Spruce St, Springfield, IL 62709"}
+          }},
+          "policyNumber": {"S": "PL-890123"},
+          "claimType": {"S": "vehicle"},
+          "incidentDate": {"S": "2025-10-05"},
+          "incidentDescription": {"S": "Multi-vehicle accident on highway. Three cars involved. Claimant's vehicle rear-ended by distracted driver, pushing into vehicle ahead. Moderate damage to front and rear."},
+          "claimValue": {"N": "11200"},
+          "policeReport": {"S": "ISP-2025-1005"},
+          "injuries": {"BOOL": true},
+          "injuryDescription": {"S": "Minor neck strain, treated and released"},
+          "status": {"S": "assigned"},
+          "assignedTo": {"S": "lisa-park"},
+          "assignedDate": {"S": "2025-10-06T10:00:00Z"},
+          "aiRecommendation": {"S": "approve"},
+          "aiRecommendationReason": {"S": "Clear liability established in police report. Claimant not at fault. Collision coverage applies. Medical treatment reasonable for described injuries. Repair estimate verified by approved body shop. All documentation complete."},
+          "aiConfidence": {"N": "0.94"},
+          "submittedDate": {"S": "2025-10-06T09:40:00Z"},
+          "lastUpdated": {"S": "2025-10-06T10:00:00Z"}
+        }
+      }
+    }
+  ]
+}

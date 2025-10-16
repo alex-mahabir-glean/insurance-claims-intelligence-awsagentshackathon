@@ -1,0 +1,201 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Reassign Insurance Claim",
+    "version": "1.0.0",
+    "description": "Reassign an insurance claim to a different reviewer. Supports intelligent auto-assignment with 'Next Available' option for workload balancing."
+  },
+  "servers": [
+    {
+      "url": "https://YOUR_API_GATEWAY_URL",
+      "description": "Legal Service Management API - Production"
+    }
+  ],
+  "paths": {
+    "/reassign-claim": {
+      "post": {
+        "operationId": "reassignClaim",
+        "summary": "Reassign a claim to another reviewer",
+        "description": "Reassign an insurance claim to a different reviewer for review. Use 'Next Available' for intelligent auto-assignment based on workload and expertise.",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "claimId",
+                  "toReviewerId"
+                ],
+                "properties": {
+                  "claimId": {
+                    "type": "string",
+                    "description": "Unique claim identifier to reassign",
+                    "pattern": "^CL-[0-9]{4}-[0-9]+$",
+                    "example": "CL-2025-1015012634"
+                  },
+                  "toReviewerId": {
+                    "type": "string",
+                    "description": "Select the reviewer to assign the claim to, or choose 'Intelligent Reassignment' for automatic workload-based assignment",
+                    "enum": [
+                      "Intelligent Reassignment (Recommended)",
+                      "Sarah Chen",
+                      "Mike Torres",
+                      "Lisa Park",
+                      "Alex Rivera",
+                      "Jordan Kim",
+                      "Taylor Brooks",
+                      "Sarah Johnson",
+                      "Michael Chen",
+                      "Emily Rodriguez",
+                      "David Thompson",
+                      "Jessica Martinez"
+                    ],
+                    "example": "Intelligent Reassignment (Recommended)"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "Optional reason for reassignment",
+                    "maxLength": 500,
+                    "example": "Specialist review required for complex property damage assessment"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Claim reassigned successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["success", "claimId", "assignedTo", "message"],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "description": "Whether the claim was reassigned successfully",
+                      "example": true
+                    },
+                    "claimId": {
+                      "type": "string",
+                      "description": "The claim ID that was reassigned",
+                      "example": "CL-2025-1015012634"
+                    },
+                    "assignedTo": {
+                      "type": "string",
+                      "description": "Reviewer ID the claim was assigned to",
+                      "example": "sarah-chen"
+                    },
+                    "assignedToName": {
+                      "type": "string",
+                      "description": "Display name of the assigned reviewer",
+                      "example": "Sarah Chen"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Confirmation message with claim ID and reviewer name",
+                      "example": "Reassigned Claim CL-2025-1015012634 to Sarah Chen"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid parameters or reviewer at capacity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "error": {
+                      "type": "string",
+                      "example": "No available reviewers found. All reviewers are at capacity."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Unauthorized"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Claim or reviewer not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "error": {
+                      "type": "string",
+                      "example": "Claim not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "error": {
+                      "type": "string",
+                      "example": "Failed to reassign claim"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization",
+        "description": "API key for authentication. Provide the token as a raw string in the Authorization header (no 'Bearer' prefix)."
+      }
+    }
+  }
+}

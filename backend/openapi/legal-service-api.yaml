@@ -1,0 +1,522 @@
+openapi: 3.0.3
+info:
+  title: Legal Service Management API
+  description: |
+    API for AI-Powered Legal Service Management System.
+    Enables Glean AI agents to interact with claims, reviewers, and audit data.
+    
+    **For Glean Actions Configuration:**
+    - Base URL: Use URL from deployment-outputs.json after running ./deploy.sh
+    - Authentication: API Key (retrieved from AWS Secrets Manager)
+    - All endpoints return JSON with CORS headers
+  version: 1.0.0
+  contact:
+    name: Legal Service Management System
+    email: support@legalservices.com
+
+servers:
+  - url: https://YOUR_API_GATEWAY_URL
+    description: Production API Gateway (replace with your deployed URL)
+
+paths:
+  /submit-claim:
+    post:
+      summary: Submit a new insurance claim
+      description: |
+        Submits a new claim to the system. The claim will be automatically assigned to an available reviewer
+        and processed through AI analysis for initial recommendation.
+        
+        **Use this action when:** A claimant wants to file a new insurance claim through conversational AI.
+      operationId: submitClaim
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - claimantName
+                - claimantEmail
+                - policyNumber
+                - claimType
+                - incidentDate
+                - incidentDescription
+                - claimValue
+              properties:
+                claimantName:
+                  type: string
+                  description: Full name of the claimant
+                  example: "John Doe"
+                claimantEmail:
+                  type: string
+                  format: email
+                  description: Email address of the claimant
+                  example: "john.doe@example.com"
+                claimantPhone:
+                  type: string
+                  description: Phone number of the claimant
+                  example: "+1-555-0123"
+                claimantAddress:
+                  type: string
+                  description: Address of the claimant
+                  example: "123 Main St, Springfield, IL 62701"
+                policyNumber:
+                  type: string
+                  description: Insurance policy number
+                  example: "PL-123456"
+                claimType:
+                  type: string
+                  enum: [vehicle, property, liability, health]
+                  description: Type of insurance claim
+                  example: "vehicle"
+                incidentDate:
+                  type: string
+                  format: date
+                  description: Date when the incident occurred (YYYY-MM-DD)
+                  example: "2025-10-13"
+                incidentDescription:
+                  type: string
+                  description: Detailed description of the incident
+                  example: "Rear-ended at stoplight by another vehicle"
+                claimValue:
+                  type: number
+                  minimum: 0
+                  description: Estimated claim value in USD
+                  example: 8500
+                policeReport:
+                  type: string
+                  description: Police report number (if applicable)
+                  example: "SPD-2025-1013"
+                injuries:
+                  type: boolean
+                  description: Whether there were any injuries
+                  example: true
+                injuryDescription:
+                  type: string
+                  description: Description of injuries (if any)
+                  example: "Mild whiplash, treated at emergency room"
+      responses:
+        '200':
+          description: Claim submitted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  claimId:
+                    type: string
+                    description: Unique claim identifier
+                    example: "CL-2025-0001"
+                  message:
+                    type: string
+                    example: "Claim CL-2025-0001 submitted successfully"
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /claims:
+    get:
+      summary: Get all claims
+      description: |
+        Retrieves all claims in the system, sorted by submission date (newest first).
+        
+        **Use this action when:** A reviewer wants to see all claims or get an overview of the claims queue.
+      operationId: getAllClaims
+      responses:
+        '200':
+          description: Claims retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  claims:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Claim'
+                  count:
+                    type: integer
+                    description: Total number of claims
+                    example: 3
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /claims/{claimId}:
+    get:
+      summary: Get specific claim details
+      description: |
+        Retrieves detailed information about a specific claim by its ID.
+        
+        **Use this action when:** A reviewer wants to see full details of a specific claim.
+      operationId: getClaimDetails
+      parameters:
+        - name: claimId
+          in: path
+          required: true
+          description: Unique claim identifier
+          schema:
+            type: string
+            example: "CL-2025-0001"
+      responses:
+        '200':
+          description: Claim details retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  claim:
+                    $ref: '#/components/schemas/Claim'
+        '404':
+          description: Claim not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /approve-claim:
+    post:
+      summary: Approve a claim
+      description: |
+        Approves a claim and updates its status. This action logs the approval in the audit trail.
+        
+        **Use this action when:** A reviewer decides to approve a claim after review.
+      operationId: approveClaim
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - claimId
+                - reviewerId
+              properties:
+                claimId:
+                  type: string
+                  description: Unique claim identifier
+                  example: "CL-2025-0001"
+                reviewerId:
+                  type: string
+                  description: ID of the reviewer approving the claim
+                  example: "sarah-chen"
+                notes:
+                  type: string
+                  description: Optional approval notes
+                  example: "All documentation verified, claim is valid"
+      responses:
+        '200':
+          description: Claim approved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  claimId:
+                    type: string
+                    example: "CL-2025-0001"
+                  status:
+                    type: string
+                    example: "approved"
+                  message:
+                    type: string
+                    example: "Claim CL-2025-0001 approved successfully"
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /deny-claim:
+    post:
+      summary: Deny a claim
+      description: |
+        Denies a claim with a reason and updates its status. This action logs the denial in the audit trail.
+        
+        **Use this action when:** A reviewer decides to deny a claim after review.
+      operationId: denyClaim
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - claimId
+                - reviewerId
+                - reason
+              properties:
+                claimId:
+                  type: string
+                  description: Unique claim identifier
+                  example: "CL-2025-0045"
+                reviewerId:
+                  type: string
+                  description: ID of the reviewer denying the claim
+                  example: "sarah-chen"
+                reason:
+                  type: string
+                  description: Reason for denial (required)
+                  example: "Policy does not cover flood damage from natural rainfall"
+      responses:
+        '200':
+          description: Claim denied successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  claimId:
+                    type: string
+                    example: "CL-2025-0045"
+                  status:
+                    type: string
+                    example: "denied"
+                  message:
+                    type: string
+                    example: "Claim CL-2025-0045 denied"
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /reassign-claim:
+    post:
+      summary: Reassign a claim to another reviewer
+      description: |
+        Reassigns a claim to a different reviewer. This action logs the reassignment in the audit trail.
+        
+        **Use this action when:** A claim needs to be transferred to another reviewer due to workload, expertise, or other factors.
+      operationId: reassignClaim
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - claimId
+                - toReviewerId
+              properties:
+                claimId:
+                  type: string
+                  description: Unique claim identifier
+                  example: "CL-2025-0067"
+                toReviewerId:
+                  type: string
+                  description: ID of the reviewer to assign the claim to
+                  example: "mike-torres"
+                reason:
+                  type: string
+                  description: Reason for reassignment
+                  example: "Workload balancing"
+      responses:
+        '200':
+          description: Claim reassigned successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  claimId:
+                    type: string
+                    example: "CL-2025-0067"
+                  assignedTo:
+                    type: string
+                    example: "mike-torres"
+                  message:
+                    type: string
+                    example: "Claim CL-2025-0067 reassigned successfully"
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    Claim:
+      type: object
+      properties:
+        claimId:
+          type: string
+          description: Unique claim identifier
+          example: "CL-2025-0001"
+        version:
+          type: string
+          description: Claim version
+          example: "v1"
+        claimantInfo:
+          type: object
+          properties:
+            name:
+              type: string
+              example: "John Doe"
+            email:
+              type: string
+              format: email
+              example: "john.doe@example.com"
+            phone:
+              type: string
+              example: "+1-555-0123"
+            address:
+              type: string
+              example: "123 Main St, Springfield, IL 62701"
+        policyNumber:
+          type: string
+          example: "PL-123456"
+        claimType:
+          type: string
+          enum: [vehicle, property, liability, health]
+          example: "vehicle"
+        incidentDate:
+          type: string
+          format: date
+          example: "2025-10-13"
+        incidentDescription:
+          type: string
+          example: "Rear-ended at stoplight by another vehicle"
+        claimValue:
+          type: number
+          example: 8500
+        policeReport:
+          type: string
+          nullable: true
+          example: "SPD-2025-1013"
+        injuries:
+          type: boolean
+          example: true
+        injuryDescription:
+          type: string
+          nullable: true
+          example: "Mild whiplash, treated at emergency room"
+        status:
+          type: string
+          enum: [submitted, assigned, under_review, approved, denied]
+          example: "assigned"
+        assignedTo:
+          type: string
+          nullable: true
+          example: "sarah-chen"
+        assignedDate:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-10-14T14:00:00Z"
+        aiRecommendation:
+          type: string
+          enum: [approve, deny, review_required]
+          nullable: true
+          example: "approve"
+        aiRecommendationReason:
+          type: string
+          nullable: true
+          example: "Valid claim with comprehensive documentation"
+        aiConfidence:
+          type: number
+          minimum: 0
+          maximum: 1
+          nullable: true
+          example: 0.94
+        finalDecision:
+          type: string
+          enum: [approve, deny]
+          nullable: true
+          example: "approve"
+        decisionReason:
+          type: string
+          nullable: true
+          example: "All documentation verified"
+        submittedDate:
+          type: string
+          format: date-time
+          example: "2025-10-14T13:54:00Z"
+        reviewedDate:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-10-14T15:30:00Z"
+        lastUpdated:
+          type: string
+          format: date-time
+          example: "2025-10-14T14:00:00Z"
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          description: Error message
+          example: "Invalid request parameters"
+
+  securitySchemes: {}
+
+security: []
+
+tags:
+  - name: Claims
+    description: Operations related to insurance claims
+  - name: Workflow
+    description: Operations for claim approval workflow

@@ -1,0 +1,91 @@
+{
+  "LegalService-Claims-legal": [
+    {
+      "PutRequest": {
+        "Item": {
+          "claimId": {"S": "CL-2025-0015"},
+          "version": {"S": "v1"},
+          "claimantInfo": {"M": {
+            "name": {"S": "Carlos Rodriguez"},
+            "email": {"S": "c.rodriguez@example.com"},
+            "phone": {"S": "+1-555-0912"},
+            "address": {"S": "912 Valley Rd, Springfield, IL 62710"}
+          }},
+          "policyNumber": {"S": "PL-901234"},
+          "claimType": {"S": "vehicle"},
+          "incidentDate": {"S": "2025-10-04"},
+          "incidentDescription": {"S": "Collision at intersection. Driver ran red light and struck claimant's vehicle on driver side. Airbags deployed. Vehicle sustained significant side panel damage."},
+          "claimValue": {"N": "14500"},
+          "policeReport": {"S": "SPD-2025-1004"},
+          "injuries": {"BOOL": true},
+          "injuryDescription": {"S": "Minor bruising and airbag burns"},
+          "status": {"S": "assigned"},
+          "assignedTo": {"S": "alex-rivera"},
+          "assignedDate": {"S": "2025-10-05T09:00:00Z"},
+          "aiRecommendation": {"S": "approve"},
+          "aiRecommendationReason": {"S": "Clear liability established in police report. Other driver cited for running red light. Collision coverage applies. Medical treatment reasonable. Repair estimate verified by approved body shop."},
+          "aiConfidence": {"N": "0.91"},
+          "submittedDate": {"S": "2025-10-05T08:30:00Z"},
+          "lastUpdated": {"S": "2025-10-05T09:00:00Z"}
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "claimId": {"S": "CL-2025-0019"},
+          "version": {"S": "v1"},
+          "claimantInfo": {"M": {
+            "name": {"S": "Nina Patel"},
+            "email": {"S": "n.patel@example.com"},
+            "phone": {"S": "+1-555-0823"},
+            "address": {"S": "823 Highland Ave, Springfield, IL 62711"}
+          }},
+          "policyNumber": {"S": "PL-012345"},
+          "claimType": {"S": "liability"},
+          "incidentDate": {"S": "2025-10-03"},
+          "incidentDescription": {"S": "Delivery person injured on property. Tripped on uneven paving stone on walkway leading to front door. Sustained ankle injury requiring medical attention."},
+          "claimValue": {"N": "6800"},
+          "injuries": {"BOOL": true},
+          "injuryDescription": {"S": "Sprained ankle requiring cast and physical therapy"},
+          "status": {"S": "under_review"},
+          "assignedTo": {"S": "jordan-kim"},
+          "assignedDate": {"S": "2025-10-04T11:00:00Z"},
+          "aiRecommendation": {"S": "approve"},
+          "aiRecommendationReason": {"S": "Liability claim appears valid. Property owner has duty to maintain safe walkways. Medical records confirm ankle sprain. Photos show uneven paving. Policy includes liability coverage. Treatment costs reasonable."},
+          "aiConfidence": {"N": "0.84"},
+          "submittedDate": {"S": "2025-10-04T10:45:00Z"},
+          "lastUpdated": {"S": "2025-10-04T11:00:00Z"}
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "claimId": {"S": "CL-2025-0022"},
+          "version": {"S": "v1"},
+          "claimantInfo": {"M": {
+            "name": {"S": "Marcus Johnson"},
+            "email": {"S": "m.johnson@example.com"},
+            "phone": {"S": "+1-555-0734"},
+            "address": {"S": "734 Sunset Blvd, Springfield, IL 62712"}
+          }},
+          "policyNumber": {"S": "PL-123890"},
+          "claimType": {"S": "property"},
+          "incidentDate": {"S": "2025-10-02"},
+          "incidentDescription": {"S": "Burst water pipe in bathroom caused extensive water damage. Affected bathroom, hallway, and master bedroom. Damage to flooring, drywall, and personal belongings."},
+          "claimValue": {"N": "19200"},
+          "injuries": {"BOOL": false},
+          "status": {"S": "assigned"},
+          "assignedTo": {"S": "taylor-brooks"},
+          "assignedDate": {"S": "2025-10-03T14:00:00Z"},
+          "aiRecommendation": {"S": "approve"},
+          "aiRecommendationReason": {"S": "Water damage from burst pipe covered under homeowners policy. Plumber report confirms pipe failure due to age and corrosion. No evidence of negligence. Damage assessment photos consistent with water damage. Repair estimate reasonable for extent of damage."},
+          "aiConfidence": {"N": "0.88"},
+          "submittedDate": {"S": "2025-10-03T13:40:00Z"},
+          "lastUpdated": {"S": "2025-10-03T14:00:00Z"}
+        }
+      }
+    }
+  ]
+}

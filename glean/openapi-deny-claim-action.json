@@ -1,0 +1,195 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Deny Insurance Claim",
+    "version": "1.0.0",
+    "description": "Deny an insurance claim with structured form data. The Glean agent can pre-fill claim information, then present a confirmation form for the reviewer to deny the claim with a required reason."
+  },
+  "servers": [
+    {
+      "url": "https://YOUR_API_GATEWAY_URL",
+      "description": "Legal Service Management API - Production"
+    }
+  ],
+  "paths": {
+    "/deny-claim": {
+      "post": {
+        "operationId": "denyClaim",
+        "summary": "Deny an insurance claim",
+        "description": "Deny a claim and update its status to denied. Requires claim ID, reviewer ID, and a reason for denial.",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "claimId",
+                  "reviewerId",
+                  "reason"
+                ],
+                "properties": {
+                  "claimId": {
+                    "type": "string",
+                    "description": "Unique claim identifier to deny",
+                    "pattern": "^CL-[0-9]{4}-[0-9]+$",
+                    "example": "CL-2025-1015012634"
+                  },
+                  "reviewerId": {
+                    "type": "string",
+                    "description": "Select the reviewer denying the claim",
+                    "enum": [
+                      "sarah-chen",
+                      "mike-torres",
+                      "lisa-park",
+                      "reviewer-sarah-johnson",
+                      "reviewer-michael-chen",
+                      "reviewer-emily-rodriguez",
+                      "reviewer-david-thompson",
+                      "reviewer-jessica-martinez"
+                    ],
+                    "example": "sarah-chen"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "Required reason for denying the claim",
+                    "minLength": 10,
+                    "maxLength": 1000,
+                    "example": "Insufficient documentation provided. Policy does not cover this type of incident."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Claim denied successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["success", "claimId", "status", "message"],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "description": "Whether the claim was denied successfully",
+                      "example": true
+                    },
+                    "claimId": {
+                      "type": "string",
+                      "description": "The claim ID that was denied",
+                      "example": "CL-2025-1015012634"
+                    },
+                    "status": {
+                      "type": "string",
+                      "description": "New status of the claim",
+                      "enum": ["denied"],
+                      "example": "denied"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Confirmation message",
+                      "example": "Claim CL-2025-1015012634 denied"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Missing required field or invalid data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "error": {
+                      "type": "string",
+                      "example": "Missing required field: reason"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Unauthorized"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Claim not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "error": {
+                      "type": "string",
+                      "example": "Claim not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "error": {
+                      "type": "string",
+                      "example": "Failed to deny claim"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization",
+        "description": "API key for authentication. Provide the token as a raw string in the Authorization header (no 'Bearer' prefix)."
+      }
+    }
+  }
+}

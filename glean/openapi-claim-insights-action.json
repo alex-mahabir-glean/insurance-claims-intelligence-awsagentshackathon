@@ -1,0 +1,154 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Claim Insights",
+    "version": "1.0.0",
+    "description": "Conversational AI-powered claim insights assistant. Search claims, analyze claim details, get AI-driven recommendations and risk assessments. Supports natural language queries and multi-turn conversations for exploring claim data before taking action. Powered by Amazon Bedrock AgentCore with Amazon Nova Pro."
+  },
+  "servers": [
+    {
+      "url": "https://YOUR_API_GATEWAY_URL",
+      "description": "Legal Service Management API - Production"
+    }
+  ],
+  "paths": {
+    "/invoke-review-agent": {
+      "post": {
+        "operationId": "getClaimInsights",
+        "summary": "Get AI-powered insights about insurance claims",
+        "description": "Submit a message to the AI claim insights assistant. The agent can search for claims, retrieve claim details, provide AI-powered analysis, recommendations, and risk assessments. Supports complex queries and multi-turn conversations using sessionId. Use this to explore and understand claims before taking action.",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["prompt"],
+                "properties": {
+                  "prompt": {
+                    "type": "string",
+                    "description": "Your message or question to the claim insights assistant. Can be a search query, analysis request, or follow-up question. Examples: 'Show me all pending claims', 'Analyze claim CL-2025-001', 'What are the risk factors for this claim?', 'Why does the AI recommend approval?'",
+                    "example": "Show me all pending claims with AI recommendations"
+                  },
+                  "sessionId": {
+                    "type": "string",
+                    "description": "Session ID from previous response to maintain conversation context. Omit for new conversations. Must be at least 33 characters.",
+                    "minLength": 33,
+                    "example": "session-1760491607523620-000000000"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response from claim insights assistant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["success", "response", "timestamp"],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "description": "Whether the request was processed successfully",
+                      "example": true
+                    },
+                    "sessionId": {
+                      "type": "string",
+                      "description": "Session ID to use in follow-up requests to maintain conversation context",
+                      "example": "session-1760491607523620-000000000"
+                    },
+                    "response": {
+                      "type": "string",
+                      "description": "The AI assistant's conversational response with insights. May include claim lists, detailed analysis, AI recommendations, risk assessments, confidence scores, and reasoning.",
+                      "example": "Here are the pending claims in the system:\n\n1. **Claim ID:** CL-2025-1015012634\n   - **Status:** Assigned\n   - **Claim Type:** Vehicle\n   - **Claim Value:** $8,500\n   - **AI Recommendation:** Approve (Confidence: 0.92)\n   - **Risk Factors:** None\n   - **Reasoning:** Low risk vehicle claim with adequate documentation"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "Timestamp of the response",
+                      "example": "2025-10-15T01:26:55.952386"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Missing required field",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "error": {
+                      "type": "string",
+                      "example": "Missing required field: prompt"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Unauthorized"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "error": {
+                      "type": "string",
+                      "example": "Failed to invoke agent"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization",
+        "description": "API key for authentication. Provide the token as a raw string in the Authorization header (no 'Bearer' prefix)."
+      }
+    }
+  }
+}

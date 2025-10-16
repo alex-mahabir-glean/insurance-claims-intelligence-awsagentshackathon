@@ -1,0 +1,193 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Approve Insurance Claim",
+    "version": "1.0.0",
+    "description": "Approve an insurance claim with structured form data. The Glean agent can pre-fill claim information, then present a confirmation form for the reviewer to approve the claim with optional notes."
+  },
+  "servers": [
+    {
+      "url": "https://YOUR_API_GATEWAY_URL",
+      "description": "Legal Service Management API - Production"
+    }
+  ],
+  "paths": {
+    "/approve-claim": {
+      "post": {
+        "operationId": "approveClaim",
+        "summary": "Approve an insurance claim",
+        "description": "Approve a claim and update its status to approved. Requires claim ID, reviewer ID, and optional approval notes.",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "claimId",
+                  "reviewerId"
+                ],
+                "properties": {
+                  "claimId": {
+                    "type": "string",
+                    "description": "Unique claim identifier to approve",
+                    "pattern": "^CL-[0-9]{4}-[0-9]+$",
+                    "example": "CL-2025-1015012634"
+                  },
+                  "reviewerId": {
+                    "type": "string",
+                    "description": "Select the reviewer approving the claim",
+                    "enum": [
+                      "sarah-chen",
+                      "mike-torres",
+                      "lisa-park",
+                      "reviewer-sarah-johnson",
+                      "reviewer-michael-chen",
+                      "reviewer-emily-rodriguez",
+                      "reviewer-david-thompson",
+                      "reviewer-jessica-martinez"
+                    ],
+                    "example": "sarah-chen"
+                  },
+                  "notes": {
+                    "type": "string",
+                    "description": "Optional approval notes or comments (optional)",
+                    "maxLength": 1000,
+                    "example": "All documentation verified. Claim value is reasonable for the incident described."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Claim approved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["success", "claimId", "status", "message"],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "description": "Whether the claim was approved successfully",
+                      "example": true
+                    },
+                    "claimId": {
+                      "type": "string",
+                      "description": "The claim ID that was approved",
+                      "example": "CL-2025-1015012634"
+                    },
+                    "status": {
+                      "type": "string",
+                      "description": "New status of the claim",
+                      "enum": ["approved"],
+                      "example": "approved"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Confirmation message",
+                      "example": "Claim CL-2025-1015012634 approved successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Missing required field or invalid claim ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "error": {
+                      "type": "string",
+                      "example": "Missing required field: claimId"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Unauthorized"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Claim not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "error": {
+                      "type": "string",
+                      "example": "Claim not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "error": {
+                      "type": "string",
+                      "example": "Failed to approve claim"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization",
+        "description": "API key for authentication. Provide the token as a raw string in the Authorization header (no 'Bearer' prefix)."
+      }
+    }
+  }
+}

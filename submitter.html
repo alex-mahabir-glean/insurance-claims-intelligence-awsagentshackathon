@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Submit Insurance Claim | Legal Service Management</title>
+    <link rel="canonical" href="https://www.glean.com/get-a-demo">
+    <link rel="shortcut icon" href="/assets/images/GLN_logo-icon-White.png">
+    <script defer src="https://app.glean.com/embedded-search-latest.min.js"></script>
+    <script defer src="/assets/js/auth-helpers.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    
+    <!-- Shared Breadcrumb Navigation Styles -->
+    <link rel="stylesheet" href="/assets/css/breadcrumb.css">
+    
+    <!-- Configuration -->
+    <script>
+        window.demoConfig = window.demoConfig || {};
+        window.demoConfig = {
+            agentId: 'your-glean-agent-id', // Glean agent ID for Claims Assistant
+            apiBaseUrl: 'https://your-api-gateway-url.execute-api.us-east-1.amazonaws.com/prod', // AWS API Gateway URL
+            authToken: 'demo-token-123'
+        };window.demoConfig.debug = false;
+    </script>
+    
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-light: #60a5fa;
+            --secondary-color: #8b5cf6;
+            --accent-color: #3b82f6;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --text-color: #1e293b;
+            --text-light: #64748b;
+            --text-lighter: #94a3b8;
+            --bg-color: #f8fafc;
+            --bg-light: #f1f5f9;
+            --bg-dark: #1e293b;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body, html {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Floating Help Button */
+        .help-button {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, #4f46e5 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 20px rgba(37, 99, 235, 0.4);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .help-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 30px rgba(37, 99, 235, 0.5);
+        }
+        
+        .help-button:active {
+            transform: scale(0.95);
+        }
+        
+        /* Main Content */
+        .main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: #f8fafc;
+        }
+        
+        .content-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 2.5rem 2rem;
+            overflow: hidden;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        /* Professional Header */
+        .page-header {
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 1.25rem 2rem;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+        }
+        
+        .page-header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .company-name {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.075em;
+        }
+        
+        .page-title {
+            font-size: 1.375rem;
+            font-weight: 600;
+            color: var(--text-color);
+            margin: 0;
+            letter-spacing: -0.02em;
+        }
+        
+        .info-cards {
+            display: none;
+        }
+        
+        /* Landing Page */
+        .landing-page {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 2rem;
+        }
+        
+        .landing-page.hidden {
+            display: none;
+        }
+        
+        .landing-title {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 0.75rem;
+            text-align: center;
+            letter-spacing: -0.02em;
+        }
+        
+        .landing-subtitle {
+            font-size: 1.125rem;
+            color: var(--text-light);
+            margin-bottom: 3rem;
+            text-align: center;
+            max-width: 600px;
+        }
+        
+        .landing-trust-badges {
+            display: flex;
+            gap: 3rem;
+            justify-content: center;
+            margin-top: 3rem;
+            flex-wrap: wrap;
+        }
+        
+        .landing-trust-badge {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .landing-trust-badge-icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(79, 70, 229, 0.1) 100%);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            color: var(--primary-color);
+            transition: all 0.3s ease;
+        }
+        
+        .landing-trust-badge:hover .landing-trust-badge-icon {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #4f46e5 100%);
+            color: white;
+            transform: translateY(-4px);
+        }
+        
+        .landing-trust-badge-text {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-color);
+            text-align: center;
+        }
+        
+        /* Trust Badge Tooltip */
+        .trust-badge-tooltip {
+            position: absolute;
+            bottom: calc(100% + 1rem);
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 1.25rem;
+            width: 280px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 100;
+            pointer-events: none;
+        }
+        
+        .trust-badge-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 8px solid transparent;
+            border-top-color: white;
+        }
+        
+        .trust-badge-tooltip::before {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 9px solid transparent;
+            border-top-color: #e5e7eb;
+            margin-top: 1px;
+        }
+        
+        .landing-trust-badge:hover .trust-badge-tooltip {
+            opacity: 1;
+            visibility: visible;
+            bottom: calc(100% + 1.5rem);
+        }
+        
+        .tooltip-title {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .tooltip-title i {
+            color: var(--primary-color);
+            font-size: 1rem;
+        }
+        
+        .tooltip-description {
+            font-size: 0.8125rem;
+            color: var(--text-light);
+            line-height: 1.6;
+            margin: 0;
+        }
+        
+        .action-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            max-width: 800px;
+            width: 100%;
+        }
+        
+        .action-card {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 1.5rem;
+        }
+        
+        .action-card:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 8px 24px rgba(37, 99, 235, 0.15);
+            transform: translateY(-4px);
+        }
+        
+        .action-card-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, #4f46e5 100%);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: white;
+        }
+        
+        .action-card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-color);
+            margin: 0;
+        }
+        
+        .action-card-description {
+            font-size: 0.9375rem;
+            color: var(--text-light);
+            line-height: 1.6;
+            margin: 0;
+        }
+        
+        /* Chat Container */
+        .chat-container {
+            flex: 1;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e5e7eb;
+            overflow: hidden;
+            display: none;
+            flex-direction: column;
+            min-height: 600px;
+        }
+        
+        .chat-container.active {
+            display: flex;
+        }
+        
+        .chat-header-bar {
+            display: none;
+        }
+        
+        .chat-content-area {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+            background: #fafbfc;
+        }
+        
+        #glean-agent {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: white;
+        }
+        
+        #glean-agent iframe {
+            width: 100% !important;
+            height: 100% !important;
+            border: none !important;
+        }
+        
+        /* Back Button */
+        .back-button {
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary-color);
+            background: none;
+            border: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 0.5rem 0;
+            margin-bottom: 1rem;
+            transition: color 0.2s ease;
+        }
+        
+        .back-button.visible {
+            display: flex;
+        }
+        
+        .back-button:hover {
+            color: var(--primary-dark);
+        }
+        
+        .back-button i {
+            font-size: 0.875rem;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 1024px) {
+            .content-wrapper {
+                padding: 2rem 1.5rem;
+            }
+            
+            .chat-container {
+                min-height: 500px;
+            }
+            
+            .action-cards {
+                grid-template-columns: 1fr;
+                max-width: 500px;
+            }
+            
+            .landing-trust-badges {
+                gap: 2rem;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .page-header {
+                padding: 1rem;
+            }
+            
+            .page-title {
+                font-size: 1.125rem;
+            }
+            
+            .content-wrapper {
+                padding: 1.5rem 1rem;
+            }
+            
+            .chat-container {
+                min-height: 450px;
+                border-radius: 8px;
+            }
+            
+            .landing-title {
+                font-size: 1.5rem;
+            }
+            
+            .landing-subtitle {
+                font-size: 1rem;
+                margin-bottom: 1.5rem;
+            }
+            
+            .landing-trust-badges {
+                gap: 1.5rem;
+                margin-top: 2rem;
+            }
+            
+            .trust-badge-tooltip {
+                width: 240px;
+                padding: 1rem;
+            }
+            
+            .landing-trust-badge-icon {
+                width: 48px;
+                height: 48px;
+                font-size: 1.5rem;
+            }
+            
+            .action-card {
+                padding: 2rem 1.5rem;
+            }
+            
+            .action-card-icon {
+                width: 64px;
+                height: 64px;
+                font-size: 2rem;
+            }
+        }
+        
+        /* Agent ID Selector - Hidden from UI but logic preserved */
+        .agent-id-selector {
+            display: none;
+        }
+        
+        /* Help Modal */
+        .help-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.2s ease;
+        }
+        
+        .help-modal.active {
+            display: flex;
+        }
+        
+        .help-modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 2.5rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            position: relative;
+            animation: slideUp 0.3s ease;
+        }
+        
+        .help-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .help-modal-header h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .help-modal-header h2 i {
+            color: var(--primary-color);
+        }
+        
+        .help-modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-light);
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        
+        .help-modal-close:hover {
+            background: var(--bg-light);
+            color: var(--text-color);
+        }
+        
+        .help-modal-body {
+            color: var(--text-color);
+        }
+        
+        .help-section {
+            margin-bottom: 2rem;
+        }
+        
+        .help-section:last-child {
+            margin-bottom: 0;
+        }
+        
+        .help-section h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .help-section h3 i {
+            color: var(--primary-color);
+            font-size: 1.125rem;
+        }
+        
+        .help-steps {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .help-steps li {
+            padding: 0.75rem 0;
+            padding-left: 2rem;
+            position: relative;
+            line-height: 1.6;
+            color: var(--text-light);
+        }
+        
+        .help-steps li:before {
+            content: attr(data-step);
+            position: absolute;
+            left: 0;
+            top: 0.75rem;
+            width: 24px;
+            height: 24px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .help-contact {
+            background: var(--bg-light);
+            padding: 1.25rem;
+            border-radius: 12px;
+            margin-top: 1.5rem;
+        }
+        
+        .help-contact p {
+            margin: 0;
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+        
+        .help-contact strong {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Footer */
+        .footer {
+            background: transparent;
+            border-top: none;
+            padding: 1.5rem 2rem;
+            text-align: center;
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+        
+        /* Loading State */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--bg-light);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Page Header -->
+    <header class="page-header">
+        <div class="page-header-content">
+            <div class="company-name">Legal Service Management</div>
+            <h1 class="page-title">NextGen Customer Support Center</h1>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <div class="main-container">
+        <div class="content-wrapper">
+            <!-- Landing Page -->
+            <div class="landing-page" id="landing-page">
+                <h2 class="landing-title">How can we help you today?</h2>
+                <p class="landing-subtitle">Choose an option below to get started with your insurance claim</p>
+                
+                <div class="action-cards">
+                    <div class="action-card" onclick="startNewClaim()">
+                        <div class="action-card-icon">
+                            <i class="fas fa-file-medical"></i>
+                        </div>
+                        <h3 class="action-card-title">Submit New Claim</h3>
+                        <p class="action-card-description">File a new insurance claim with our AI-powered assistant. Quick, easy, and secure.</p>
+                    </div>
+                    
+                    <div class="action-card" onclick="checkExistingClaim()">
+                        <div class="action-card-icon">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <h3 class="action-card-title">Check Existing Claim</h3>
+                        <p class="action-card-description">Track the status of your submitted claim and get real-time updates.</p>
+                    </div>
+                </div>
+                
+                <!-- Trust Badges -->
+                <div class="landing-trust-badges">
+                    <div class="landing-trust-badge">
+                        <div class="landing-trust-badge-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <span class="landing-trust-badge-text">5-minute process</span>
+                        <div class="trust-badge-tooltip">
+                            <div class="tooltip-title">
+                                <i class="fas fa-clock"></i>
+                                Quick & Easy
+                            </div>
+                            <p class="tooltip-description">
+                                Our streamlined process takes just 5 minutes from start to finish. Simply answer a few questions, upload any supporting documents, and you're done. No lengthy forms or complicated procedures.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="landing-trust-badge">
+                        <div class="landing-trust-badge-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <span class="landing-trust-badge-text">Secure & confidential</span>
+                        <div class="trust-badge-tooltip">
+                            <div class="tooltip-title">
+                                <i class="fas fa-shield-alt"></i>
+                                Bank-Level Security
+                            </div>
+                            <p class="tooltip-description">
+                                Your information is protected with enterprise-grade encryption and security protocols. We comply with all industry standards and regulations to keep your data safe and confidential.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="landing-trust-badge">
+                        <div class="landing-trust-badge-icon">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <span class="landing-trust-badge-text">AI-powered</span>
+                        <div class="trust-badge-tooltip">
+                            <div class="tooltip-title">
+                                <i class="fas fa-robot"></i>
+                                Smart Assistance
+                            </div>
+                            <p class="tooltip-description">
+                                Our AI assistant guides you through every step, validates your information in real-time, and automatically assigns your claim to the most qualified reviewer based on expertise and workload.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Back Button -->
+            <button class="back-button" id="back-button" onclick="returnToLanding()">
+                <i class="fas fa-arrow-left"></i>
+                Back to options
+            </button>
+            
+            <!-- Chat Container -->
+            <div class="chat-container" id="chat-container">
+                <div class="chat-content-area">
+                    <div id="glean-agent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <p>Powered by AWS Bedrock AgentCore + Glean | AWS AI Agent Global Hackathon 2025</p>
+    </footer>
+    
+    <!-- Floating Help Button -->
+    <button class="help-button" onclick="toggleHelpModal()" aria-label="Help">
+        <i class="fas fa-question"></i>
+    </button>
+    
+    <!-- Help Modal -->
+    <div class="help-modal" id="help-modal" onclick="closeHelpModalOnBackdrop(event)">
+        <div class="help-modal-content">
+            <div class="help-modal-header">
+                <h2><i class="fas fa-life-ring"></i> How to File Your Claim</h2>
+                <button class="help-modal-close" onclick="toggleHelpModal()" aria-label="Close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="help-modal-body">
+                <div class="help-section">
+                    <h3><i class="fas fa-clipboard-list"></i> Filing Process</h3>
+                    <ul class="help-steps">
+                        <li data-step="1">Answer the AI assistant's questions about your claim type and incident details</li>
+                        <li data-step="2">Provide information about the date, location, and circumstances of the incident</li>
+                        <li data-step="3">Upload any supporting documents (photos, police reports, receipts, etc.)</li>
+                        <li data-step="4">Review all your information carefully before submitting</li>
+                        <li data-step="5">Receive your claim ID and estimated review timeline</li>
+                    </ul>
+                </div>
+                
+                <div class="help-section">
+                    <h3><i class="fas fa-lightbulb"></i> Tips for Success</h3>
+                    <ul class="help-steps">
+                        <li data-step="✓">Be as detailed as possible when describing the incident</li>
+                        <li data-step="✓">Have all relevant documents ready before starting</li>
+                        <li data-step="✓">Take clear photos of any damage or evidence</li>
+                        <li data-step="✓">Keep your claim ID for future reference</li>
+                    </ul>
+                </div>
+                
+                <div class="help-contact">
+                    <p><strong>Need Additional Help?</strong></p>
+                    <p>Contact our support team at <strong>support@legalservices.com</strong> or call <strong>1-800-CLAIMS-1</strong></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Agent ID Selector - Hidden but preserved for programmatic access -->
+    <div class="agent-id-selector" style="display: none;">
+        <label for="agent-id-input">Agent ID:</label>
+        <input type="text" id="agent-id-input" placeholder="Enter Glean Agent ID">
+        <button onclick="updateAgentId()">Update</button>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="assets/js/api-client.js"></script>
+    <script src="assets/js/submitter.js"></script>
+</body>
+</html>

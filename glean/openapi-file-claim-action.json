@@ -1,0 +1,229 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "File Insurance Claim",
+    "version": "2.0.0",
+    "description": "Submit insurance claims with structured form data. The Glean agent can auto-fill fields based on user conversation, then present a modal form for review and submission. Validates policy information and submits claims to the legal service management system."
+  },
+  "servers": [
+    {
+      "url": "https://YOUR_API_GATEWAY_URL",
+      "description": "Legal Service Management API - Production"
+    }
+  ],
+  "paths": {
+    "/invoke-intake-agent": {
+      "post": {
+        "operationId": "fileInsuranceClaim",
+        "summary": "File an insurance claim with structured data",
+        "description": "Submit an insurance claim with all required information. The Glean agent will extract information from conversation and present a form modal for user review before submission.",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "claimantName",
+                  "claimantEmail",
+                  "policyNumber",
+                  "claimType",
+                  "incidentDate",
+                  "incidentDescription",
+                  "claimValue"
+                ],
+                "properties": {
+                  "claimantName": {
+                    "type": "string",
+                    "description": "Full name of the person filing the claim",
+                    "maxLength": 200,
+                    "example": "John Doe"
+                  },
+                  "claimantEmail": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email address of the claimant for updates and correspondence",
+                    "example": "john.doe@example.com"
+                  },
+                  "policyNumber": {
+                    "type": "string",
+                    "description": "Insurance policy number",
+                    "maxLength": 50,
+                    "example": "POL-12345"
+                  },
+                  "claimType": {
+                    "type": "string",
+                    "enum": ["vehicle", "property", "liability", "health"],
+                    "description": "Type of insurance claim being filed",
+                    "example": "vehicle"
+                  },
+                  "incidentDate": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Date when the incident occurred (YYYY-MM-DD format)",
+                    "example": "2025-10-14"
+                  },
+                  "incidentDescription": {
+                    "type": "string",
+                    "description": "Detailed description of what happened during the incident",
+                    "maxLength": 2000,
+                    "example": "Rear-ended at stoplight by another vehicle. The other driver fled the scene immediately after impact."
+                  },
+                  "claimValue": {
+                    "type": "number",
+                    "description": "Estimated claim value in USD",
+                    "minimum": 0,
+                    "example": 8500
+                  },
+                  "claimantPhone": {
+                    "type": "string",
+                    "description": "Phone number of the claimant (optional)",
+                    "maxLength": 20,
+                    "example": "+1-555-0123"
+                  },
+                  "claimantAddress": {
+                    "type": "string",
+                    "description": "Address of the claimant (optional)",
+                    "maxLength": 500,
+                    "example": "123 Main St, Springfield, IL 62701"
+                  },
+                  "policeReport": {
+                    "type": "string",
+                    "description": "Police report number if applicable (optional)",
+                    "maxLength": 50,
+                    "example": "SPD-2025-1013"
+                  },
+                  "injuries": {
+                    "type": "boolean",
+                    "description": "Whether there were any injuries (optional)",
+                    "default": false,
+                    "example": false
+                  },
+                  "injuryDescription": {
+                    "type": "string",
+                    "description": "Description of injuries if any occurred (optional)",
+                    "maxLength": 1000,
+                    "example": "Mild whiplash, treated at emergency room"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Claim submitted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["success", "claimId", "status", "submittedDate"],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "description": "Whether the claim was submitted successfully",
+                      "example": true
+                    },
+                    "claimId": {
+                      "type": "string",
+                      "description": "Unique claim ID assigned to the submitted claim",
+                      "example": "CL-2025-1015012634"
+                    },
+                    "status": {
+                      "type": "string",
+                      "description": "Initial status of the claim",
+                      "enum": ["submitted"],
+                      "example": "submitted"
+                    },
+                    "submittedDate": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "Timestamp when the claim was submitted",
+                      "example": "2025-10-15T01:26:36.233735"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Confirmation message",
+                      "example": "Claim CL-2025-1015012634 submitted successfully. You will receive updates via email at john.doe@example.com."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Missing required field or invalid data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "error": {
+                      "type": "string",
+                      "example": "Missing required field: claimantName"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Unauthorized"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "error": {
+                      "type": "string",
+                      "example": "Failed to invoke agent"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization",
+        "description": "API key for authentication. Provide the token as a raw string in the Authorization header (no 'Bearer' prefix)."
+      }
+    }
+  }
+}

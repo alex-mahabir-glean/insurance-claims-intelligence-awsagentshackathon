@@ -1,0 +1,167 @@
+{
+  "LegalService-Reviewers-legal": [
+    {
+      "PutRequest": {
+        "Item": {
+          "reviewerId": {"S": "sarah-chen"},
+          "name": {"S": "Sarah Chen"},
+          "email": {"S": "sarah.chen@legalservices.com"},
+          "currentWorkload": {"N": "3"},
+          "maxCapacity": {"N": "10"},
+          "activeClaims": {"L": [
+            {"S": "CL-2025-0001"},
+            {"S": "CL-2025-0045"},
+            {"S": "CL-2025-0067"}
+          ]},
+          "expertise": {"L": [
+            {"S": "vehicle"},
+            {"S": "property"}
+          ]},
+          "totalClaimsReviewed": {"N": "247"},
+          "approvalRate": {"N": "0.873"},
+          "avgReviewTime": {"N": "2.3"},
+          "accuracy": {"N": "0.968"},
+          "joinedDate": {"S": "2023-01-15"},
+          "lastActive": {"S": "2025-10-14T15:30:00Z"}
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "reviewerId": {"S": "mike-torres"},
+          "name": {"S": "Mike Torres"},
+          "email": {"S": "mike.torres@legalservices.com"},
+          "currentWorkload": {"N": "5"},
+          "maxCapacity": {"N": "10"},
+          "activeClaims": {"L": [
+            {"S": "CL-2025-0023"},
+            {"S": "CL-2025-0034"},
+            {"S": "CL-2025-0056"},
+            {"S": "CL-2025-0078"},
+            {"S": "CL-2025-0089"}
+          ]},
+          "expertise": {"L": [
+            {"S": "property"},
+            {"S": "liability"}
+          ]},
+          "totalClaimsReviewed": {"N": "189"},
+          "approvalRate": {"N": "0.812"},
+          "avgReviewTime": {"N": "3.1"},
+          "accuracy": {"N": "0.945"},
+          "joinedDate": {"S": "2023-06-20"},
+          "lastActive": {"S": "2025-10-14T14:15:00Z"}
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "reviewerId": {"S": "lisa-park"},
+          "name": {"S": "Lisa Park"},
+          "email": {"S": "lisa.park@legalservices.com"},
+          "currentWorkload": {"N": "7"},
+          "maxCapacity": {"N": "10"},
+          "activeClaims": {"L": [
+            {"S": "CL-2025-0012"},
+            {"S": "CL-2025-0029"},
+            {"S": "CL-2025-0041"},
+            {"S": "CL-2025-0053"},
+            {"S": "CL-2025-0064"},
+            {"S": "CL-2025-0075"},
+            {"S": "CL-2025-0086"}
+          ]},
+          "expertise": {"L": [
+            {"S": "vehicle"},
+            {"S": "liability"}
+          ]},
+          "totalClaimsReviewed": {"N": "312"},
+          "approvalRate": {"N": "0.891"},
+          "avgReviewTime": {"N": "1.9"},
+          "accuracy": {"N": "0.972"},
+          "joinedDate": {"S": "2022-09-10"},
+          "lastActive": {"S": "2025-10-14T15:45:00Z"}
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "reviewerId": {"S": "alex-rivera"},
+          "name": {"S": "Alex Rivera"},
+          "email": {"S": "alex.rivera@legalservices.com"},
+          "currentWorkload": {"N": "2"},
+          "maxCapacity": {"N": "10"},
+          "activeClaims": {"L": [
+            {"S": "CL-2025-0015"},
+            {"S": "CL-2025-0028"}
+          ]},
+          "expertise": {"L": [
+            {"S": "vehicle"},
+            {"S": "property"}
+          ]},
+          "totalClaimsReviewed": {"N": "156"},
+          "approvalRate": {"N": "0.845"},
+          "avgReviewTime": {"N": "2.8"},
+          "accuracy": {"N": "0.952"},
+          "joinedDate": {"S": "2023-11-10"},
+          "lastActive": {"S": "2025-10-14T16:00:00Z"}
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "reviewerId": {"S": "jordan-kim"},
+          "name": {"S": "Jordan Kim"},
+          "email": {"S": "jordan.kim@legalservices.com"},
+          "currentWorkload": {"N": "3"},
+          "maxCapacity": {"N": "10"},
+          "activeClaims": {"L": [
+            {"S": "CL-2025-0019"},
+            {"S": "CL-2025-0037"},
+            {"S": "CL-2025-0048"}
+          ]},
+          "expertise": {"L": [
+            {"S": "liability"},
+            {"S": "property"}
+          ]},
+          "totalClaimsReviewed": {"N": "203"},
+          "approvalRate": {"N": "0.867"},
+          "avgReviewTime": {"N": "2.5"},
+          "accuracy": {"N": "0.961"},
+          "joinedDate": {"S": "2023-08-15"},
+          "lastActive": {"S": "2025-10-14T15:50:00Z"}
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "reviewerId": {"S": "taylor-brooks"},
+          "name": {"S": "Taylor Brooks"},
+          "email": {"S": "taylor.brooks@legalservices.com"},
+          "currentWorkload": {"N": "4"},
+          "maxCapacity": {"N": "10"},
+          "activeClaims": {"L": [
+            {"S": "CL-2025-0022"},
+            {"S": "CL-2025-0035"},
+            {"S": "CL-2025-0046"},
+            {"S": "CL-2025-0058"}
+          ]},
+          "expertise": {"L": [
+            {"S": "vehicle"},
+            {"S": "liability"},
+            {"S": "property"}
+          ]},
+          "totalClaimsReviewed": {"N": "278"},
+          "approvalRate": {"N": "0.882"},
+          "avgReviewTime": {"N": "2.1"},
+          "accuracy": {"N": "0.965"},
+          "joinedDate": {"S": "2022-12-05"},
+          "lastActive": {"S": "2025-10-14T16:10:00Z"}
+        }
+      }
+    }
+  ]
+}
