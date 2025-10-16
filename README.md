@@ -35,7 +35,7 @@ This system automates insurance claim intake, assignment, and review while keepi
 
 ## 🎨 What You'll Deploy
 
-Two production-ready web portals with embedded AI agents:
+Two web portals with embedded AI agents:
 
 <table>
 <tr>
