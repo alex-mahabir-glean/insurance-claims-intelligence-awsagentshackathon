@@ -19,46 +19,47 @@ echo -e "${BLUE}║                    Cleanup Deployed Resources               
 echo -e "${BLUE}╚════════════════════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
-# Check if deployment-outputs.json exists
-if [ ! -f "deployment-outputs.json" ]; then
-    echo -e "${YELLOW}⚠️  deployment-outputs.json not found.${NC}"
-    echo -e "${YELLOW}   Will attempt cleanup with default values.${NC}"
-    echo ""
-    
-    # Prompt for values
-    read -p "Enter AWS Region (default: us-east-1): " REGION
-    REGION=${REGION:-us-east-1}
-    
-    read -p "Enter Stack Name (default: legal-service-stack): " STACK_NAME
-    STACK_NAME=${STACK_NAME:-legal-service-stack}
-    
-    read -p "Enter Deployment ID (default: legal): " DEPLOYMENT_ID
-    DEPLOYMENT_ID=${DEPLOYMENT_ID:-legal}
-else
-    # Load from deployment outputs
+# Load configuration from config.env or deployment-outputs.json
+if [ -f "config.env" ]; then
+    echo -e "${BLUE}Loading configuration from config.env...${NC}"
+    source config.env
+    REGION=${AWS_REGION:-us-east-1}
+    PROFILE=${AWS_PROFILE}
+elif [ -f "deployment-outputs.json" ]; then
+    echo -e "${BLUE}Loading configuration from deployment-outputs.json...${NC}"
     REGION=$(python3 -c "import json; print(json.load(open('deployment-outputs.json'))['region'])")
     STACK_NAME=$(python3 -c "import json; print(json.load(open('deployment-outputs.json'))['stackName'])")
     DEPLOYMENT_ID=$(python3 -c "import json; print(json.load(open('deployment-outputs.json'))['deploymentId'])")
+else
+    echo -e "${RED}❌ Error: Neither config.env nor deployment-outputs.json found!${NC}"
+    echo -e "${YELLOW}   Please create config.env with your deployment configuration.${NC}"
+    exit 1
 fi
 
+# Set AWS CLI command with profile if available
+if [ -n "$PROFILE" ]; then
+    AWS_CMD="aws --profile $PROFILE"
+else
+    AWS_CMD="aws"
+fi
+
+echo ""
 echo -e "${BLUE}Configuration:${NC}"
 echo -e "  Region: ${YELLOW}$REGION${NC}"
 echo -e "  Stack Name: ${YELLOW}$STACK_NAME${NC}"
 echo -e "  Deployment ID: ${YELLOW}$DEPLOYMENT_ID${NC}"
+if [ -n "$PROFILE" ]; then
+    echo -e "  AWS Profile: ${YELLOW}$PROFILE${NC}"
+fi
 echo ""
 
-# Confirmation
 echo -e "${RED}⚠️  WARNING: This will delete all deployed resources!${NC}"
 echo -e "${RED}   - CloudFormation stack and all resources${NC}"
 echo -e "${RED}   - AgentCore agents${NC}"
 echo -e "${RED}   - DynamoDB data${NC}"
 echo ""
-read -p "Are you sure you want to continue? (yes/no): " CONFIRM
-
-if [ "$CONFIRM" != "yes" ]; then
-    echo -e "${YELLOW}Cleanup cancelled.${NC}"
-    exit 0
-fi
+echo -e "${YELLOW}Starting cleanup in 3 seconds... (Ctrl+C to cancel)${NC}"
+sleep 3
 
 echo ""
 
@@ -109,14 +110,14 @@ echo -e "${BLUE}Step 2/2: Deleting CloudFormation Stack${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
 echo -e "${BLUE}Deleting stack: $STACK_NAME${NC}"
-aws cloudformation delete-stack \
+$AWS_CMD cloudformation delete-stack \
   --stack-name "$STACK_NAME" \
   --region "$REGION"
 
 echo -e "${BLUE}Waiting for stack deletion to complete...${NC}"
 echo -e "${YELLOW}This may take 5-10 minutes...${NC}"
 
-aws cloudformation wait stack-delete-complete \
+$AWS_CMD cloudformation wait stack-delete-complete \
   --stack-name "$STACK_NAME" \
   --region "$REGION" || {
     echo -e "${YELLOW}⚠️  Stack deletion may have failed or timed out${NC}"
