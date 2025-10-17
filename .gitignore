@@ -53,7 +53,12 @@ Thumbs.db
 deployment-outputs.json
 config.env
 config.js
+cognito-config.js
 glean/generated/
+hosting/hosting-outputs.json
+
+# Hosting directory (deployment artifacts)
+hosting/
 
 # Backup files
 *.bak

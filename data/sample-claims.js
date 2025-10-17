@@ -400,6 +400,12 @@ const sampleReviewers = [
   }
 ];
 
+// Make available in browser
+if (typeof window !== 'undefined') {
+  window.sampleClaims = sampleClaims;
+  window.sampleReviewers = sampleReviewers;
+}
+
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { sampleClaims, sampleReviewers };

@@ -12,6 +12,7 @@ let currentFilter = 'all';
 let gleanChatInitialized = false;
 let isAdminMode = false;
 let selectedRole = null;
+let lastInitialMessage = null; // Store the last initial message for refresh
 
 /**
  * Check if agent ID is a placeholder value
@@ -1060,6 +1061,11 @@ function renderGleanChatOverlay(initialMessage = null) {
         return;
     }
     
+    // Store the initial message if provided
+    if (initialMessage) {
+        lastInitialMessage = initialMessage;
+    }
+    
     const agentId = window.demoConfig.agentId;
     
     // Check if agent ID is a placeholder
@@ -1530,11 +1536,28 @@ function initChatOverlay() {
         chatRefresh.addEventListener('click', () => {
             // Reset AgentCore choice on refresh
             userChoseAgentCore = false;
-            chatInitialized = false;
+            
+            // Reset title to original
+            const chatTitle = document.querySelector('.chat-title');
+            if (chatTitle) {
+                chatTitle.innerHTML = '<i class="fas fa-robot"></i> AI Review Assistant';
+            }
+            
+            // Reset switch button
+            const fallbackBtn = document.getElementById('chat-fallback');
+            if (fallbackBtn) {
+                fallbackBtn.style.display = '';
+                fallbackBtn.title = 'Switch to AgentCore Direct (for judges without Glean access)';
+                fallbackBtn.onclick = showAgentCoreFallbackPrompt;
+            }
+            
             const container = document.getElementById('glean-agent-overlay');
             if (container) {
                 container.innerHTML = '';
-                renderGleanChatOverlay();
+                // Reset and reinitialize properly
+                chatInitialized = false;
+                renderGleanChatOverlay(lastInitialMessage);
+                chatInitialized = true;
             }
         });
     }
@@ -1669,6 +1692,140 @@ async function refreshClaims() {
     }
 }
 
+/**
+ * Show AgentCore fallback prompt (intermediary page)
+ */
+function showAgentCoreFallbackPrompt() {
+    const container = document.getElementById('glean-agent-overlay');
+    if (!container) return;
+    
+    // Update the switch button to go back to Glean from the intermediary page
+    const fallbackBtn = document.getElementById('chat-fallback');
+    if (fallbackBtn) {
+        fallbackBtn.title = 'Back to Glean';
+        fallbackBtn.onclick = switchBackToGlean;
+    }
+    
+    container.innerHTML = `
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 2rem; text-align: center; background: #f8f9fa;">
+            <div style="max-width: 600px;">
+                <svg style="width: 64px; height: 64px; margin-bottom: 1rem; color: #f59e0b;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+                <h3 style="color: #1f2937; margin-bottom: 0.5rem; font-family: Inter, sans-serif; font-size: 1.5rem; font-weight: 600;">Switch to AgentCore Direct?</h3>
+                <p style="color: #6b7280; margin-bottom: 1rem; font-family: Inter, sans-serif; line-height: 1.6;">
+                    You're about to switch from the <strong>Glean conversational AI experience</strong> to <strong>AgentCore Direct</strong>.
+                </p>
+                <div style="background: #fef3c7; border: 1px solid #fbbf24; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1.5rem; text-align: left;">
+                    <p style="color: #92400e; margin: 0 0 0.5rem 0; font-family: Inter, sans-serif; font-size: 0.875rem; line-height: 1.5;">
+                        <strong>⚠️ What you'll be missing:</strong>
+                    </p>
+                    <ul style="color: #92400e; margin: 0; padding-left: 1.5rem; font-family: Inter, sans-serif; font-size: 0.875rem; line-height: 1.5;">
+                        <li>Glean's conversational agents and knowledge graph</li>
+                        <li>Enhanced context understanding and memory</li>
+                        <li>Optimized response quality and accuracy</li>
+                    </ul>
+                </div>
+                <p style="color: #6b7280; margin-bottom: 1.5rem; font-family: Inter, sans-serif; font-size: 0.875rem; line-height: 1.5;">
+                    <strong>Note:</strong> This option is provided for judges who don't have Glean access. 
+                    If you have Glean configured, we recommend using the full Glean experience.
+                </p>
+                <div style="display: flex; gap: 1rem; justify-content: center;">
+                    <button onclick="switchBackToGlean()" style="padding: 0.75rem 1.5rem; background: #f3f4f6; color: #1f2937; border: 1px solid #d1d5db; border-radius: 0.5rem; font-weight: 600; font-family: Inter, sans-serif; cursor: pointer; font-size: 1rem;">
+                        ← Back to Glean
+                    </button>
+                    <button onclick="switchToAgentCoreDirect()" style="padding: 0.75rem 1.5rem; background: #2563eb; color: white; border: none; border-radius: 0.5rem; font-weight: 600; font-family: Inter, sans-serif; cursor: pointer; font-size: 1rem;">
+                        Continue to AgentCore
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Switch to AgentCore Direct mode
+ */
+function switchToAgentCoreDirect() {
+    const container = document.getElementById('glean-agent-overlay');
+    if (!container) return;
+    
+    // Update chat title
+    const chatTitle = document.querySelector('.chat-title');
+    if (chatTitle) {
+        chatTitle.innerHTML = '<i class="fas fa-robot"></i> AgentCore Direct Chat';
+    }
+    
+    // Update the switch button to show "Switch to Glean" and make it visible
+    const fallbackBtn = document.getElementById('chat-fallback');
+    if (fallbackBtn) {
+        fallbackBtn.style.display = '';
+        fallbackBtn.title = 'Switch back to Glean';
+        fallbackBtn.onclick = switchBackToGlean;
+    }
+    
+    container.innerHTML = `
+        <div style="display: flex; flex-direction: column; height: 100%; background: white;">
+            <div style="padding: 0.75rem 1rem; background: #fef3c7; border-bottom: 1px solid #fbbf24; display: flex; align-items: center; justify-content: space-between;">
+                <p style="margin: 0; font-family: Inter, sans-serif; color: #92400e; font-size: 0.875rem; line-height: 1.5; flex: 1;">
+                    ⚠️ <strong>Limited Experience:</strong> Using AgentCore Direct without Glean's conversational layer.
+                </p>
+                <button onclick="switchBackToGlean()" style="padding: 0.5rem 1rem; background: white; border: 1px solid #fbbf24; border-radius: 0.375rem; cursor: pointer; font-family: Inter, sans-serif; font-weight: 500; font-size: 0.875rem; color: #92400e; white-space: nowrap; margin-left: 1rem;">
+                    ← Back to Glean
+                </button>
+            </div>
+            <div id="agentcore-messages-overlay" style="flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+                <div style="background: #f3f4f6; padding: 1rem; border-radius: 0.5rem; font-family: Inter, sans-serif; color: #4b5563;">
+                    <strong>AI Assistant:</strong> Hi! I'm your AI review assistant powered by Amazon Bedrock AgentCore. How can I help you analyze this claim?
+                </div>
+            </div>
+            <div style="padding: 1rem; border-top: 1px solid #e5e7eb;">
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" id="agentcore-input-overlay" placeholder="Type your message..." 
+                        style="flex: 1; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-family: Inter, sans-serif;"
+                        onkeypress="if(event.key === 'Enter') sendAgentCoreMessageOverlay()">
+                    <button onclick="sendAgentCoreMessageOverlay()" 
+                        style="padding: 0.75rem 1.5rem; background: #2563eb; color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-family: Inter, sans-serif;">
+                        Send
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    console.log('Switched to AgentCore Direct mode');
+}
+
+/**
+ * Switch back to Glean chat
+ */
+function switchBackToGlean() {
+    const container = document.getElementById('glean-agent-overlay');
+    if (!container) return;
+    
+    // Update chat title back to original
+    const chatTitle = document.querySelector('.chat-title');
+    if (chatTitle) {
+        chatTitle.innerHTML = '<i class="fas fa-robot"></i> AI Review Assistant';
+    }
+    
+    // Reset the switch button to show "Switch to AgentCore" and make it visible
+    const fallbackBtn = document.getElementById('chat-fallback');
+    if (fallbackBtn) {
+        fallbackBtn.style.display = '';
+        fallbackBtn.title = 'Switch to AgentCore Direct (for judges without Glean access)';
+        fallbackBtn.onclick = showAgentCoreFallbackPrompt;
+    }
+    
+    // Clear the container first
+    container.innerHTML = '';
+    
+    // Reset and reinitialize properly
+    chatInitialized = false;
+    renderGleanChatOverlay(lastInitialMessage);
+    chatInitialized = true;
+}
+
 // Make functions globally accessible
 window.selectRole = selectRole;
 window.returnToLanding = returnToLanding;
@@ -1689,3 +1846,7 @@ window.handleDeny = handleDeny;
 window.handleAIAssessment = handleAIAssessment;
 window.showChatOverlay = showChatOverlay;
 window.refreshClaims = refreshClaims;
+window.showAgentCoreFallbackPrompt = showAgentCoreFallbackPrompt;
+window.switchToAgentCoreDirect = switchToAgentCoreDirect;
+window.switchBackToGlean = switchBackToGlean;
+window.sendAgentCoreMessageOverlay = sendAgentCoreMessageOverlay;

@@ -10,6 +10,7 @@
     <link rel="canonical" href="https://www.glean.com/get-a-demo">
     <link rel="shortcut icon" href="/assets/images/GLN_logo-icon-White.png">
     <script defer src="https://app.glean.com/embedded-search-latest.min.js"></script>
+    <script src="cognito-config.js"></script>
     <script defer src="/assets/js/auth-helpers.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
@@ -22,22 +23,17 @@
     
     <!-- Configuration -->
     <script>
+        // agentId and apiBaseUrl are loaded from config.js
+        // Add reviewer-specific configuration
         window.demoConfig = window.demoConfig || {};
-        window.demoConfig = {
-            // Glean Agent Configuration
-            agentId: window.deploymentConfig?.gleanReviewAgentId || 'your-glean-agent-id',
-            
-            // API Configuration
-            apiBaseUrl: window.deploymentConfig?.apiBaseUrl || 'https://your-api-gateway-url.execute-api.us-east-1.amazonaws.com/prod',
-            authToken: window.deploymentConfig?.authToken || 'demo-token-123',
-            
-            // Reviewer Configuration
-            reviewerId: 'sarah-chen', // Current reviewer ID
-            reviewerName: 'Sarah Chen', // Display name
-            
-            // Debug Mode - Set to true to see API request/response logs in console
-            debug: true
-        };
+        window.demoConfig.reviewerId = 'sarah-chen'; // Current reviewer ID
+        window.demoConfig.reviewerName = 'Sarah Chen'; // Display name
+        window.demoConfig.debug = true; // Debug Mode
+        
+        // Use reviewAgentId from config.js for the overlay agent
+        if (window.demoConfig.reviewAgentId) {
+            window.demoConfig.agentId = window.demoConfig.reviewAgentId;
+        }
     </script>
     
     <style>
@@ -85,17 +81,74 @@
             border-bottom: 1px solid #e5e7eb;
             padding: 1.25rem 2rem;
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-            position: relative;
+        }
+        
+        .header-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            width: 100%;
+        }
+        
+        .logout-btn-wrapper {
+            flex-shrink: 0;
+        }
+        
+        .back-btn-wrapper {
+            flex-shrink: 0;
+        }
+        
+        .back-btn {
+            background: white;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        
+        .back-btn:hover {
+            background: var(--bg-light);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
         }
         
         .header-content {
-            max-width: 1600px;
-            margin: 0 auto;
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: center;
             gap: 1rem;
-            padding-left: 120px;
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .logout-btn {
+            background: white;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+        
+        .logout-btn:hover {
+            background: var(--bg-light);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
         }
         
         .header-center {
@@ -129,7 +182,7 @@
         .header-actions.visible {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 1.5rem;
         }
         
         .select-assessor-btn {
@@ -1458,13 +1511,13 @@
         
         /* Responsive */
         @media (max-width: 1024px) {
-            .action-cards {
-                grid-template-columns: 1fr;
-                max-width: 500px;
+            .header-center {
+                flex-shrink: 1;
+                min-width: 0;
             }
             
-            .assessor-grid {
-                grid-template-columns: repeat(2, 1fr);
+            .page-title {
+                font-size: 1.25rem;
             }
         }
         
@@ -1473,7 +1526,22 @@
                 padding: 1rem;
             }
             
+            .header-wrapper {
+                flex-wrap: wrap;
+            }
+            
+            .back-btn-wrapper {
+                order: 1;
+            }
+            
+            .logout-btn-wrapper {
+                order: 2;
+                margin-left: 0;
+            }
+            
             .header-content {
+                order: 3;
+                width: 100%;
                 flex-wrap: wrap;
             }
             
@@ -1486,7 +1554,9 @@
                 margin-top: 0.5rem;
                 justify-content: flex-end;
             }
-            
+        }
+        
+        @media (max-width: 768px) {
             .assessor-modal-content {
                 padding: 1.5rem;
             }
@@ -1540,24 +1610,38 @@
 <body>
     <!-- Header -->
     <header class="header">
-        <div class="header-content">
-            <button class="back-to-landing" id="back-to-landing" onclick="returnToLanding()">
-                <i class="fas fa-arrow-left"></i>
-                Back
-            </button>
-            <div class="header-center">
-                <div class="company-name">Legal Service Management</div>
-                <h1 class="page-title">NextGen Legal Claims Management</h1>
+        <div class="header-wrapper">
+            <div class="back-btn-wrapper">
+                <a href="/index.html" class="back-btn">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Back</span>
+                </a>
             </div>
-            <div class="header-actions" id="header-actions">
-                <div class="current-assessor" id="current-assessor"></div>
-                <button class="select-assessor-btn" onclick="openAssessorModal()">
-                    <i class="fas fa-user-circle"></i>
-                    Select Assessor
+            <div class="header-content">
+                <button class="back-to-landing" id="back-to-landing" onclick="returnToLanding()" style="visibility: hidden;">
+                    <i class="fas fa-arrow-left"></i>
+                    Back
                 </button>
-                <button class="ai-agent-btn" id="ai-agent-btn" onclick="showChatOverlay()">
-                    <i class="fas fa-robot"></i>
-                    AI Agent
+                <div class="header-center">
+                    <div class="company-name">Legal Service Management</div>
+                    <h1 class="page-title">NextGen Legal Claims Management</h1>
+                </div>
+                <div class="header-actions" id="header-actions">
+                    <div class="current-assessor" id="current-assessor"></div>
+                    <button class="select-assessor-btn" onclick="openAssessorModal()">
+                        <i class="fas fa-user-circle"></i>
+                        Select Assessor
+                    </button>
+                    <button class="ai-agent-btn" id="ai-agent-btn" onclick="showChatOverlay()">
+                        <i class="fas fa-robot"></i>
+                        AI Agent
+                    </button>
+                </div>
+            </div>
+            <div class="logout-btn-wrapper">
+                <button class="logout-btn" onclick="if(window.CognitoAuth) window.CognitoAuth.signOut()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
                 </button>
             </div>
         </div>
@@ -1802,6 +1886,9 @@
                 <button class="chat-minimize" id="chat-minimize" title="Minimize">
                     <i class="fas fa-minus"></i>
                 </button>
+                <button class="chat-fallback" id="chat-fallback" title="Switch to AgentCore Direct (for judges without Glean access)" onclick="showAgentCoreFallbackPrompt()">
+                    <i class="fas fa-exchange-alt"></i>
+                </button>
             </div>
         </div>
         <div class="chat-container">
@@ -1818,5 +1905,12 @@
     <script src="data/sample-claims.js"></script>
     <script src="assets/js/api-client.js"></script>
     <script src="assets/js/reviewer.js"></script>
+    
+    <script>
+        // Require authentication
+        if (window.CognitoAuth) {
+            window.CognitoAuth.requireAuth();
+        }
+    </script>
 </body>
 </html>

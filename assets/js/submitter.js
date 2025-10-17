@@ -32,11 +32,22 @@ document.addEventListener('DOMContentLoaded', function() {
         const state = JSON.parse(savedState);
         if (state.intent) {
             currentIntent = state.intent;
-            // Restore the chat view without auto-sending message
+            // Restore the chat view
             document.getElementById('landing-page').classList.add('hidden');
+            document.getElementById('chat-controls').classList.add('active');
             document.getElementById('chat-container').classList.add('active');
-            document.getElementById('back-button').classList.add('visible');
-            initializeGleanChat();
+            
+            // Reinitialize with the original intent message
+            const intentMessages = {
+                'new-claim': 'I want to file a new insurance claim. What information do you need from me?',
+                'check-claim': 'I want to check on an existing claim. What information do you need?'
+            };
+            const initialMessage = intentMessages[state.intent];
+            if (initialMessage) {
+                initializeGleanChat(initialMessage);
+            } else {
+                initializeGleanChat();
+            }
         }
     }
 });
@@ -101,9 +112,9 @@ function checkExistingClaim() {
  * Return to landing page
  */
 function returnToLanding() {
-    // Hide chat and back button
+    // Hide chat and controls
     document.getElementById('chat-container').classList.remove('active');
-    document.getElementById('back-button').classList.remove('visible');
+    document.getElementById('chat-controls').classList.remove('active');
     
     // Show landing page
     document.getElementById('landing-page').classList.remove('hidden');
@@ -127,8 +138,8 @@ function showChat(initialMessage) {
     // Hide landing page
     document.getElementById('landing-page').classList.add('hidden');
     
-    // Show back button and chat
-    document.getElementById('back-button').classList.add('visible');
+    // Show controls and chat
+    document.getElementById('chat-controls').classList.add('active');
     document.getElementById('chat-container').classList.add('active');
     
     // Initialize chat with message
@@ -151,6 +162,7 @@ function initializeGleanChat(initialMessage = null) {
     }
     
     const agentId = window.demoConfig.agentId;
+    console.log('Checking agent ID:', agentId, 'Type:', typeof agentId);
     const container = document.getElementById('glean-agent');
     if (!container) {
         console.error('Chat container not found');
@@ -161,6 +173,7 @@ function initializeGleanChat(initialMessage = null) {
     container.innerHTML = '';
     
     // Check if agent ID is a placeholder
+    console.log('isPlaceholderAgentId result:', isPlaceholderAgentId(agentId));
     if (isPlaceholderAgentId(agentId)) {
         // If user has already chosen AgentCore, skip fallback and go directly to chat
         if (userChoseAgentCore) {
@@ -547,6 +560,195 @@ function getStatusDescription(status) {
 }
 
 // Make functions available globally
+/**
+ * Show AgentCore switch prompt (intermediary page)
+ */
+function showAgentCoreSwitchPrompt() {
+    const container = document.getElementById('glean-agent');
+    if (!container) return;
+    
+    // Update switch button
+    const switchBtn = document.getElementById('switch-mode-btn');
+    if (switchBtn) {
+        switchBtn.onclick = switchBackToGleanSubmitter;
+        switchBtn.title = 'Back to Glean';
+    }
+    
+    container.innerHTML = `
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 2rem; text-align: center; background: #f8f9fa;">
+            <div style="max-width: 600px;">
+                <svg style="width: 64px; height: 64px; margin-bottom: 1rem; color: #f59e0b;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+                <h3 style="color: #1f2937; margin-bottom: 0.5rem; font-family: Inter, sans-serif; font-size: 1.5rem; font-weight: 600;">Switch to AgentCore Direct?</h3>
+                <p style="color: #6b7280; margin-bottom: 1rem; font-family: Inter, sans-serif; line-height: 1.6;">
+                    You're about to switch from the <strong>Glean conversational AI experience</strong> to <strong>AgentCore Direct</strong>.
+                </p>
+                <div style="background: #fef3c7; border: 1px solid #fbbf24; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1.5rem; text-align: left;">
+                    <p style="color: #92400e; margin: 0 0 0.5rem 0; font-family: Inter, sans-serif; font-size: 0.875rem; line-height: 1.5;">
+                        <strong>⚠️ What you'll be missing:</strong>
+                    </p>
+                    <ul style="color: #92400e; margin: 0; padding-left: 1.5rem; font-family: Inter, sans-serif; font-size: 0.875rem; line-height: 1.5;">
+                        <li>Glean's conversational agents and knowledge graph</li>
+                        <li>Enhanced context understanding and memory</li>
+                        <li>Optimized response quality and accuracy</li>
+                    </ul>
+                </div>
+                <p style="color: #6b7280; margin-bottom: 1.5rem; font-family: Inter, sans-serif; font-size: 0.875rem; line-height: 1.5;">
+                    <strong>Note:</strong> This option is provided for judges who don't have Glean access. 
+                    If you have Glean configured, we recommend using the full Glean experience.
+                </p>
+                <div style="display: flex; gap: 1rem; justify-content: center;">
+                    <button onclick="switchBackToGleanSubmitter()" style="padding: 0.75rem 1.5rem; background: #f3f4f6; color: #1f2937; border: 1px solid #d1d5db; border-radius: 0.5rem; font-weight: 600; font-family: Inter, sans-serif; cursor: pointer; font-size: 1rem;">
+                        ← Back to Glean
+                    </button>
+                    <button onclick="switchToAgentCoreDirectSubmitter()" style="padding: 0.75rem 1.5rem; background: #2563eb; color: white; border: none; border-radius: 0.5rem; font-weight: 600; font-family: Inter, sans-serif; cursor: pointer; font-size: 1rem;">
+                        Continue to AgentCore
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Switch to AgentCore Direct mode
+ */
+function switchToAgentCoreDirectSubmitter() {
+    const container = document.getElementById('glean-agent');
+    if (!container) return;
+    
+    // Update switch button
+    const switchBtn = document.getElementById('switch-mode-btn');
+    if (switchBtn) {
+        switchBtn.onclick = switchBackToGleanSubmitter;
+        switchBtn.title = 'Switch back to Glean';
+        switchBtn.innerHTML = '<i class="fas fa-exchange-alt"></i>';
+    }
+    
+    container.innerHTML = `
+        <div style="display: flex; flex-direction: column; height: 100%; background: white;">
+            <div style="padding: 0.75rem 1rem; background: #fef3c7; border-bottom: 1px solid #fbbf24; display: flex; align-items: center; justify-content: space-between;">
+                <p style="margin: 0; font-family: Inter, sans-serif; color: #92400e; font-size: 0.875rem; line-height: 1.5; flex: 1;">
+                    ⚠️ <strong>Limited Experience:</strong> Using AgentCore Direct without Glean's conversational layer.
+                </p>
+                <button onclick="switchBackToGleanSubmitter()" style="padding: 0.5rem 1rem; background: white; border: 1px solid #fbbf24; border-radius: 0.375rem; cursor: pointer; font-family: Inter, sans-serif; font-weight: 500; font-size: 0.875rem; color: #92400e; white-space: nowrap; margin-left: 1rem;">
+                    ← Back to Glean
+                </button>
+            </div>
+            <div id="agentcore-messages" style="flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+                <div style="background: #f3f4f6; padding: 1rem; border-radius: 0.5rem; font-family: Inter, sans-serif; color: #4b5563;">
+                    <strong>AI Assistant:</strong> Hi! I'm your AI claims assistant powered by Amazon Bedrock AgentCore. How can I help you with your claim today?
+                </div>
+            </div>
+            <div style="padding: 1rem; border-top: 1px solid #e5e7eb;">
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" id="agentcore-input" placeholder="Type your message..." 
+                        style="flex: 1; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-family: Inter, sans-serif;"
+                        onkeypress="if(event.key === 'Enter') sendAgentCoreMessageSubmitter()">
+                    <button onclick="sendAgentCoreMessageSubmitter()" 
+                        style="padding: 0.75rem 1.5rem; background: #2563eb; color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-family: Inter, sans-serif;">
+                        Send
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    console.log('Switched to AgentCore Direct mode');
+}
+
+/**
+ * Send message in AgentCore Direct mode
+ */
+async function sendAgentCoreMessageSubmitter() {
+    const input = document.getElementById('agentcore-input');
+    const messagesContainer = document.getElementById('agentcore-messages');
+    
+    if (!input || !messagesContainer) return;
+    
+    const message = input.value.trim();
+    if (!message) return;
+    
+    // Add user message
+    const userMsg = document.createElement('div');
+    userMsg.style.cssText = 'background: #2563eb; color: white; padding: 1rem; border-radius: 0.5rem; font-family: Inter, sans-serif; align-self: flex-end; max-width: 80%;';
+    userMsg.innerHTML = `<strong>You:</strong> ${message.replace(/</g, '&lt;').replace(/>/g, '&gt;')}`;
+    messagesContainer.appendChild(userMsg);
+    
+    input.value = '';
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    
+    // Show loading
+    const loadingMsg = document.createElement('div');
+    loadingMsg.id = 'loading-msg';
+    loadingMsg.style.cssText = 'background: #f3f4f6; padding: 1rem; border-radius: 0.5rem; font-family: Inter, sans-serif; color: #4b5563;';
+    loadingMsg.innerHTML = '<strong>AI Assistant:</strong> <em>Thinking...</em>';
+    messagesContainer.appendChild(loadingMsg);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    
+    try {
+        const response = await fetch(`${window.deploymentConfig.apiBaseUrl}/invoke-intake-agent`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${window.deploymentConfig.authToken}`
+            },
+            body: JSON.stringify({
+                prompt: message
+            })
+        });
+        
+        const data = await response.json();
+        loadingMsg.remove();
+        
+        const aiMsg = document.createElement('div');
+        aiMsg.style.cssText = 'background: #f3f4f6; padding: 1rem; border-radius: 0.5rem; font-family: Inter, sans-serif; color: #1f2937;';
+        const responseText = data.response || data.message || 'I received your message.';
+        aiMsg.innerHTML = `<strong>AI Assistant:</strong> ${responseText}`;
+        messagesContainer.appendChild(aiMsg);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        
+    } catch (error) {
+        console.error('Error sending message:', error);
+        loadingMsg.remove();
+        
+        const errorMsg = document.createElement('div');
+        errorMsg.style.cssText = 'background: #fee2e2; padding: 1rem; border-radius: 0.5rem; font-family: Inter, sans-serif; color: #991b1b;';
+        errorMsg.innerHTML = '<strong>Error:</strong> Unable to send message. Please try again.';
+        messagesContainer.appendChild(errorMsg);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+}
+
+/**
+ * Switch back to Glean chat
+ */
+function switchBackToGleanSubmitter() {
+    const container = document.getElementById('glean-agent');
+    if (!container) return;
+    
+    // Reset switch button
+    const switchBtn = document.getElementById('switch-mode-btn');
+    if (switchBtn) {
+        switchBtn.onclick = showAgentCoreSwitchPrompt;
+        switchBtn.title = 'Switch to AgentCore Direct (for judges without Glean access)';
+        switchBtn.innerHTML = '<i class="fas fa-exchange-alt"></i>';
+    }
+    
+    // Get the original intent message
+    const intentMessages = {
+        'new-claim': 'I want to file a new insurance claim. What information do you need from me?',
+        'check-claim': 'I want to check on an existing claim. What information do you need?'
+    };
+    const initialMessage = currentIntent ? intentMessages[currentIntent] : null;
+    
+    // Clear container and reinitialize Glean with the original message
+    container.innerHTML = '';
+    gleanChatInitialized = false;
+    initializeGleanChat(initialMessage);
+}
+
 window.updateAgentId = updateAgentId;
 window.toggleHelpModal = toggleHelpModal;
 window.closeHelpModalOnBackdrop = closeHelpModalOnBackdrop;
@@ -554,3 +756,7 @@ window.checkStatus = checkStatus;
 window.startNewClaim = startNewClaim;
 window.checkExistingClaim = checkExistingClaim;
 window.returnToLanding = returnToLanding;
+window.showAgentCoreSwitchPrompt = showAgentCoreSwitchPrompt;
+window.switchToAgentCoreDirectSubmitter = switchToAgentCoreDirectSubmitter;
+window.switchBackToGleanSubmitter = switchBackToGleanSubmitter;
+window.sendAgentCoreMessageSubmitter = sendAgentCoreMessageSubmitter;

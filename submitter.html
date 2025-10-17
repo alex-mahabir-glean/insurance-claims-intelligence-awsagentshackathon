@@ -10,6 +10,7 @@
     <link rel="canonical" href="https://www.glean.com/get-a-demo">
     <link rel="shortcut icon" href="/assets/images/GLN_logo-icon-White.png">
     <script defer src="https://app.glean.com/embedded-search-latest.min.js"></script>
+    <script src="cognito-config.js"></script>
     <script defer src="/assets/js/auth-helpers.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
@@ -21,15 +22,7 @@
     <script src="config.js"></script>
     
     <!-- Configuration -->
-    <script>
-        window.demoConfig = window.demoConfig || {};
-        window.demoConfig = {
-            agentId: window.deploymentConfig?.gleanIntakeAgentId || 'your-glean-agent-id',
-            apiBaseUrl: window.deploymentConfig?.apiBaseUrl || 'https://your-api-gateway-url.execute-api.us-east-1.amazonaws.com/prod',
-            authToken: window.deploymentConfig?.authToken || 'demo-token-123'
-        };
-        window.demoConfig.debug = false;
-    </script>
+    <!-- demoConfig is loaded from config.js -->
     
     <style>
         :root {
@@ -126,6 +119,43 @@
             border-bottom: 1px solid #e5e7eb;
             padding: 1.25rem 2rem;
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+            position: relative;
+        }
+        
+        .logout-btn-wrapper {
+            position: absolute;
+            right: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .back-btn-wrapper {
+            position: absolute;
+            left: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .back-btn {
+            background: white;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        
+        .back-btn:hover {
+            background: var(--bg-light);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
         }
         
         .page-header-content {
@@ -133,7 +163,30 @@
             margin: 0 auto;
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 1rem;
+        }
+        
+        .logout-btn {
+            background: white;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+        
+        .logout-btn:hover {
+            background: var(--bg-light);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
         }
         
         .company-name {
@@ -393,9 +446,21 @@
             border: none !important;
         }
         
+        /* Chat Controls Container */
+        .chat-controls-container {
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .chat-controls-container.active {
+            display: flex;
+        }
+        
         /* Back Button */
         .back-button {
-            display: none;
+            display: flex;
             align-items: center;
             gap: 0.5rem;
             color: var(--primary-color);
@@ -405,12 +470,30 @@
             font-weight: 500;
             cursor: pointer;
             padding: 0.5rem 0;
-            margin-bottom: 1rem;
             transition: color 0.2s ease;
         }
         
-        .back-button.visible {
+        /* Switch Mode Button */
+        .switch-mode-btn {
+            background: white;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 0.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
             display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            transition: all 0.3s ease;
+        }
+        
+        .switch-mode-btn:hover {
+            background: var(--bg-light);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
         }
         
         .back-button:hover {
@@ -709,9 +792,23 @@
 <body>
     <!-- Page Header -->
     <header class="page-header">
+        <div class="back-btn-wrapper">
+            <a href="/index.html" class="back-btn">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back</span>
+            </a>
+        </div>
         <div class="page-header-content">
-            <div class="company-name">Legal Service Management</div>
-            <h1 class="page-title">NextGen Customer Support Center</h1>
+            <div>
+                <div class="company-name">Legal Service Management</div>
+                <h1 class="page-title">NextGen Customer Support Center</h1>
+            </div>
+        </div>
+        <div class="logout-btn-wrapper">
+            <button class="logout-btn" onclick="if(window.CognitoAuth) window.CognitoAuth.signOut()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </button>
         </div>
     </header>
     
@@ -791,11 +888,16 @@
                 </div>
             </div>
             
-            <!-- Back Button -->
-            <button class="back-button" id="back-button" onclick="returnToLanding()">
-                <i class="fas fa-arrow-left"></i>
-                Back to options
-            </button>
+            <!-- Chat Controls -->
+            <div class="chat-controls-container" id="chat-controls">
+                <button class="back-button" onclick="returnToLanding()">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to options
+                </button>
+                <button class="switch-mode-btn" id="switch-mode-btn" onclick="showAgentCoreSwitchPrompt()" title="Switch to AgentCore Direct (for judges without Glean access)">
+                    <i class="fas fa-exchange-alt"></i>
+                </button>
+            </div>
             
             <!-- Chat Container -->
             <div class="chat-container" id="chat-container">
@@ -865,5 +967,12 @@
     <!-- Scripts -->
     <script src="assets/js/api-client.js"></script>
     <script src="assets/js/submitter.js"></script>
+    
+    <script>
+        // Require authentication
+        if (window.CognitoAuth) {
+            window.CognitoAuth.requireAuth();
+        }
+    </script>
 </body>
 </html>

@@ -36,7 +36,7 @@ for spec_file in glean/openapi-*.json; do
         output_file="glean/generated/$filename"
         
         # Replace the API URL placeholder
-        sed "s|https://[a-z0-9]*\.execute-api\.[a-z0-9-]*\.amazonaws\.com/prod|$API_URL|g" "$spec_file" > "$output_file"
+        sed "s|https://YOUR_API_GATEWAY_URL|$API_URL|g" "$spec_file" > "$output_file"
         
         echo -e "${GREEN}✓ Generated: $output_file${NC}"
     fi
