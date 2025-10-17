@@ -17,7 +17,8 @@ app = BedrockAgentCoreApp()
 
 # Initialize AWS clients
 dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
-claims_table = dynamodb.Table('LegalService-Claims-legal')
+# Table name will be replaced during deployment with correct DEPLOYMENT_ID
+claims_table = dynamodb.Table(os.environ.get('CLAIMS_TABLE', 'LegalService-Claims-legal'))
 
 # Define system prompt
 SYSTEM_PROMPT = """You are an AI assistant specialized in insurance claim intake for a legal service management system.

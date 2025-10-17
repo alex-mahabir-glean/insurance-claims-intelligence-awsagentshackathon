@@ -235,6 +235,13 @@ mkdir -p agentcore-deploy/intake-agent agentcore-deploy/review-agent
 cp ../backend/agents/intake_agent_agentcore.py agentcore-deploy/intake-agent/agent.py
 cp ../backend/agents/review_agent_agentcore.py agentcore-deploy/review-agent/agent.py
 
+# Replace hardcoded table names with correct DEPLOYMENT_ID
+echo -e "${BLUE}Updating table names to use DEPLOYMENT_ID: ${DEPLOYMENT_ID}...${NC}"
+sed -i.bak "s/LegalService-Claims-legal/LegalService-Claims-${DEPLOYMENT_ID}/g" agentcore-deploy/intake-agent/agent.py
+sed -i.bak "s/LegalService-Claims-legal/LegalService-Claims-${DEPLOYMENT_ID}/g" agentcore-deploy/review-agent/agent.py
+sed -i.bak "s/LegalService-AuditTrail-legal/LegalService-AuditTrail-${DEPLOYMENT_ID}/g" agentcore-deploy/review-agent/agent.py
+rm -f agentcore-deploy/intake-agent/agent.py.bak agentcore-deploy/review-agent/agent.py.bak
+
 # Create requirements.txt for both agents
 cat > agentcore-deploy/intake-agent/requirements.txt << 'REQUIREMENTS'
 bedrock-agentcore
@@ -343,14 +350,12 @@ echo -e "${GREEN}✅ Lambda functions updated${NC}"
 # =============================================================================
 
 echo ""
-echo -e "${BLUE}🔐 Granting DynamoDB permissions to AgentCore execution role...${NC}"
+echo -e "${BLUE}🔐 Granting DynamoDB permissions to AgentCore execution roles...${NC}"
 
-# Get the AgentCore execution role name
-AGENTCORE_ROLE=$($AWS_CMD iam list-roles --region "$REGION" --query "Roles[?contains(RoleName, 'AmazonBedrockAgentCoreSDKRuntime')].RoleName" --output text | head -1)
+# Get all AgentCore execution role names (there may be multiple from agentcore launch)
+AGENTCORE_ROLES=$($AWS_CMD iam list-roles --region "$REGION" --query "Roles[?contains(RoleName, 'AmazonBedrockAgentCoreSDKRuntime')].RoleName" --output text)
 
-if [ -n "$AGENTCORE_ROLE" ]; then
-    echo -e "${BLUE}Found AgentCore role: $AGENTCORE_ROLE${NC}"
-    
+if [ -n "$AGENTCORE_ROLES" ]; then
     # Create inline policy for DynamoDB access
     cat > /tmp/agentcore-dynamodb-policy.json << EOF
 {
@@ -365,10 +370,13 @@ if [ -n "$AGENTCORE_ROLE" ]; then
         "dynamodb:Scan",
         "dynamodb:PutItem",
         "dynamodb:UpdateItem",
-        "dynamodb:DeleteItem"
+        "dynamodb:DeleteItem",
+        "dynamodb:BatchGetItem",
+        "dynamodb:BatchWriteItem"
       ],
       "Resource": [
         "arn:aws:dynamodb:${REGION}:${ACCOUNT_ID}:table/LegalService-Claims-${DEPLOYMENT_ID}",
+        "arn:aws:dynamodb:${REGION}:${ACCOUNT_ID}:table/LegalService-Claims-${DEPLOYMENT_ID}/index/*",
         "arn:aws:dynamodb:${REGION}:${ACCOUNT_ID}:table/LegalService-AuditTrail-${DEPLOYMENT_ID}",
         "arn:aws:dynamodb:${REGION}:${ACCOUNT_ID}:table/LegalService-Reviewers-${DEPLOYMENT_ID}"
       ]
@@ -377,17 +385,26 @@ if [ -n "$AGENTCORE_ROLE" ]; then
 }
 EOF
     
-    # Attach the policy
-    $AWS_CMD iam put-role-policy \
-      --role-name "$AGENTCORE_ROLE" \
-      --policy-name "DynamoDBTableAccess-${DEPLOYMENT_ID}" \
-      --policy-document file:///tmp/agentcore-dynamodb-policy.json \
-      --region "$REGION" > /dev/null
+    # Attach the policy to each role
+    for ROLE in $AGENTCORE_ROLES; do
+        echo -e "${BLUE}Granting permissions to role: $ROLE${NC}"
+        $AWS_CMD iam put-role-policy \
+          --role-name "$ROLE" \
+          --policy-name "DynamoDBTableAccess-${DEPLOYMENT_ID}" \
+          --policy-document file:///tmp/agentcore-dynamodb-policy.json \
+          --region "$REGION" > /dev/null 2>&1
+        
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}  ✅ Permissions granted to $ROLE${NC}"
+        else
+            echo -e "${YELLOW}  ⚠️  Failed to grant permissions to $ROLE (may already exist)${NC}"
+        fi
+    done
     
-    echo -e "${GREEN}✅ DynamoDB permissions granted to AgentCore role${NC}"
     rm /tmp/agentcore-dynamodb-policy.json
+    echo -e "${GREEN}✅ DynamoDB permissions update complete${NC}"
 else
-    echo -e "${YELLOW}⚠️  AgentCore role not found - skipping DynamoDB permissions${NC}"
+    echo -e "${YELLOW}⚠️  No AgentCore roles found - skipping DynamoDB permissions${NC}"
 fi
 
 cd ..

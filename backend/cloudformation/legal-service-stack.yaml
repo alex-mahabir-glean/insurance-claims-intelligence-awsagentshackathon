@@ -2107,53 +2107,35 @@ Outputs:
   ApiGatewayUrl:
     Description: API Gateway endpoint URL
     Value: !Sub "https://${LegalServiceAPI}.execute-api.${AWS::Region}.amazonaws.com/prod"
-    Export:
-      Name: !Sub "LegalService-ApiUrl-${DeploymentID}"
 
   ClaimsTableName:
     Description: Name of the Claims DynamoDB table
     Value: !Ref ClaimsTable
-    Export:
-      Name: !Sub "LegalService-ClaimsTable-${DeploymentID}"
 
   ReviewersTableName:
     Description: Name of the Reviewers DynamoDB table
     Value: !Ref ReviewersTable
-    Export:
-      Name: !Sub "LegalService-ReviewersTable-${DeploymentID}"
 
   AuditTrailTableName:
     Description: Name of the AuditTrail DynamoDB table
     Value: !Ref AuditTrailTable
-    Export:
-      Name: !Sub "LegalService-AuditTrailTable-${DeploymentID}"
 
   ApiTokenSecretArn:
     Description: ARN of the API token secret
     Value: !Ref ApiTokenSecret
-    Export:
-      Name: !Sub "LegalService-ApiTokenArn-${DeploymentID}"
 
   AgentCoreApiTokenSecretArn:
     Description: ARN of the AgentCore API Token Secret
     Value: !Ref AgentCoreApiTokenSecret
-    Export:
-      Name: !Sub "LegalService-AgentCoreApiTokenArn-${DeploymentID}"
 
   InvokeIntakeAgentUrl:
     Description: URL for invoking the Intake Agent
     Value: !Sub "https://${LegalServiceAPI}.execute-api.${AWS::Region}.amazonaws.com/prod/invoke-intake-agent"
-    Export:
-      Name: !Sub "LegalService-InvokeIntakeAgentUrl-${DeploymentID}"
 
   InvokeReviewAgentUrl:
     Description: URL for invoking the Review Agent
     Value: !Sub "https://${LegalServiceAPI}.execute-api.${AWS::Region}.amazonaws.com/prod/invoke-review-agent"
-    Export:
-      Name: !Sub "LegalService-InvokeReviewAgentUrl-${DeploymentID}"
 
   AgentCoreRuntimeRoleArn:
     Description: ARN of the AgentCore Runtime Execution Role (use this when deploying agents)
     Value: !GetAtt AgentCoreRuntimeExecutionRole.Arn
-    Export:
-      Name: !Sub "LegalService-AgentCoreRuntimeRoleArn-${DeploymentID}"

@@ -17,8 +17,9 @@ app = BedrockAgentCoreApp()
 
 # Initialize AWS clients
 dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
-claims_table = dynamodb.Table('LegalService-Claims-legal')
-audit_table = dynamodb.Table('LegalService-AuditTrail-legal')
+# Table names will be replaced during deployment with correct DEPLOYMENT_ID
+claims_table = dynamodb.Table(os.environ.get('CLAIMS_TABLE', 'LegalService-Claims-legal'))
+audit_table = dynamodb.Table(os.environ.get('AUDIT_TABLE', 'LegalService-AuditTrail-legal'))
 
 # Reviewer ID to display name mapping
 REVIEWER_NAMES = {
