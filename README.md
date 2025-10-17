@@ -264,6 +264,8 @@ Then open:
 
 ### Step 5: Configure Glean Agents
 
+> **ℹ️ Note:** This step requires access to a Glean workspace with admin permissions. If you don't have Glean access, you can still use the system through the web interface (submitter.html and reviewer.html) which connects directly to the AgentCore agents.
+
 The deployment automatically generates Glean-ready OpenAPI specifications in `glean/generated/` with your API Gateway URL already configured!
 
 Follow the detailed instructions in **[GLEAN_SETUP.md](GLEAN_SETUP.md)** to:

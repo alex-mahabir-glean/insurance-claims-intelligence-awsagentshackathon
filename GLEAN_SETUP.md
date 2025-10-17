@@ -28,10 +28,15 @@ This creates customized OpenAPI specifications in `glean/generated/` with your a
 
 ### Step 2: Get API Authentication Token
 
-The system uses API Key authentication. Retrieve your API token from AWS Secrets Manager:
+The system uses API Key authentication. You can retrieve your API token from either:
 
+**Option 1: From deployment-outputs.json** (Easiest)
 ```bash
-# Get the API token
+cat deployment-outputs.json | grep apiToken
+```
+
+**Option 2: From AWS Secrets Manager**
+```bash
 aws secretsmanager get-secret-value \
   --secret-id LegalService/AgentCoreApiToken/legal \
   --region us-east-1 \
@@ -39,64 +44,117 @@ aws secretsmanager get-secret-value \
   --output text | python3 -c "import sys, json; print(json.load(sys.stdin)['token'])"
 ```
 
-Save this token - you'll need it for configuring Glean Actions.
+**Option 3: From CloudFormation Outputs**
+- Go to AWS Console → CloudFormation → LegalService-legal stack → Outputs tab
+- Find `ApiToken` output value
+
+Save this token - you'll need it for configuring all 6 Glean Actions.
 
 ---
 
-### Step 3: Import Glean Actions
+### Step 3: Create Glean Actions
 
-Import the following 6 actions into Glean:
+You need to create 6 Glean Actions. Each action requires the same authentication token from Step 2.
 
-#### Action 1: File Insurance Claim
+#### Detailed Example: Creating "Claim Insights" Action (READ Action)
 
-1. Go to **Glean Admin Console** → **Actions** → **Create New Action**
-2. **Upload OpenAPI Spec**: `glean/generated/openapi-file-claim-action.json`
-3. **Configure Authentication**:
-   - Type: **API Key**
-   - Header Name: `Authorization`
-   - API Key Value: `<paste token from Step 2>`
-4. **Save** as "File Insurance Claim"
+Follow these steps for the first action. The process is identical for all 6 actions, just with different files and settings.
 
-#### Action 2: Manage Insurance Claims
+**1. Navigate to Actions**
+- Go to **Glean Admin Console** → **Actions** → **Create Action**
 
-1. **Create New Action**
-2. **Upload**: `glean/generated/openapi-manage-claims-action.json`
-3. **Authentication**: Same as above
-4. **Save** as "Manage Insurance Claims"
+**2. Configure Basic Information**
 
-#### Action 3: Approve Claim
+![Basic Info Configuration](assets/js/images/glean-deployment-steps/claim-insights-action/1-basic-info.png)
 
-1. **Create New Action**
-2. **Upload**: `glean/generated/openapi-approve-claim-action.json`
-3. **Authentication**: Same as above
-4. **Save** as "Approve Claim"
+- **Display Name**: `Claim Insights`
+- **Description**: `Get AI-powered insights about insurance claims`
+- **Action Type**: **Read** (this action retrieves information without modifying data)
+- **Trigger Condition**: Leave as default or set to "When user asks for claim insights"
 
-#### Action 4: Deny Claim
+**3. Add OpenAPI Specification**
 
-1. **Create New Action**
-2. **Upload**: `glean/generated/openapi-deny-claim-action.json`
-3. **Authentication**: Same as above
-4. **Save** as "Deny Claim"
+![OpenAPI Spec Configuration](assets/js/images/glean-deployment-steps/claim-insights-action/2-openapi-spec.png)
 
-#### Action 5: Reassign Claim
+- Click **"Edit OpenAPI Spec"**
+- Upload or paste the contents of: `glean/generated/openapi-claim-insights-action.json`
+- Glean will automatically parse the endpoints and parameters
 
-1. **Create New Action**
-2. **Upload**: `glean/generated/openapi-reassign-claim-action.json`
-3. **Authentication**: Same as above
-4. **Save** as "Reassign Claim"
+**4. Configure Authentication**
+- **Authentication Type**: **API Key**
+- **Header Name**: `Authorization`
+- **API Key Value**: Paste the token from Step 2 (from `deployment-outputs.json` or Secrets Manager)
+- **Note**: Do NOT include "Bearer" prefix - just paste the raw token
 
-#### Action 6: Claim Insights
-
-1. **Create New Action**
-2. **Upload**: `glean/generated/openapi-claim-insights-action.json`
-3. **Authentication**: Same as above
-4. **Save** as "Claim Insights"
+**5. Save the Action**
+- Click **Save** or **Create Action**
+- Verify the action appears in your Actions list
 
 ---
 
-### Step 4: Create Glean Agents
+#### Quick Steps for Remaining 5 Actions
 
-#### Agent 1: Claim Intake Assistant
+Repeat the above process for each of the following actions. The only differences are the **Display Name**, **Action Type**, and **OpenAPI file**:
+
+| # | Display Name | Action Type | OpenAPI File | Description |
+|---|--------------|-------------|--------------|-------------|
+| 1 | **File Insurance Claim** | Write | `openapi-file-claim-action.json` | Submit new insurance claims |
+| 2 | **Manage Insurance Claims** | Read | `openapi-manage-claims-action.json` | Search and view claims conversationally |
+| 3 | **Approve Claim** | Write | `openapi-approve-claim-action.json` | Approve a claim |
+| 4 | **Deny Claim** | Write | `openapi-deny-claim-action.json` | Deny a claim with reason |
+| 5 | **Reassign Claim** | Write | `openapi-reassign-claim-action.json` | Reassign claim to another reviewer |
+
+**For each action:**
+1. Create New Action
+2. Enter Display Name from table above
+3. Select Action Type (Read or Write)
+4. Upload the corresponding OpenAPI file from `glean/generated/`
+5. Configure Authentication (same token for all)
+6. Save
+
+**✅ Checkpoint**: You should now have 6 actions in your Glean Actions list
+
+---
+
+### Step 4: Import Glean Agents
+
+We've pre-configured two agents for you! Instead of manually creating them, you can import the agent configurations directly.
+
+#### Import Both Agents
+
+**Agent configuration files are located in:** `glean/agents/`
+- `Claims Intake Agent.json` - For filing new claims
+- `Claims Insight & Management Agent.json` - For reviewing and managing claims
+
+**To import each agent:**
+
+1. Go to **Glean Admin Console** → **Agents**
+2. Click the **Import Agent** button:
+
+![Import Agent Button](assets/js/images/glean-agent-import-button-screenshot.png)
+
+3. Upload the agent JSON file:
+   - First, import `Claims Intake Agent.json`
+   - Then, import `Claims Insight & Management Agent.json`
+
+4. **Important**: After importing, verify that the actions are properly linked:
+   - **Claims Intake Agent** should have: `File Insurance Claim` action
+   - **Claims Insight & Management Agent** should have: `Manage Insurance Claims`, `Approve Claim`, `Deny Claim`, `Reassign Claim`, and `Claim Insights` actions
+
+5. If actions are not linked, manually add them:
+   - Edit the agent
+   - Go to Actions section
+   - Add the appropriate actions from the list
+
+**✅ Checkpoint**: You should now have 2 agents in your Glean Agents list, each with their respective actions configured.
+
+---
+
+#### Alternative: Manual Agent Creation
+
+If you prefer to create agents manually or need to customize them, here are the detailed configurations:
+
+##### Agent 1: Claim Intake Assistant
 
 **Purpose**: Help users file insurance claims conversationally
 
@@ -140,7 +198,7 @@ Optional information:
    - "I want to file an insurance claim"
 6. **Save Agent**
 
-#### Agent 2: Claim Management Assistant
+##### Agent 2: Claim Management Assistant
 
 **Purpose**: Help reviewers manage and analyze claims
 
@@ -300,10 +358,18 @@ DynamoDB (Data Storage)
 
 - [ ] AWS infrastructure deployed (`./deploy.sh`)
 - [ ] Glean OpenAPI specs generated (`./generate-glean-specs.sh`)
-- [ ] API token retrieved from Secrets Manager
-- [ ] All 6 Glean Actions imported and configured
-- [ ] Both Glean Agents created with instructions
-- [ ] Actions added to appropriate agents
+- [ ] API token retrieved (from `deployment-outputs.json`, Secrets Manager, or CloudFormation)
+- [ ] All 6 Glean Actions created with proper authentication:
+  - [ ] Claim Insights (Read)
+  - [ ] File Insurance Claim (Write)
+  - [ ] Manage Insurance Claims (Read)
+  - [ ] Approve Claim (Write)
+  - [ ] Deny Claim (Write)
+  - [ ] Reassign Claim (Write)
+- [ ] Both Glean Agents imported from `glean/agents/`:
+  - [ ] Claims Intake Agent
+  - [ ] Claims Insight & Management Agent
+- [ ] Actions verified and linked to appropriate agents
 - [ ] Test claim filing successful
 - [ ] Test claim management successful
 
@@ -311,4 +377,4 @@ DynamoDB (Data Storage)
 
 **Status**: Ready for Production ✅
 
-*Last Updated: October 15, 2025*
+*Last Updated: October 16, 2025*
