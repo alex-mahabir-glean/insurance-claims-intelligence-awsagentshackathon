@@ -1515,6 +1515,26 @@
                 max-width: 400px;
             }
         }
+        
+        /* Footer */
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            text-align: center;
+            font-size: 0.875rem;
+            z-index: 100;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .footer p {
+            margin: 0;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
@@ -1788,6 +1808,11 @@
             <div id="glean-agent-overlay"></div>
         </div>
     </div>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <p>Powered by Amazon Bedrock AgentCore + Glean | AWS AI Agent Global Hackathon 2025</p>
+    </footer>
     
     <!-- Scripts -->
     <script src="data/sample-claims.js"></script>

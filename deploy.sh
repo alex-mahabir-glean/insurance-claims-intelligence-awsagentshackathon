@@ -338,6 +338,58 @@ $AWS_CMD lambda update-function-configuration \
 
 echo -e "${GREEN}✅ Lambda functions updated${NC}"
 
+# =============================================================================
+# Grant DynamoDB Permissions to AgentCore Execution Role
+# =============================================================================
+
+echo ""
+echo -e "${BLUE}🔐 Granting DynamoDB permissions to AgentCore execution role...${NC}"
+
+# Get the AgentCore execution role name
+AGENTCORE_ROLE=$($AWS_CMD iam list-roles --region "$REGION" --query "Roles[?contains(RoleName, 'AmazonBedrockAgentCoreSDKRuntime')].RoleName" --output text | head -1)
+
+if [ -n "$AGENTCORE_ROLE" ]; then
+    echo -e "${BLUE}Found AgentCore role: $AGENTCORE_ROLE${NC}"
+    
+    # Create inline policy for DynamoDB access
+    cat > /tmp/agentcore-dynamodb-policy.json << EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "DynamoDBAccess",
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:GetItem",
+        "dynamodb:Query",
+        "dynamodb:Scan",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem"
+      ],
+      "Resource": [
+        "arn:aws:dynamodb:${REGION}:${ACCOUNT_ID}:table/LegalService-Claims-${DEPLOYMENT_ID}",
+        "arn:aws:dynamodb:${REGION}:${ACCOUNT_ID}:table/LegalService-AuditTrail-${DEPLOYMENT_ID}",
+        "arn:aws:dynamodb:${REGION}:${ACCOUNT_ID}:table/LegalService-Reviewers-${DEPLOYMENT_ID}"
+      ]
+    }
+  ]
+}
+EOF
+    
+    # Attach the policy
+    $AWS_CMD iam put-role-policy \
+      --role-name "$AGENTCORE_ROLE" \
+      --policy-name "DynamoDBTableAccess-${DEPLOYMENT_ID}" \
+      --policy-document file:///tmp/agentcore-dynamodb-policy.json \
+      --region "$REGION" > /dev/null
+    
+    echo -e "${GREEN}✅ DynamoDB permissions granted to AgentCore role${NC}"
+    rm /tmp/agentcore-dynamodb-policy.json
+else
+    echo -e "${YELLOW}⚠️  AgentCore role not found - skipping DynamoDB permissions${NC}"
+fi
+
 cd ..
 
 # =============================================================================

@@ -13,6 +13,16 @@ let gleanChatInitialized = false;
 let isAdminMode = false;
 let selectedRole = null;
 
+/**
+ * Check if agent ID is a placeholder value
+ */
+function isPlaceholderAgentId(agentId) {
+    return !agentId || 
+           agentId === 'your-glean-agent-id' || 
+           agentId.trim() === '' ||
+           agentId === 'legal-claims-assistant';
+}
+
 // Reviewer data
 const reviewers = {
     'sarah-chen': { name: 'Sarah Chen', id: 'sarah-chen' },
@@ -743,10 +753,6 @@ function initializeGleanChat(claim) {
     }
     
     const agentId = window.demoConfig.agentId;
-    if (!agentId || agentId === 'legal-claims-assistant') {
-        console.warn('Using default agent ID. Please update with your actual Glean Agent ID.');
-    }
-    
     const container = document.getElementById('glean-agent-detail');
     if (!container) {
         console.error('Chat container not found');
@@ -755,6 +761,33 @@ function initializeGleanChat(claim) {
     
     // Clear existing content
     container.innerHTML = '';
+    
+    // Check if agent ID is a placeholder
+    if (isPlaceholderAgentId(agentId)) {
+        container.innerHTML = `
+            <div id="agentcore-fallback-container-detail" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 2rem; text-align: center; background: #f8f9fa;">
+                <div style="max-width: 600px;">
+                    <svg style="width: 64px; height: 64px; margin-bottom: 1rem; color: #6b7280;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <h3 style="color: #1f2937; margin-bottom: 0.5rem; font-family: Inter, sans-serif;">Glean Agent Not Configured</h3>
+                    <p style="color: #6b7280; margin-bottom: 1.5rem; font-family: Inter, sans-serif; line-height: 1.5;">
+                        To complete the Glean implementation steps, you require access to a Glean deployment. 
+                        If you don't have access, feel free to utilize the AgentCore agents directly below.
+                    </p>
+                    <p style="color: #9ca3af; margin-bottom: 1.5rem; font-family: Inter, sans-serif; font-size: 0.875rem; line-height: 1.5;">
+                        <strong>Note:</strong> Using AgentCore directly will not utilize the Glean conversational agents, 
+                        knowledge graph, and other Glean-specific features, but you can still test the core AI functionality.
+                    </p>
+                    <button onclick="showAgentCoreChatDetail()" style="display: inline-block; padding: 0.75rem 1.5rem; background: #2563eb; color: white; border: none; border-radius: 0.5rem; font-weight: 600; font-family: Inter, sans-serif; cursor: pointer; font-size: 1rem;">
+                        Use AgentCore Direct Chat
+                    </button>
+                </div>
+            </div>
+        `;
+        console.warn('Placeholder agent ID detected. Showing AgentCore fallback option.');
+        return;
+    }
     
     try {
         // Get auth token
@@ -983,6 +1016,8 @@ if (!document.getElementById('notification-styles')) {
  */
 let chatInitialized = false;
 let chatExpanded = false;
+let pendingInitialMessage = null; // Store initial message for AgentCore fallback
+let userChoseAgentCore = false; // Track if user has chosen to use AgentCore
 
 function showChatOverlay(initialMessage = null) {
     const chatOverlay = document.getElementById('chat-overlay');
@@ -1027,6 +1062,59 @@ function renderGleanChatOverlay(initialMessage = null) {
     
     const agentId = window.demoConfig.agentId;
     
+    // Check if agent ID is a placeholder
+    if (isPlaceholderAgentId(agentId)) {
+        // If user has already chosen AgentCore, skip fallback and go directly to chat
+        if (userChoseAgentCore) {
+            // Check if chat UI already exists
+            const existingChat = document.getElementById('agentcore-messages-overlay');
+            
+            if (!existingChat) {
+                // Chat doesn't exist yet, create it
+                showAgentCoreChatOverlay();
+            }
+            
+            // Send the initial message if provided
+            if (initialMessage) {
+                setTimeout(() => {
+                    const input = document.getElementById('agentcore-input-overlay');
+                    if (input) {
+                        input.value = initialMessage;
+                        sendAgentCoreMessageOverlay();
+                    }
+                }, 150);
+            }
+            return;
+        }
+        
+        // Store the initial message for AgentCore fallback
+        pendingInitialMessage = initialMessage;
+        
+        container.innerHTML = `
+            <div id="agentcore-fallback-container-overlay" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 2rem; text-align: center; background: #f8f9fa;">
+                <div style="max-width: 600px;">
+                    <svg style="width: 64px; height: 64px; margin-bottom: 1rem; color: #6b7280;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <h3 style="color: #1f2937; margin-bottom: 0.5rem; font-family: Inter, sans-serif;">Glean Agent Not Configured</h3>
+                    <p style="color: #6b7280; margin-bottom: 1.5rem; font-family: Inter, sans-serif; line-height: 1.5;">
+                        To complete the Glean implementation steps, you require access to a Glean deployment. 
+                        If you don't have access, feel free to utilize the AgentCore agents directly below.
+                    </p>
+                    <p style="color: #9ca3af; margin-bottom: 1.5rem; font-family: Inter, sans-serif; font-size: 0.875rem; line-height: 1.5;">
+                        <strong>Note:</strong> Using AgentCore directly will not utilize the Glean conversational agents, 
+                        knowledge graph, and other Glean-specific features, but you can still test the core AI functionality.
+                    </p>
+                    <button onclick="showAgentCoreChatOverlay()" style="display: inline-block; padding: 0.75rem 1.5rem; background: #2563eb; color: white; border: none; border-radius: 0.5rem; font-weight: 600; font-family: Inter, sans-serif; cursor: pointer; font-size: 1rem;">
+                        Use AgentCore Direct Chat
+                    </button>
+                </div>
+            </div>
+        `;
+        console.warn('Placeholder agent ID detected. Showing AgentCore fallback option.');
+        return;
+    }
+    
     const config = {
         agentId: agentId,
         enable3PCookieAccessRequest: true,
@@ -1049,9 +1137,34 @@ function renderGleanChatOverlay(initialMessage = null) {
 function reloadGleanChatWithInitialMessage(message) {
     const container = document.getElementById('glean-agent-overlay');
     if (container) {
-        container.innerHTML = '';
-        
         const agentId = window.demoConfig.agentId;
+        
+        // Check if placeholder - handle AgentCore flow
+        if (isPlaceholderAgentId(agentId)) {
+            // If user has already chosen AgentCore, refresh the chat with new message
+            if (userChoseAgentCore) {
+                // Clear and recreate the chat UI for a fresh conversation
+                showAgentCoreChatOverlay();
+                // Send the new message
+                if (message) {
+                    setTimeout(() => {
+                        const input = document.getElementById('agentcore-input-overlay');
+                        if (input) {
+                            input.value = message;
+                            sendAgentCoreMessageOverlay();
+                        }
+                    }, 100);
+                }
+            } else {
+                // First time, clear and show fallback
+                container.innerHTML = '';
+                renderGleanChatOverlay(message);
+            }
+            return;
+        }
+        
+        // For real Glean, clear and reload
+        container.innerHTML = '';
         
         // Pass the DOM element itself, not the ID string
         window.EmbeddedSearch.renderChat(container, {
@@ -1061,6 +1174,325 @@ function reloadGleanChatWithInitialMessage(message) {
             initialMessage: message
         });
     }
+}
+
+/**
+ * Show AgentCore direct chat in detail view
+ */
+function showAgentCoreChatDetail() {
+    const container = document.getElementById('glean-agent-detail');
+    if (!container) return;
+    
+    const claim = currentClaim;
+    const initialMsg = claim ? `Analyzing claim ${claim.claimId}: ${claim.description}` : 'How can I help you review this claim?';
+    
+    container.innerHTML = `
+        <div style="display: flex; flex-direction: column; height: 100%; background: white;">
+            <div style="padding: 1rem; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; gap: 0.5rem;">
+                <h3 style="margin: 0; font-family: Inter, sans-serif; color: #1f2937; flex: 1;">AgentCore Direct Chat</h3>
+                <button onclick="backToFallbackMessageDetail()" style="padding: 0.5rem 1rem; background: #f3f4f6; border: none; border-radius: 0.375rem; cursor: pointer; font-family: Inter, sans-serif; font-weight: 500;">
+                    ← Back
+                </button>
+            </div>
+            <div style="background: #fef3c7; border-bottom: 1px solid #fbbf24; padding: 0.75rem 1rem;">
+                <p style="margin: 0; font-family: Inter, sans-serif; font-size: 0.875rem; color: #92400e; line-height: 1.5;">
+                    ⚠️ <strong>Limited Experience:</strong> This direct chat bypasses Glean's conversational agents and knowledge graph. This direct chat although somewhat functional was not meant to be customer-facing. Expect an incomplete, and buggy experience with incorrect responses. For the full customer-facing demo experience, configure Glean access and refresh your page or click the 'Back' button above.
+                </p>
+            </div>
+            <div id="agentcore-messages-detail" style="flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+                <div style="background: #f3f4f6; padding: 1rem; border-radius: 0.5rem; font-family: Inter, sans-serif; color: #4b5563;">
+                    <strong>AI Assistant:</strong> ${escapeHtmlReviewer(initialMsg)}
+                </div>
+            </div>
+            <div style="padding: 1rem; border-top: 1px solid #e5e7eb;">
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" id="agentcore-input-detail" placeholder="Type your message..." 
+                        style="flex: 1; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-family: Inter, sans-serif;"
+                        onkeypress="if(event.key === 'Enter') sendAgentCoreMessageDetail()">
+                    <button onclick="sendAgentCoreMessageDetail()" 
+                        style="padding: 0.75rem 1.5rem; background: #2563eb; color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-family: Inter, sans-serif;">
+                        Send
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Show AgentCore direct chat in overlay
+ */
+function showAgentCoreChatOverlay() {
+    // Mark that user has chosen AgentCore
+    userChoseAgentCore = true;
+    
+    const container = document.getElementById('glean-agent-overlay');
+    if (!container) return;
+    
+    container.innerHTML = `
+        <div style="display: flex; flex-direction: column; height: 100%; background: white;">
+            <div style="padding: 1rem; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; gap: 0.5rem;">
+                <h3 style="margin: 0; font-family: Inter, sans-serif; color: #1f2937; flex: 1;">AgentCore Direct Chat</h3>
+                <button onclick="backToFallbackMessageOverlay()" style="padding: 0.5rem 1rem; background: #f3f4f6; border: none; border-radius: 0.375rem; cursor: pointer; font-family: Inter, sans-serif; font-weight: 500;">
+                    ← Back
+                </button>
+            </div>
+            <div style="background: #fef3c7; border-bottom: 1px solid #fbbf24; padding: 0.75rem 1rem;">
+                <p style="margin: 0; font-family: Inter, sans-serif; font-size: 0.875rem; color: #92400e; line-height: 1.5;">
+                    ⚠️ <strong>Limited Experience:</strong> This direct chat bypasses Glean's conversational agents and knowledge graph. This direct chat although somewhat functional was not meant to be customer-facing. Expect an incomplete, and buggy experience with incorrect responses. For the full customer-facing demo experience, configure Glean access and refresh your page or click the 'Back' button above.
+                </p>
+            </div>
+            <div id="agentcore-messages-overlay" style="flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+                <div style="background: #f3f4f6; padding: 1rem; border-radius: 0.5rem; font-family: Inter, sans-serif; color: #4b5563;">
+                    <strong>AI Assistant:</strong> Hi! I'm your AI review assistant powered by Amazon Bedrock AgentCore. How can I help you today?
+                </div>
+            </div>
+            <div style="padding: 1rem; border-top: 1px solid #e5e7eb;">
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" id="agentcore-input-overlay" placeholder="Type your message..." 
+                        style="flex: 1; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-family: Inter, sans-serif;"
+                        onkeypress="if(event.key === 'Enter') sendAgentCoreMessageOverlay()">
+                    <button onclick="sendAgentCoreMessageOverlay()" 
+                        style="padding: 0.75rem 1.5rem; background: #2563eb; color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-family: Inter, sans-serif;">
+                        Send
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // If there's a pending initial message, auto-send it
+    if (pendingInitialMessage) {
+        const messageToSend = pendingInitialMessage;
+        pendingInitialMessage = null; // Clear it after capturing
+        
+        // Wait for DOM to be ready, then send the message
+        setTimeout(() => {
+            const input = document.getElementById('agentcore-input-overlay');
+            if (input) {
+                input.value = messageToSend;
+                sendAgentCoreMessageOverlay();
+            }
+        }, 100);
+    }
+}
+
+/**
+ * Back to fallback message - detail view
+ */
+function backToFallbackMessageDetail() {
+    gleanChatInitialized = false;
+    if (currentClaim) {
+        showChatDetail(currentClaim);
+    }
+}
+
+/**
+ * Back to fallback message - overlay
+ */
+function backToFallbackMessageOverlay() {
+    // Reset AgentCore choice when going back
+    userChoseAgentCore = false;
+    renderGleanChatOverlay();
+}
+
+/**
+ * Send message to AgentCore - detail view
+ */
+async function sendAgentCoreMessageDetail() {
+    const input = document.getElementById('agentcore-input-detail');
+    const messagesContainer = document.getElementById('agentcore-messages-detail');
+    
+    if (!input || !messagesContainer) return;
+    
+    const message = input.value.trim();
+    if (!message) return;
+    
+    // Add user message
+    const userMsg = document.createElement('div');
+    userMsg.style.cssText = 'background: #2563eb; color: white; padding: 1rem; border-radius: 0.5rem; font-family: Inter, sans-serif; align-self: flex-end; max-width: 80%;';
+    userMsg.innerHTML = `<strong>You:</strong> ${escapeHtmlReviewer(message)}`;
+    messagesContainer.appendChild(userMsg);
+    
+    input.value = '';
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    
+    // Show loading
+    const loadingMsg = document.createElement('div');
+    loadingMsg.id = 'loading-msg-detail';
+    loadingMsg.style.cssText = 'background: #f3f4f6; padding: 1rem; border-radius: 0.5rem; font-family: Inter, sans-serif; color: #4b5563;';
+    loadingMsg.innerHTML = '<strong>AI Assistant:</strong> <em>Thinking...</em>';
+    messagesContainer.appendChild(loadingMsg);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    
+    try {
+        const response = await fetch(`${window.demoConfig.apiBaseUrl}/invoke-review-agent`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${window.demoConfig.authToken}`
+            },
+            body: JSON.stringify({
+                prompt: message
+            })
+        });
+        
+        const data = await response.json();
+        loadingMsg.remove();
+        
+        const aiMsg = document.createElement('div');
+        aiMsg.style.cssText = 'background: #f3f4f6; padding: 1rem; border-radius: 0.5rem; font-family: Inter, sans-serif; color: #1f2937;';
+        const responseText = data.response || data.message || 'I received your message.';
+        aiMsg.innerHTML = `<strong>AI Assistant:</strong> ${cleanAgentCoreResponse(responseText)}`;
+        messagesContainer.appendChild(aiMsg);
+        
+    } catch (error) {
+        console.error('Error sending message:', error);
+        loadingMsg.remove();
+        
+        const errorMsg = document.createElement('div');
+        errorMsg.style.cssText = 'background: #fee2e2; padding: 1rem; border-radius: 0.5rem; font-family: Inter, sans-serif; color: #991b1b;';
+        
+        // Check if it's a CORS error
+        if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
+            errorMsg.innerHTML = `
+                <strong>Connection Error:</strong> Unable to reach the AgentCore API.<br><br>
+                <strong>Note:</strong> The backend may need to be updated to support direct browser access. 
+                For the best experience, please configure Glean Agents as described in the setup documentation.
+            `;
+        } else {
+            errorMsg.innerHTML = '<strong>Error:</strong> Failed to send message. Please try again.';
+        }
+        messagesContainer.appendChild(errorMsg);
+    }
+    
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+/**
+ * Send message to AgentCore - overlay
+ */
+async function sendAgentCoreMessageOverlay() {
+    const input = document.getElementById('agentcore-input-overlay');
+    const messagesContainer = document.getElementById('agentcore-messages-overlay');
+    
+    if (!input || !messagesContainer) return;
+    
+    const message = input.value.trim();
+    if (!message) return;
+    
+    // Add user message
+    const userMsg = document.createElement('div');
+    userMsg.style.cssText = 'background: #2563eb; color: white; padding: 1rem; border-radius: 0.5rem; font-family: Inter, sans-serif; align-self: flex-end; max-width: 80%;';
+    userMsg.innerHTML = `<strong>You:</strong> ${escapeHtmlReviewer(message)}`;
+    messagesContainer.appendChild(userMsg);
+    
+    input.value = '';
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    
+    // Show loading
+    const loadingMsg = document.createElement('div');
+    loadingMsg.id = 'loading-msg-overlay';
+    loadingMsg.style.cssText = 'background: #f3f4f6; padding: 1rem; border-radius: 0.5rem; font-family: Inter, sans-serif; color: #4b5563;';
+    loadingMsg.innerHTML = '<strong>AI Assistant:</strong> <em>Thinking...</em>';
+    messagesContainer.appendChild(loadingMsg);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    
+    try {
+        const response = await fetch(`${window.demoConfig.apiBaseUrl}/invoke-review-agent`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${window.demoConfig.authToken}`
+            },
+            body: JSON.stringify({
+                prompt: message
+            })
+        });
+        
+        const data = await response.json();
+        loadingMsg.remove();
+        
+        const aiMsg = document.createElement('div');
+        aiMsg.style.cssText = 'background: #f3f4f6; padding: 1rem; border-radius: 0.5rem; font-family: Inter, sans-serif; color: #1f2937;';
+        const responseText = data.response || data.message || 'I received your message.';
+        aiMsg.innerHTML = `<strong>AI Assistant:</strong> ${cleanAgentCoreResponse(responseText)}`;
+        messagesContainer.appendChild(aiMsg);
+        
+    } catch (error) {
+        console.error('Error sending message:', error);
+        loadingMsg.remove();
+        
+        const errorMsg = document.createElement('div');
+        errorMsg.style.cssText = 'background: #fee2e2; padding: 1rem; border-radius: 0.5rem; font-family: Inter, sans-serif; color: #991b1b;';
+        
+        // Check if it's a CORS error
+        if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
+            errorMsg.innerHTML = `
+                <strong>Connection Error:</strong> Unable to reach the AgentCore API.<br><br>
+                <strong>Note:</strong> The backend may need to be updated to support direct browser access. 
+                For the best experience, please configure Glean Agents as described in the setup documentation.
+            `;
+        } else {
+            errorMsg.innerHTML = '<strong>Error:</strong> Failed to send message. Please try again.';
+        }
+        messagesContainer.appendChild(errorMsg);
+    }
+    
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+/**
+ * Escape HTML to prevent XSS
+ */
+function escapeHtmlReviewer(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function cleanAgentCoreResponse(text) {
+    if (!text) return text;
+    
+    // Remove <thinking> tags and their content
+    text = text.replace(/<thinking>.*?<\/thinking>/gs, '');
+    
+    // Remove escaped quotes
+    text = text.replace(/\\"/g, '"');
+    text = text.replace(/\\'/g, "'");
+    
+    // Convert escaped newlines to actual newlines
+    text = text.replace(/\\n/g, '\n');
+    
+    // Remove leading/trailing whitespace first
+    text = text.trim();
+    
+    // Remove wrapping quotes if the entire response is quoted
+    if ((text.startsWith('"') && text.endsWith('"')) || (text.startsWith("'") && text.endsWith("'"))) {
+        text = text.slice(1, -1).trim();
+    }
+    
+    // Convert markdown headers (### Header) to HTML
+    text = text.replace(/^### (.+)$/gm, '<strong style="font-size: 1.1em; display: block; margin-top: 0.5em; margin-bottom: 0.5em;">$1</strong>');
+    text = text.replace(/^## (.+)$/gm, '<strong style="font-size: 1.2em; display: block; margin-top: 0.5em; margin-bottom: 0.5em;">$1</strong>');
+    text = text.replace(/^# (.+)$/gm, '<strong style="font-size: 1.3em; display: block; margin-top: 0.5em; margin-bottom: 0.5em;">$1</strong>');
+    
+    // Convert markdown bold (**text**) to HTML
+    text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    
+    // Convert markdown italic (*text*) to HTML
+    text = text.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    
+    // Convert markdown lists (- item or * item) to HTML
+    text = text.replace(/^[\-\*] (.+)$/gm, '• $1');
+    
+    // Convert numbered lists (1. item) - keep as is but ensure proper spacing
+    text = text.replace(/^(\d+)\. /gm, '$1. ');
+    
+    // Convert newlines to <br> for HTML display
+    text = text.replace(/\n/g, '<br>');
+    
+    return text;
 }
 
 function initChatOverlay() {
@@ -1096,6 +1528,9 @@ function initChatOverlay() {
     // Refresh button
     if (chatRefresh) {
         chatRefresh.addEventListener('click', () => {
+            // Reset AgentCore choice on refresh
+            userChoseAgentCore = false;
+            chatInitialized = false;
             const container = document.getElementById('glean-agent-overlay');
             if (container) {
                 container.innerHTML = '';

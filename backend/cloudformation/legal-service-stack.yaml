@@ -729,7 +729,7 @@ Resources:
         IntegrationResponses:
           - StatusCode: 200
             ResponseParameters:
-              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,x-api-key,X-Amz-Security-Token'"
               method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
         RequestTemplates:
@@ -774,7 +774,7 @@ Resources:
         IntegrationResponses:
           - StatusCode: 200
             ResponseParameters:
-              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,x-api-key,X-Amz-Security-Token'"
               method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
             ResponseTemplates:
@@ -997,26 +997,30 @@ Resources:
               logger.info("AgentCore Authorizer Lambda triggered")
               
               headers = event.get('headers', {})
-              auth_header = headers.get('Authorization') or headers.get('authorization')
+              # Check for x-api-key header (case-insensitive)
+              api_key = headers.get('x-api-key') or headers.get('X-Api-Key') or headers.get('X-API-KEY')
               
-              if not auth_header:
-                  logger.error("No Authorization header found")
-                  raise Exception('Unauthorized')
+              # Fallback to Authorization header for backward compatibility
+              if not api_key:
+                  auth_header = headers.get('Authorization') or headers.get('authorization')
+                  if auth_header:
+                      try:
+                          api_key = auth_header.split(' ')[1] if ' ' in auth_header else auth_header
+                      except IndexError:
+                          pass
               
-              try:
-                  token = auth_header.split(' ')[1] if ' ' in auth_header else auth_header
-              except IndexError:
-                  logger.error("Invalid Authorization header format")
+              if not api_key:
+                  logger.error("No x-api-key or Authorization header found")
                   raise Exception('Unauthorized')
               
               method_arn = event['methodArn']
               
-              if validate_token(token):
+              if validate_token(api_key):
                   logger.info("Token is valid, allowing access")
-                  return generate_policy(token, 'Allow', method_arn)
+                  return generate_policy(api_key, 'Allow', method_arn)
               else:
                   logger.error("Token is invalid, denying access")
-                  return generate_policy(token, 'Deny', method_arn)
+                  return generate_policy(api_key, 'Deny', method_arn)
 
           def validate_token(token):
               global cached_api_key
@@ -1062,29 +1066,28 @@ Resources:
                   }
               }
 
-  # Lambda Function: Invoke Intake Agent (Direct Submission)
+  # Lambda Function: Invoke Intake Agent (AgentCore Chat)
   InvokeIntakeAgentFunction:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: !Sub "LegalService-InvokeIntakeAgent-${DeploymentID}"
       Runtime: python3.12
       Handler: index.lambda_handler
-      Role: !GetAtt LambdaExecutionRole.Arn
+      Role: !GetAtt AgentCoreProxyLambdaRole.Arn
       Timeout: 30
       MemorySize: 256
       Environment:
         Variables:
-          CLAIMS_TABLE: !Ref ClaimsTable
+          INTAKE_AGENT_ARN: "placeholder-will-be-updated-by-deployment-script"
       Code:
         ZipFile: |
           import json
           import boto3
           import os
           from datetime import datetime
-          from decimal import Decimal
 
-          dynamodb = boto3.resource('dynamodb')
-          claims_table = dynamodb.Table(os.environ['CLAIMS_TABLE'])
+          agentcore_client = boto3.client('bedrock-agentcore', region_name='us-east-1')
+          INTAKE_AGENT_ARN = os.environ.get('INTAKE_AGENT_ARN')
 
           def lambda_handler(event, context):
               headers = {
@@ -1099,89 +1102,49 @@ Resources:
                       return {'statusCode': 200, 'headers': headers, 'body': ''}
                   
                   body = json.loads(event.get('body', '{}'))
+                  user_prompt = body.get('prompt', '')
+                  session_id = body.get('sessionId', f'session-{int(datetime.now().timestamp() * 1000000)}')
                   
-                  # Validate required fields
-                  required_fields = ['claimantName', 'claimantEmail', 'policyNumber', 'claimType', 
-                                   'incidentDate', 'incidentDescription', 'claimValue']
-                  missing_fields = [field for field in required_fields if not body.get(field)]
+                  if len(session_id) < 33:
+                      session_id = f"{session_id}-{'0' * (33 - len(session_id))}"
                   
-                  if missing_fields:
+                  if not user_prompt:
                       return {
                           'statusCode': 400,
                           'headers': headers,
-                          'body': json.dumps({
-                              'success': False, 
-                              'error': f'Missing required fields: {", ".join(missing_fields)}'
-                          })
+                          'body': json.dumps({'success': False, 'error': 'Missing required field: prompt'})
                       }
                   
-                  # Validate claim type
-                  valid_types = ['vehicle', 'property', 'liability', 'health']
-                  if body['claimType'].lower() not in valid_types:
-                      return {
-                          'statusCode': 400,
-                          'headers': headers,
-                          'body': json.dumps({
-                              'success': False,
-                              'error': f'Invalid claim type. Must be one of: {", ".join(valid_types)}'
-                          })
-                      }
+                  agent_payload = json.dumps({"prompt": user_prompt}).encode('utf-8')
                   
-                  # Generate claim ID
-                  timestamp = datetime.utcnow()
-                  claim_id = f"CL-{timestamp.strftime('%Y-%m%d%H%M%S')}"
+                  response = agentcore_client.invoke_agent_runtime(
+                      agentRuntimeArn=INTAKE_AGENT_ARN,
+                      runtimeSessionId=session_id,
+                      payload=agent_payload
+                  )
                   
-                  # Prepare claim record
-                  claim_record = {
-                      'claimId': claim_id,
-                      'version': 'v1',
-                      'claimantInfo': {
-                          'name': body['claimantName'],
-                          'email': body['claimantEmail']
-                      },
-                      'policyNumber': body['policyNumber'],
-                      'claimType': body['claimType'].lower(),
-                      'incidentDate': body['incidentDate'],
-                      'incidentDescription': body['incidentDescription'],
-                      'claimValue': Decimal(str(body['claimValue'])),
-                      'status': 'submitted',
-                      'submittedDate': timestamp.isoformat(),
-                      'lastUpdated': timestamp.isoformat()
-                  }
-                  
-                  # Add optional fields
-                  if body.get('claimantPhone'):
-                      claim_record['claimantInfo']['phone'] = body['claimantPhone']
-                  if body.get('claimantAddress'):
-                      claim_record['claimantInfo']['address'] = body['claimantAddress']
-                  if body.get('policeReport'):
-                      claim_record['policeReport'] = body['policeReport']
-                  if 'injuries' in body:
-                      claim_record['injuries'] = body['injuries']
-                  if body.get('injuryDescription'):
-                      claim_record['injuryDescription'] = body['injuryDescription']
-                  
-                  # Save to DynamoDB
-                  claims_table.put_item(Item=claim_record)
+                  response_body = response['outputPayload'].read().decode('utf-8')
+                  agent_response = json.loads(response_body)
                   
                   return {
                       'statusCode': 200,
                       'headers': headers,
                       'body': json.dumps({
                           'success': True,
-                          'claimId': claim_id,
-                          'status': 'submitted',
-                          'submittedDate': timestamp.isoformat(),
-                          'message': f'Claim {claim_id} submitted successfully. You will receive updates via email at {body["claimantEmail"]}.'
+                          'response': agent_response.get('output', agent_response.get('response', 'No response from agent')),
+                          'sessionId': session_id
                       })
                   }
                   
               except Exception as e:
-                  print(f"Error submitting claim: {str(e)}")
+                  print(f"Error invoking intake agent: {str(e)}")
                   return {
                       'statusCode': 500,
                       'headers': headers,
-                      'body': json.dumps({'success': False, 'error': f'Failed to submit claim: {str(e)}'})
+                      'body': json.dumps({
+                          'success': False,
+                          'error': str(e)
+                      })
                   }
 
   # Lambda Function: Invoke Review Agent
@@ -1844,7 +1807,7 @@ Resources:
       RestApiId: !Ref LegalServiceAPI
       AuthorizerUri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AgentCoreAuthorizerLambda.Arn}/invocations"
       IdentitySource: method.request.header.Authorization
-      AuthorizerResultTtlInSeconds: 300
+      AuthorizerResultTtlInSeconds: 0
 
   # API Gateway Resources
   InvokeIntakeAgentResource:
@@ -1910,7 +1873,7 @@ Resources:
         IntegrationResponses:
           - StatusCode: 200
             ResponseParameters:
-              method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,x-api-key,X-Amz-Security-Token'"
               method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
       MethodResponses:
@@ -1948,7 +1911,7 @@ Resources:
         IntegrationResponses:
           - StatusCode: 200
             ResponseParameters:
-              method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,x-api-key,X-Amz-Security-Token'"
               method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
       MethodResponses:

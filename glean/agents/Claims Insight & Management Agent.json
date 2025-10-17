@@ -1,0 +1,408 @@
+{
+  "name": "Claims Insight & Management Agent",
+  "description": "Help users file insurance claims through conversational interaction.",
+  "icon": {
+    "backgroundColor": "var(--theme-brand-pink-50)",
+    "color": "#333",
+    "iconType": "GLYPH",
+    "name": "flag"
+  },
+  "schema": {
+    "fields": [],
+    "goal": "",
+    "modelOptions": {
+      "llmConfig": {
+        "provider": "OPEN_AI",
+        "model": "GPT5_LATEST"
+      }
+    },
+    "notes": [],
+    "steps": [
+      {
+        "id": "9c308229-9fdc-4b2a-a3df-72c46484b4c0",
+        "modelOptions": {},
+        "type": "BRANCH",
+        "branchConfig": {
+          "branches": [
+            {
+              "condition": {
+                "boolFunction": {
+                  "id": "Think",
+                  "inputTemplate": [
+                    {
+                      "name": "ExecutionConditionBoolPrompt",
+                      "template": "the user wants to extract insights from existing claims, or have AI automatically review a claim"
+                    },
+                    {
+                      "name": "examples",
+                      "template": "- Show me claim CL-2025-0000000000\n- Summarize all available claims"
+                    }
+                  ]
+                }
+              },
+              "stepId": "d43f305b-cff0-4ed1-9b93-b27d6a60465d"
+            },
+            {
+              "condition": {
+                "boolFunction": {
+                  "id": "Think",
+                  "inputTemplate": [
+                    {
+                      "name": "ExecutionConditionBoolPrompt",
+                      "template": "the user wants to manage claims, like manually approving, denying, or reassigning a claim"
+                    }
+                  ]
+                }
+              },
+              "stepId": "c53e4278-d930-4891-82d4-c5f684557221"
+            }
+          ],
+          "default": {
+            "stepId": "baedbb25-5e6d-4d52-b4f0-936e038606d2"
+          }
+        }
+      },
+      {
+        "id": "d43f305b-cff0-4ed1-9b93-b27d6a60465d",
+        "modelOptions": {},
+        "stepDependencies": [
+          "9c308229-9fdc-4b2a-a3df-72c46484b4c0"
+        ],
+        "type": "TOOL",
+        "instructionTemplate": "**Purpose:** Analyze the user's request and format it into a clear, structured prompt for the Claim Insights Action.\n\n**Instructions:**\n\nThink about what the user is asking for and reformulate their query into a clear, specific prompt that will be sent to the Claim Insights AI agent. Consider:\n\n1. **What information is the user seeking?** (specific claim, list of claims, analysis, AI recommendation)\n2. **What filters or criteria apply?** (status, value range, date range, claim type)\n3. **What level of detail is needed?** (summary, detailed analysis, comparison)\n4. **Is this a follow-up question?** (maintain context from previous conversation)\n\nFormat the query to be direct and actionable for the backend AI agent.\n\n**Example Transformations:**\n\n| User Query | Formatted Prompt for Claim Insights |\n|------------|-------------------------------------|\n| \"What claims need my attention?\" | \"Show me all claims with status 'assigned' that have high-risk factors or low AI confidence scores\" |\n| \"Tell me about claim 001\" | \"Provide detailed analysis of claim CL-2025-001 including AI recommendation, confidence score, risk factors, and reasoning\" |\n| \"Which ones should I approve?\" | \"List all pending claims where the AI recommends approval with confidence above 0.85\" |\n| \"Why did the AI flag this as risky?\" | \"Explain the risk factors and AI reasoning for claim CL-2025-001\" |\n| \"Show me expensive property claims\" | \"Retrieve all property claims with value over $15,000, include AI recommendations\" |\n| \"What's the status of the claim I just asked about?\" | \"Get current status and details for claim CL-2025-001\" (maintain session context) |\n\n**What the Claim Insights Action Can Do:**\n\n✅ **Search & Filter Claims**\n- Retrieve all claims or filter by status (pending, assigned, approved, denied)\n- Find claims by type (vehicle, property, liability, health)\n- Search by value range, date range, or claimant information\n\n✅ **Analyze Specific Claims**\n- Get detailed claim information including all fields\n- View AI recommendation (approve/deny) with confidence score\n- See risk factors identified by the AI\n- Understand AI reasoning and analysis basis\n\n✅ **AI Insights & Recommendations**\n- Explain why AI recommends approval or denial\n- Show confidence scores and what influences them\n- Identify fraud indicators or policy concerns\n- Compare claims or identify patterns\n\n✅ **Multi-turn Conversations**\n- Ask follow-up questions about claims\n- Drill into specific details\n- Request clarifications or additional context\n- Maintain conversation history via sessionId\n\n**Output:** A single, well-formatted prompt string ready to be sent to the Claim Insights Action.",
+        "toolConfig": [
+          {
+            "thinkConfig": {
+              "temperature": "FACTUAL"
+            },
+            "inputTemplate": [],
+            "name": "Think"
+          }
+        ]
+      },
+      {
+        "id": "c53e4278-d930-4891-82d4-c5f684557221",
+        "modelOptions": {},
+        "stepDependencies": [
+          "9c308229-9fdc-4b2a-a3df-72c46484b4c0"
+        ],
+        "type": "TOOL",
+        "instructionTemplate": "Think about the user's prompt, and prepare a query to search for the relevant information based on the prompt. For example:\n\n- If a user wants to make changes to any single claim - you will prepare a single string-based prompt to search for that specific claim's information. This will be used in the \"Prompt\" field of the following action.",
+        "toolConfig": [
+          {
+            "thinkConfig": {
+              "temperature": "FACTUAL"
+            },
+            "inputTemplate": [],
+            "name": "Think"
+          }
+        ]
+      },
+      {
+        "id": "baedbb25-5e6d-4d52-b4f0-936e038606d2",
+        "modelOptions": {},
+        "stepDependencies": [
+          "9c308229-9fdc-4b2a-a3df-72c46484b4c0"
+        ],
+        "type": "TOOL",
+        "instructionTemplate": "Fallback response. None of the branches matched. Ask for clearer instructions around:\n\n- Claims Insights\n- Approving Claims\n- Denying Claims\n- Reassigning Claims",
+        "toolConfig": [
+          {
+            "respondConfig": {
+              "temperature": "FACTUAL"
+            },
+            "inputTemplate": [],
+            "name": "Respond"
+          }
+        ]
+      },
+      {
+        "id": "532f76eb-cf4d-4b68-bb1c-6425fd82b143",
+        "modelOptions": {},
+        "stepDependencies": [
+          "d43f305b-cff0-4ed1-9b93-b27d6a60465d"
+        ],
+        "type": "TOOL",
+        "instructionTemplate": "Extract insights from claims. This action passes through to another agent that can read from, and gather insights from existing claims data. The [[d43f305b-cff0-4ed1-9b93-b27d6a60465d]] step will provide a single, formatted string-based prompt to include in the \"Prompt\" field.",
+        "toolConfig": [
+          {
+            "customisationData": {},
+            "inputTemplate": [],
+            "name": "DemoHub: Legal - Claim Insights Action"
+          }
+        ]
+      },
+      {
+        "id": "cdcca80e-9448-42a4-a67a-53542ade9945",
+        "modelOptions": {},
+        "stepDependencies": [
+          "c53e4278-d930-4891-82d4-c5f684557221"
+        ],
+        "type": "TOOL",
+        "instructionTemplate": "This action extract insights from claims. In this flow we're gathering claims information to be used in follow-on steps.\n\nTake the context/prompt prepared in [[c53e4278-d930-4891-82d4-c5f684557221]] , and gather the required information.\n\nThe [[c53e4278-d930-4891-82d4-c5f684557221]] step will provide a single, formatted string-based prompt to include in the \"Prompt\" field.\n\nOutput the necessary data of that prompt, which will be used in next steps.",
+        "toolConfig": [
+          {
+            "customisationData": {},
+            "inputTemplate": [],
+            "name": "DemoHub: Legal - Claim Insights Action"
+          }
+        ]
+      },
+      {
+        "id": "9de5a035-3c33-4186-84fd-e354ce4a0755",
+        "modelOptions": {},
+        "stepDependencies": [
+          "532f76eb-cf4d-4b68-bb1c-6425fd82b143"
+        ],
+        "type": "TOOL",
+        "toolConfig": [
+          {
+            "customisationData": {},
+            "inputTemplate": [
+              {
+                "template": "[[532f76eb-cf4d-4b68-bb1c-6425fd82b143]]"
+              }
+            ],
+            "documentReaderConfig": {
+              "retrieveImagesWithRawData": false
+            },
+            "name": "Read document"
+          }
+        ]
+      },
+      {
+        "id": "99456247-0dc2-4f32-a03d-e45dfd7f2af8",
+        "modelOptions": {},
+        "stepDependencies": [
+          "cdcca80e-9448-42a4-a67a-53542ade9945"
+        ],
+        "type": "TOOL",
+        "instructionTemplate": "- Think about what information returned in [[cdcca80e-9448-42a4-a67a-53542ade9945]] . Gather the information specifically related to the Claim specified by the user.\n- The existing fields will be used to pre-fill the appropriate fields in following Action steps.\n- If the user asked for a specific update in the initial request, make sure to update that appropriate field with the new value specified by the user.\n- Note: The only field that can NEVER be changed is the Claim ID field.\n- Include a 'Claim Details for Review' section in the form of a table with the fields being added to the action form.",
+        "toolConfig": [
+          {
+            "thinkConfig": {
+              "temperature": "FACTUAL"
+            },
+            "inputTemplate": [],
+            "name": "Think"
+          }
+        ]
+      },
+      {
+        "id": "295287ba-8b46-4c37-9247-a83b694124a8",
+        "modelOptions": {},
+        "stepDependencies": [
+          "9de5a035-3c33-4186-84fd-e354ce4a0755"
+        ],
+        "type": "TOOL",
+        "instructionTemplate": "User prompt was formed in [[d43f305b-cff0-4ed1-9b93-b27d6a60465d]] , submitted in action [[532f76eb-cf4d-4b68-bb1c-6425fd82b143]] , and response was read in [[9de5a035-3c33-4186-84fd-e354ce4a0755]] .\n\nNow respond to the user based on this context. Provide your response in appropriate, human-readable format. Use bolded text, bullets, numbering, and tables if and when appropriate. If you're providing back claims information, especially if it's a long list of claims, always provide it in table format.",
+        "toolConfig": [
+          {
+            "customisationData": {
+              "skipUserInteraction": true
+            },
+            "respondConfig": {
+              "temperature": "FACTUAL"
+            },
+            "inputTemplate": [],
+            "name": "Respond"
+          }
+        ]
+      },
+      {
+        "id": "21d807b5-af26-4509-8cd1-5ee5b2e9034e",
+        "modelOptions": {},
+        "stepDependencies": [
+          "99456247-0dc2-4f32-a03d-e45dfd7f2af8"
+        ],
+        "type": "BRANCH",
+        "branchConfig": {
+          "branches": [
+            {
+              "condition": {
+                "boolFunction": {
+                  "id": "Think",
+                  "inputTemplate": [
+                    {
+                      "name": "ExecutionConditionBoolPrompt",
+                      "template": "the user wants to manually approve a claim"
+                    }
+                  ]
+                }
+              },
+              "stepId": "f2927b95-4813-466e-9f76-32e4b153e510"
+            },
+            {
+              "condition": {
+                "boolFunction": {
+                  "id": "Think",
+                  "inputTemplate": [
+                    {
+                      "name": "ExecutionConditionBoolPrompt",
+                      "template": "the user wants to manually deny a claim"
+                    }
+                  ]
+                }
+              },
+              "stepId": "f6305d79-0a0d-420a-9b83-3103b1c2ea3d"
+            },
+            {
+              "condition": {
+                "boolFunction": {
+                  "id": "Think",
+                  "inputTemplate": [
+                    {
+                      "name": "ExecutionConditionBoolPrompt",
+                      "template": "the user wants to manually reassign a claim"
+                    }
+                  ]
+                }
+              },
+              "stepId": "e5ea016b-caa2-457b-9919-c51b731d333d"
+            }
+          ],
+          "default": {
+            "stepId": "82bc6a0e-cff6-4802-bfe7-a438746bd128"
+          }
+        }
+      },
+      {
+        "id": "82bc6a0e-cff6-4802-bfe7-a438746bd128",
+        "modelOptions": {},
+        "stepDependencies": [
+          "21d807b5-af26-4509-8cd1-5ee5b2e9034e"
+        ],
+        "type": "TOOL",
+        "instructionTemplate": "Fallback response. None of the branches matched. Ask for clearer instructions around:\n\n- Claims Insights\n- Approving Claims\n- Denying Claims\n- Reassigning Claims",
+        "toolConfig": [
+          {
+            "respondConfig": {
+              "temperature": "FACTUAL"
+            },
+            "inputTemplate": [],
+            "name": "Respond"
+          }
+        ]
+      },
+      {
+        "id": "f6305d79-0a0d-420a-9b83-3103b1c2ea3d",
+        "modelOptions": {},
+        "stepDependencies": [
+          "21d807b5-af26-4509-8cd1-5ee5b2e9034e"
+        ],
+        "type": "TOOL",
+        "instructionTemplate": "- Instruct the user to utilize the below \"Deny Claim\" button to update the Claim. Explain that the appropriate fields should have been updated, but they should review the details.\n- Include a table showing what details have been added to the Update action below. The table should have three columns, 'Field', 'Current Value', and 'New Value'. For the fields where you're changing the value, be sure to include the new value in the appropriate cell within the 'New Value' column. If a Current Value stayed unchanged, add \"Unchanged\" in the 'New Value' column.\n- Be sure to neatly format all responses relevant to the output you're generating, so it's easily digestible.",
+        "toolConfig": [
+          {
+            "respondConfig": {
+              "temperature": "FACTUAL"
+            },
+            "inputTemplate": [],
+            "name": "Respond"
+          }
+        ]
+      },
+      {
+        "id": "e5ea016b-caa2-457b-9919-c51b731d333d",
+        "modelOptions": {},
+        "stepDependencies": [
+          "21d807b5-af26-4509-8cd1-5ee5b2e9034e"
+        ],
+        "type": "TOOL",
+        "instructionTemplate": "- Instruct the user to utilize the below \"Reassign Claim\" button to update the Claim. Explain that the appropriate fields should have been updated, but they should review the details.\n- Include a table showing what details have been added to the Update action below. The table should have three columns, 'Field', 'Current Value', and 'New Value'. For the fields where you're changing the value, be sure to include the new value in the appropriate cell within the 'New Value' column. If a Current Value stayed unchanged, add \"Unchanged\" in the 'New Value' column.\n- Be sure to neatly format all responses relevant to the output you're generating, so it's easily digestible.\n- During reassignment, if the user mentions no specific Reviewer, assume to use the \"Intelligent Reassignment\" option",
+        "toolConfig": [
+          {
+            "respondConfig": {
+              "temperature": "FACTUAL"
+            },
+            "inputTemplate": [],
+            "name": "Respond"
+          }
+        ]
+      },
+      {
+        "id": "f2927b95-4813-466e-9f76-32e4b153e510",
+        "modelOptions": {},
+        "stepDependencies": [
+          "21d807b5-af26-4509-8cd1-5ee5b2e9034e"
+        ],
+        "type": "TOOL",
+        "instructionTemplate": "- Instruct the user to utilize the below \"Approve Claim\" button to update the Claim. Explain that the appropriate fields should have been updated, but they should review the details.\n- Include a table showing what details have been added to the Update action below. The table should have three columns, 'Field', 'Current Value', and 'New Value'. For the fields where you're changing the value, be sure to include the new value in the appropriate cell within the 'New Value' column. If a Current Value stayed unchanged, add \"Unchanged\" in the 'New Value' column.\n- Be sure to neatly format all responses relevant to the output you're generating, so it's easily digestible.",
+        "toolConfig": [
+          {
+            "respondConfig": {
+              "temperature": "FACTUAL"
+            },
+            "inputTemplate": [],
+            "name": "Respond"
+          }
+        ]
+      },
+      {
+        "id": "2bd7436d-98f8-4e27-b620-a9d1d42a5b78",
+        "modelOptions": {},
+        "stepDependencies": [
+          "f6305d79-0a0d-420a-9b83-3103b1c2ea3d"
+        ],
+        "type": "TOOL",
+        "instructionTemplate": "Use this action for the user to DENY a claim.\n\n- Fill in all fields similar to the ones gathered in [[cdcca80e-9448-42a4-a67a-53542ade9945]]  \n- If the user requested any of the particular fields to be updated, update it for them as decided in [[99456247-0dc2-4f32-a03d-e45dfd7f2af8]] .\n- The Claim Id field will be present. Be sure to fill out the Claim ID on behalf of the user.",
+        "toolConfig": [
+          {
+            "customisationData": {},
+            "inputTemplate": [],
+            "name": "DemoHub: Legal - Deny Claim"
+          }
+        ]
+      },
+      {
+        "id": "dec4dd6a-5776-4f72-918e-f3725665fab7",
+        "modelOptions": {},
+        "stepDependencies": [
+          "e5ea016b-caa2-457b-9919-c51b731d333d"
+        ],
+        "type": "TOOL",
+        "instructionTemplate": "Use this action for the user to DENY a claim.\n\n- Fill in all fields similar to the ones gathered in [[cdcca80e-9448-42a4-a67a-53542ade9945]]  \n- If the user requested any of the particular fields to be updated, update it for them as decided in [[99456247-0dc2-4f32-a03d-e45dfd7f2af8]] .\n- The Claim Id field will be present. Be sure to fill out the Claim ID on behalf of the user.\n- During reassignment, if the user mentions no specific Reviewer, assume to use the \"Intelligent Reassignment\" option",
+        "toolConfig": [
+          {
+            "customisationData": {},
+            "inputTemplate": [],
+            "name": "DemoHub: Legal - Reassign Claim"
+          }
+        ]
+      },
+      {
+        "id": "7c5a0ea6-bc64-470b-90f9-5e3457741c28",
+        "modelOptions": {},
+        "stepDependencies": [
+          "f2927b95-4813-466e-9f76-32e4b153e510"
+        ],
+        "type": "TOOL",
+        "instructionTemplate": "Use this action for the user to DENY a claim.\n\n- Fill in all fields similar to the ones gathered in [[cdcca80e-9448-42a4-a67a-53542ade9945]]  \n- If the user requested any of the particular fields to be updated, update it for them as decided in [[99456247-0dc2-4f32-a03d-e45dfd7f2af8]] .\n- The Claim Id field will be present. Be sure to fill out the Claim ID on behalf of the user.",
+        "toolConfig": [
+          {
+            "customisationData": {},
+            "inputTemplate": [],
+            "name": "DemoHub: Legal - Approve Claim"
+          }
+        ]
+      }
+    ],
+    "trigger": {
+      "config": {
+        "chatMessage": {
+          "prompts": [],
+          "slackConfig": {
+            "enabled": false,
+            "instanceChannels": {},
+            "sharingSettings": {
+              "autoShareResponse": false,
+              "disableSharing": false
+            }
+          }
+        }
+      },
+      "type": "CHAT_MESSAGE"
+    }
+  },
+  "namespace": "AGENT"
+}

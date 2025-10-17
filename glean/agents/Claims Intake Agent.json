@@ -1,0 +1,258 @@
+{
+  "name": "Claims Intake Agent",
+  "description": "Assist users with submitting new Insurance Claims in the Legal DemoHub",
+  "icon": {
+    "backgroundColor": "var(--theme-brand-apple-green-50)",
+    "color": "#333",
+    "iconType": "GLYPH",
+    "name": "clipboard"
+  },
+  "schema": {
+    "fields": [],
+    "goal": "",
+    "modelOptions": {},
+    "notes": [],
+    "steps": [
+      {
+        "id": "cfd24046-37f8-4bb4-8dbc-22a5816f8625",
+        "memoryConfig": "ALL_DEPENDENCIES",
+        "modelOptions": {},
+        "type": "BRANCH",
+        "branchConfig": {
+          "branches": [
+            {
+              "condition": {
+                "boolFunction": {
+                  "id": "Think",
+                  "inputTemplate": [
+                    {
+                      "name": "ExecutionConditionBoolPrompt",
+                      "template": "the user wants to file a new insurance claim"
+                    },
+                    {
+                      "name": "examples",
+                      "template": "- What information do you need from me?\n- I want to file a new insurance claim. What information do you need from me?\n- How do I file an insurance claim?"
+                    }
+                  ]
+                }
+              },
+              "stepId": "77533dc9-262b-4e11-8568-a592e15dd1d6"
+            },
+            {
+              "condition": {
+                "boolFunction": {
+                  "id": "Think",
+                  "inputTemplate": [
+                    {
+                      "name": "ExecutionConditionBoolPrompt",
+                      "template": "the user wants an update on their existing insurance claim"
+                    }
+                  ]
+                }
+              },
+              "stepId": "c0fe593a-a3a5-4aee-99a3-faccbdb732ea"
+            }
+          ],
+          "default": {
+            "stepId": "96116a65-dc69-43e6-837e-4bf96d181259"
+          }
+        }
+      },
+      {
+        "id": "77533dc9-262b-4e11-8568-a592e15dd1d6",
+        "memoryConfig": "ALL_DEPENDENCIES",
+        "modelOptions": {},
+        "stepDependencies": [
+          "cfd24046-37f8-4bb4-8dbc-22a5816f8625"
+        ],
+        "type": "TOOL",
+        "instructionTemplate": "**Your Role:**\nYou are an AI assistant that helps users file insurance claims through a structured intake form.\n\n**Initial Greeting & Form Introduction:**\nWhen a user wants to file a claim, explain:\n\"To file your insurance claim, you'll use our **Claim Intake Form** by clicking the button below. I can help make this process quick and easy by pre-filling the form with any information you provide to me.\"\n\n**Information Collection Approach:**\nEncourage the user to share information freely:\n\"Feel free to provide all your claim details to me in any format - you can type, paste, or attach documents with the information. I'll extract the details and pre-fill the form fields for you, so you only need to review and submit.\"\n\n**Required Information (Must Collect):**\nInform the user of the required fields:\n\"Here's what we need to process your claim:\n1. **Your full name**\n2. **Email address** (for updates and correspondence)\n3. **Policy number**\n4. **Claim type** - Choose from: vehicle, property, liability, or health\n5. **Incident date** (in YYYY-MM-DD format)\n6. **Detailed description** of what happened\n7. **Estimated claim value** in USD\"\n\n**Optional Information (Nice to Have):**\nMention optional fields without pressuring:\n\"If available, you can also provide:\n- Phone number\n- Address\n- Police report number\n- Information about any injuries (yes/no and description)\"\n\n**Submission & Next Steps:**\nSet clear expectations:\n\"Once you've provided the information and submitted the form, I'll give you a **Claim ID** for tracking. You'll receive all updates about your claim via email at the address you provide.\"\n\n**Conversation Flow:**\n- Be conversational and empathetic - users may be stressed after an incident\n- Extract information from natural language (e.g., \"I was in a car accident yesterday\" → claim type: vehicle, incident date: [yesterday's date])\n- If information is missing, ask for it naturally without being repetitive\n- When you have all required fields, inform the user: \"I have all the required information. Click the button below to review and submit your claim.\"\n- Do NOT submit the form yourself - the user must click the button and review the pre-filled form",
+        "toolConfig": [
+          {
+            "respondConfig": {
+              "temperature": "FACTUAL"
+            },
+            "inputTemplate": [],
+            "name": "Respond"
+          }
+        ]
+      },
+      {
+        "id": "c0fe593a-a3a5-4aee-99a3-faccbdb732ea",
+        "memoryConfig": "ALL_DEPENDENCIES",
+        "modelOptions": {},
+        "stepDependencies": [
+          "cfd24046-37f8-4bb4-8dbc-22a5816f8625"
+        ],
+        "type": "BRANCH",
+        "branchConfig": {
+          "branches": [
+            {
+              "condition": {
+                "boolFunction": {
+                  "id": "Think",
+                  "inputTemplate": [
+                    {
+                      "name": "ExecutionConditionBoolPrompt",
+                      "template": "the user provided ANY ONE of the following info:\n1. Full name\n2. Email\n3. Claim ID\n4. Policy number"
+                    }
+                  ]
+                }
+              },
+              "stepId": "408df293-cba0-4952-b229-92bbfa4d45a6"
+            }
+          ],
+          "default": {
+            "stepId": "78a6ac4d-a3cf-4c80-b086-3b935ce37974"
+          }
+        }
+      },
+      {
+        "id": "96116a65-dc69-43e6-837e-4bf96d181259",
+        "memoryConfig": "ALL_DEPENDENCIES",
+        "modelOptions": {},
+        "stepDependencies": [
+          "cfd24046-37f8-4bb4-8dbc-22a5816f8625"
+        ],
+        "type": "TOOL",
+        "instructionTemplate": "Respond to the user saying they need to either provide:\n-1. The information needed to file a claim\n**Required Information (Must Collect):**\nInform the user of the required fields:\n\"Here's what we need to process your claim:\n1. **Your full name**\n2. **Email address** (for updates and correspondence)\n3. **Policy number**\n4. **Claim type** - Choose from: vehicle, property, liability, or health\n5. **Incident date** (in YYYY-MM-DD format)\n6. **Detailed description** of what happened\n7. **Estimated claim value** in USD\"\n\n**Optional Information (Nice to Have):**\nMention optional fields without pressuring:\n\"If available, you can also provide:\n- Phone number\n- Address\n- Police report number\n- Information about any injuries (yes/no and description)\"\n\nOR!\n\n2. They need to provide the information needed to check on an existing claim, which is either:\n\n1. Full name\n2. Email\n3. Claim ID\n4. Policy number",
+        "toolConfig": [
+          {
+            "respondConfig": {
+              "temperature": "FACTUAL"
+            },
+            "inputTemplate": [],
+            "name": "Respond"
+          }
+        ]
+      },
+      {
+        "id": "e95340e6-86b0-403c-9ab6-728dec09bbd4",
+        "memoryConfig": "ALL_DEPENDENCIES",
+        "modelOptions": {},
+        "stepDependencies": [
+          "77533dc9-262b-4e11-8568-a592e15dd1d6"
+        ],
+        "type": "TOOL",
+        "instructionTemplate": "Action to submit new claims.",
+        "toolConfig": [
+          {
+            "customisationData": {},
+            "inputTemplate": [],
+            "name": "DemoHub: Legal - Claim Intake Action"
+          }
+        ]
+      },
+      {
+        "id": "408df293-cba0-4952-b229-92bbfa4d45a6",
+        "memoryConfig": "ALL_DEPENDENCIES",
+        "modelOptions": {},
+        "stepDependencies": [
+          "c0fe593a-a3a5-4aee-99a3-faccbdb732ea"
+        ],
+        "type": "TOOL",
+        "instructionTemplate": "**Purpose:** Analyze the user's request and format it into a clear, structured prompt for the Claim Insights Action - in order to get status information on their existing claim.\n\n**Instructions:**\n\nThink about what the user is asking for and reformulate their query into a clear, specific prompt that will be sent to the Claim Insights AI agent to gather information on their specific claim.\n\nThe user provided some, or all of the below. This can be used in the prompt to gather the required information.\n1. Full name\n2. Email\n3. Claim ID\n4. Policy number\n\nFormat the query to be direct and actionable for the backend AI agent.\n\nExample prompts:\n\"What's the status of the claim CL-1238763476\"\n\"What is the status of the claim for Firstname Lastname\"\n\"What is the status for the claim attached to policy number PL-8374832758\"\n\n**Output:** A single, well-formatted prompt string ready to be sent to the Claim Insights Action.",
+        "toolConfig": [
+          {
+            "thinkConfig": {
+              "temperature": "FACTUAL"
+            },
+            "inputTemplate": [],
+            "name": "Think"
+          }
+        ]
+      },
+      {
+        "id": "78a6ac4d-a3cf-4c80-b086-3b935ce37974",
+        "memoryConfig": "ALL_DEPENDENCIES",
+        "modelOptions": {},
+        "stepDependencies": [
+          "c0fe593a-a3a5-4aee-99a3-faccbdb732ea"
+        ],
+        "type": "TOOL",
+        "instructionTemplate": "Ask the user to provide the information needed to check on an existing claim, which is either:\n\n1. Full name\n2. Email\n3. Claim ID\n4. Policy number",
+        "toolConfig": [
+          {
+            "respondConfig": {
+              "temperature": "FACTUAL"
+            },
+            "inputTemplate": [],
+            "name": "Respond"
+          }
+        ]
+      },
+      {
+        "id": "fde54ba7-7f4b-4ef2-be12-b2cae7f8b7be",
+        "memoryConfig": "ALL_DEPENDENCIES",
+        "modelOptions": {},
+        "stepDependencies": [
+          "408df293-cba0-4952-b229-92bbfa4d45a6"
+        ],
+        "type": "TOOL",
+        "instructionTemplate": "Extract insights from claims. This action passes through to another agent that can read from, and gather insights from existing claims data. The [[408df293-cba0-4952-b229-92bbfa4d45a6]] step will provide a single, formatted string-based prompt to include in the \"Prompt\" field to gather information related to a single claim.",
+        "toolConfig": [
+          {
+            "customisationData": {},
+            "inputTemplate": [],
+            "name": "DemoHub: Legal - Claim Insights Action"
+          }
+        ]
+      },
+      {
+        "id": "2bd6325e-b6e6-4aed-b974-6b6cb472dcf0",
+        "memoryConfig": "ALL_DEPENDENCIES",
+        "modelOptions": {},
+        "stepDependencies": [
+          "fde54ba7-7f4b-4ef2-be12-b2cae7f8b7be"
+        ],
+        "type": "TOOL",
+        "instructionTemplate": "[[fde54ba7-7f4b-4ef2-be12-b2cae7f8b7be]]",
+        "toolConfig": [
+          {
+            "documentReaderConfig": {
+              "retrieveImagesWithRawData": false
+            },
+            "inputTemplate": [],
+            "name": "Read document"
+          }
+        ]
+      },
+      {
+        "id": "a3d29816-410b-4907-84fa-47da4c7965eb",
+        "memoryConfig": "ALL_DEPENDENCIES",
+        "modelOptions": {},
+        "stepDependencies": [
+          "2bd6325e-b6e6-4aed-b974-6b6cb472dcf0"
+        ],
+        "type": "TOOL",
+        "instructionTemplate": "- Be polite and empathetic as appropraite\n- Use emojis as appropriate to spice up the response, but don't over-do it. Stay professional.\n- Provide the user with a status update of their claim, including the current status, and who it's assigned to.\n\nProvide the below information on their claim in TABLE format:\n1. Full name\n2. Email\n2. Policy number\n3. Claim type (Eg. vehicle, property, liability, or health)\n4. Current status\n5. Assigned reviewer\n\nEnd by reminding the user that they will continue to receive updates vir email.",
+        "toolConfig": [
+          {
+            "respondConfig": {
+              "temperature": "FACTUAL"
+            },
+            "inputTemplate": [],
+            "name": "Respond"
+          }
+        ]
+      }
+    ],
+    "trigger": {
+      "config": {
+        "chatMessage": {
+          "prompts": [],
+          "slackConfig": {
+            "enabled": false,
+            "instanceChannels": {},
+            "sharingSettings": {
+              "autoShareResponse": false,
+              "disableSharing": false
+            }
+          }
+        }
+      },
+      "type": "CHAT_MESSAGE"
+    }
+  },
+  "namespace": "AGENT"
+}
