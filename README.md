@@ -191,6 +191,26 @@ The system includes pre-loaded sample data:
 - **Python 3.10+** (Python 3.12 recommended for AgentCore)
 - **Glean account** (optional, for conversational interface)
 
+---
+
+### ⚠️ Security Notice
+
+**The web interfaces (submitter.html and reviewer.html) do not include authentication.** They are designed for local development and testing.
+
+**For production deployments:**
+- ✅ **Do NOT expose these pages publicly without authentication**
+- ✅ **Recommended**: Place behind authentication layer:
+  - **Basic Auth** (simple HTTP authentication)
+  - **AWS Cognito** (user pools with federated identity)
+  - **Okta, Auth0, or similar** (enterprise SSO)
+  - **CloudFront + Lambda@Edge** (custom auth at CDN level)
+- ✅ The backend API uses API key authentication and is secure
+- ✅ Glean integration uses Glean's built-in authentication
+
+**Local testing is safe** - just run `./serve.sh` and access via `http://localhost:8000`
+
+---
+
 ### Step 1: Configure Deployment
 
 Copy the configuration template and customize it:
