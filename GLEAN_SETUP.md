@@ -48,17 +48,17 @@ aws secretsmanager get-secret-value \
 - Go to AWS Console → CloudFormation → LegalService-legal stack → Outputs tab
 - Find `ApiToken` output value
 
-Save this token - you'll need it for configuring all 6 Glean Actions.
+Save this token - you'll need it for configuring all 5 Glean Actions.
 
 ---
 
 ### Step 3: Create Glean Actions
 
-You need to create 6 Glean Actions. Each action requires the same authentication token from Step 2.
+You need to create 5 Glean Actions. Each action requires the same authentication token from Step 2.
 
 #### Detailed Example: Creating "Claim Insights" Action (READ Action)
 
-Follow these steps for the first action. The process is identical for all 6 actions, just with different files and settings.
+Follow these steps for the first action. The process is identical for all 5 actions, just with different files and settings.
 
 **1. Navigate to Actions**
 - Go to **Glean Admin Console** → **Actions** → **Create Action**
