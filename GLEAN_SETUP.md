@@ -98,7 +98,7 @@ Repeat the above process for each of the following actions. The only differences
 
 | # | Display Name | Action Type | OpenAPI File | Description |
 |---|--------------|-------------|--------------|-------------|
-| 1 | **File Insurance Claim** | Write | `openapi-file-claim-action.json` | Submit new insurance claims |
+| 1 | **Claim Intake** | Write | `openapi-claim-intake-action.json` | Submit new insurance claims |
 | 2 | **Approve Claim** | Write | `openapi-approve-claim-action.json` | Approve a claim |
 | 3 | **Deny Claim** | Write | `openapi-deny-claim-action.json` | Deny a claim with reason |
 | 4 | **Reassign Claim** | Write | `openapi-reassign-claim-action.json` | Reassign claim to another reviewer |
@@ -137,7 +137,7 @@ We've pre-configured two agents for you! Instead of manually creating them, you 
    - Then, import `Claims Insight & Management Agent.json`
 
 4. **Important**: After importing, verify that the actions are properly linked:
-   - **Claims Intake Agent** should have: `File Insurance Claim` action
+   - **Claims Intake Agent** should have: `Claim Intake` action
    - **Claims Insight & Management Agent** should have: `Claim Insights`, `Approve Claim`, `Deny Claim`, and `Reassign Claim` actions
 
 5. If actions are not linked, manually add them:
@@ -168,7 +168,7 @@ Your role is to:
 - Guide users through the claim filing process conversationally
 - Collect all required information: claimant name, email, policy number, claim type, incident date, description, and claim value
 - Ask clarifying questions to ensure complete and accurate information
-- Use the "File Insurance Claim" action to submit claims when all information is collected
+- Use the "Claim Intake" action to submit claims when all information is collected
 - Provide the claim ID to users after successful submission
 
 Be empathetic, professional, and thorough. Help users understand what information is needed and why.
@@ -190,7 +190,7 @@ Optional information:
 - Injury description
 ```
 
-4. **Add Action**: Select "File Insurance Claim"
+4. **Add Action**: Select "Claim Intake"
 5. **Conversation Starters**:
    - "I need to file a vehicle accident claim"
    - "Help me submit a property damage claim"
@@ -358,7 +358,7 @@ DynamoDB (Data Storage)
 - [ ] API token retrieved (from `deployment-outputs.json`, Secrets Manager, or CloudFormation)
 - [ ] All 5 Glean Actions created with proper authentication:
   - [ ] Claim Insights (Read)
-  - [ ] File Insurance Claim (Write)
+  - [ ] Claim Intake (Write)
   - [ ] Approve Claim (Write)
   - [ ] Deny Claim (Write)
   - [ ] Reassign Claim (Write)

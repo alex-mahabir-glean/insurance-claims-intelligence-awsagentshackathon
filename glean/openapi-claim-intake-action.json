@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "File Insurance Claim",
+    "title": "Claim Intake",
     "version": "2.0.0",
     "description": "Submit insurance claims with structured form data. The Glean agent can auto-fill fields based on user conversation, then present a modal form for review and submission. Validates policy information and submits claims to the legal service management system."
   },
