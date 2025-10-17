@@ -92,17 +92,16 @@ Follow these steps for the first action. The process is identical for all 6 acti
 
 ---
 
-#### Quick Steps for Remaining 5 Actions
+#### Quick Steps for Remaining 4 Actions
 
 Repeat the above process for each of the following actions. The only differences are the **Display Name**, **Action Type**, and **OpenAPI file**:
 
 | # | Display Name | Action Type | OpenAPI File | Description |
 |---|--------------|-------------|--------------|-------------|
 | 1 | **File Insurance Claim** | Write | `openapi-file-claim-action.json` | Submit new insurance claims |
-| 2 | **Manage Insurance Claims** | Read | `openapi-manage-claims-action.json` | Search and view claims conversationally |
-| 3 | **Approve Claim** | Write | `openapi-approve-claim-action.json` | Approve a claim |
-| 4 | **Deny Claim** | Write | `openapi-deny-claim-action.json` | Deny a claim with reason |
-| 5 | **Reassign Claim** | Write | `openapi-reassign-claim-action.json` | Reassign claim to another reviewer |
+| 2 | **Approve Claim** | Write | `openapi-approve-claim-action.json` | Approve a claim |
+| 3 | **Deny Claim** | Write | `openapi-deny-claim-action.json` | Deny a claim with reason |
+| 4 | **Reassign Claim** | Write | `openapi-reassign-claim-action.json` | Reassign claim to another reviewer |
 
 **For each action:**
 1. Create New Action
@@ -112,7 +111,7 @@ Repeat the above process for each of the following actions. The only differences
 5. Configure Authentication (same token for all)
 6. Save
 
-**✅ Checkpoint**: You should now have 6 actions in your Glean Actions list
+**✅ Checkpoint**: You should now have 5 actions in your Glean Actions list
 
 ---
 
@@ -139,7 +138,7 @@ We've pre-configured two agents for you! Instead of manually creating them, you 
 
 4. **Important**: After importing, verify that the actions are properly linked:
    - **Claims Intake Agent** should have: `File Insurance Claim` action
-   - **Claims Insight & Management Agent** should have: `Manage Insurance Claims`, `Approve Claim`, `Deny Claim`, `Reassign Claim`, and `Claim Insights` actions
+   - **Claims Insight & Management Agent** should have: `Claim Insights`, `Approve Claim`, `Deny Claim`, and `Reassign Claim` actions
 
 5. If actions are not linked, manually add them:
    - Edit the agent
@@ -210,12 +209,11 @@ Optional information:
 You are an AI assistant specialized in helping claim reviewers manage and analyze insurance claims.
 
 Your role is to:
-- Help reviewers search and view claims using the "Manage Insurance Claims" action
+- Help reviewers search and view claims using the "Claim Insights" action
 - Provide detailed claim analysis and AI recommendations
 - Assist with approving claims using the "Approve Claim" action
 - Assist with denying claims using the "Deny Claim" action
 - Help reassign claims to other reviewers using the "Reassign Claim" action
-- Provide insights on claim patterns using the "Claim Insights" action
 
 Be analytical, thorough, and provide clear reasoning for recommendations. Always explain the basis for AI recommendations and highlight key factors in claim decisions.
 
@@ -228,12 +226,11 @@ When reviewing claims, consider:
 - AI confidence scores
 ```
 
-4. **Add Actions**: Select all 5 actions:
-   - Manage Insurance Claims
+4. **Add Actions**: Select all 4 actions:
+   - Claim Insights
    - Approve Claim
    - Deny Claim
    - Reassign Claim
-   - Claim Insights
 5. **Conversation Starters**:
    - "Show me all pending claims"
    - "What claims need my review?"
@@ -359,10 +356,9 @@ DynamoDB (Data Storage)
 - [ ] AWS infrastructure deployed (`./deploy.sh`)
 - [ ] Glean OpenAPI specs generated (`./generate-glean-specs.sh`)
 - [ ] API token retrieved (from `deployment-outputs.json`, Secrets Manager, or CloudFormation)
-- [ ] All 6 Glean Actions created with proper authentication:
+- [ ] All 5 Glean Actions created with proper authentication:
   - [ ] Claim Insights (Read)
   - [ ] File Insurance Claim (Write)
-  - [ ] Manage Insurance Claims (Read)
   - [ ] Approve Claim (Write)
   - [ ] Deny Claim (Write)
   - [ ] Reassign Claim (Write)
