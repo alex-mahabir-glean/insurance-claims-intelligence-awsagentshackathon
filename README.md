@@ -204,8 +204,8 @@ The system includes pre-loaded sample data:
   - **AWS Cognito** (user pools with federated identity)
   - **Okta, Auth0, or similar** (enterprise SSO)
   - **CloudFront + Lambda@Edge** (custom auth at CDN level)
-- ✅ The backend API uses API key authentication and is secure
-- ✅ Glean integration uses Glean's built-in authentication
+- ✅ The backend API uses API key authentication stored in Secrets Manager and is secure enough for demo purposes
+- ✅ Glean integration uses Glean's built-in authentication provided by Glean's WebSDK & Glean Actions
 
 **Local testing is safe** - just run `./serve.sh` and access via `http://localhost:8000`
 
