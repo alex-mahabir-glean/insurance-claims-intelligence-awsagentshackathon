@@ -168,7 +168,14 @@ echo ""
   export AWS_REGION="$REGION"
   export DEPLOYMENT_ID="$DEPLOYMENT_ID"
   
-  python3 << 'PYTHON_WAIT_AGENTS'
+  # Use venv Python if available for bedrock-agentcore-control service
+  if [ -d "deployment/agentcore-venv" ]; then
+    PYTHON_CMD="deployment/agentcore-venv/bin/python3"
+  else
+    PYTHON_CMD="python3"
+  fi
+  
+  $PYTHON_CMD << 'PYTHON_WAIT_AGENTS'
 import boto3
 import os
 import time
