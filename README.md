@@ -197,7 +197,7 @@ The system includes pre-loaded sample data:
 
 **The web interfaces are designed for local development and testing.** For local testing, simply run `./serve.sh` and access via `http://localhost:8000`.
 
-**For production deployments**, see **[AWS_HOSTING.md](AWS_HOSTING.md)** for a complete secure hosting setup with CloudFront, Cognito authentication, and Lambda@Edge.
+**For production deployments**, see **[AWS_HOSTING.md](AWS_HOSTING.md)** for a complete secure hosting setup with CloudFront, Cognito authentication, and Lambda@Edge. As with everything else hosted publicly, you should review the code before deploying.
 
 ---
 
