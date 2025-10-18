@@ -11,6 +11,7 @@ window.deploymentConfig = {
     gleanIntakeAgentId: 'your-glean-agent-id',
     gleanReviewAgentId: 'your-glean-agent-id',
     
-    // Auth token (for demo purposes - in production use proper auth)
-    authToken: 'demo-token-123'
+    // Auth token for AgentCore API endpoints
+    // Get this from: aws secretsmanager get-secret-value --secret-id LegalService/AgentCoreApiToken/YOUR_DEPLOYMENT_ID
+    authToken: 'your-api-token-from-secrets-manager'
 };

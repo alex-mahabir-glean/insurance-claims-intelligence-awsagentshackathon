@@ -418,6 +418,28 @@ echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━�
 echo -e "${BLUE}🌐 Step 5/6: Updating Frontend Configuration${NC}"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
+echo -e "${BLUE}Retrieving API token from Secrets Manager...${NC}"
+
+# Retrieve the API token from Secrets Manager
+API_TOKEN_CMD="aws secretsmanager get-secret-value \
+  --secret-id LegalService/AgentCoreApiToken/${DEPLOYMENT_ID} \
+  --region $REGION \
+  --query SecretString \
+  --output text"
+
+if [ -n "$PROFILE" ]; then
+    API_TOKEN_CMD="$API_TOKEN_CMD --profile $PROFILE"
+fi
+
+API_TOKEN=$(eval $API_TOKEN_CMD | python3 -c "import sys, json; print(json.load(sys.stdin)['token'])")
+
+if [ -z "$API_TOKEN" ]; then
+    echo -e "${RED}❌ Failed to retrieve API token from Secrets Manager${NC}"
+    exit 1
+fi
+
+echo -e "${GREEN}✓ API token retrieved${NC}"
+
 echo -e "${BLUE}Creating config.js for local development...${NC}"
 
 # Create config.js with deployment values
@@ -434,8 +456,8 @@ window.deploymentConfig = {
     gleanIntakeAgentId: '${GLEAN_INTAKE_AGENT_ID:-your-glean-agent-id}',
     gleanReviewAgentId: '${GLEAN_REVIEW_AGENT_ID:-your-glean-agent-id}',
     
-    // Auth token (for demo purposes - in production use proper auth)
-    authToken: 'demo-token-123'
+    // Auth token for AgentCore API endpoints
+    authToken: '$API_TOKEN'
 };
 EOF
 
