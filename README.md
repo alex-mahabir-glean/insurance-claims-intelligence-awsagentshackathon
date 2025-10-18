@@ -195,19 +195,9 @@ The system includes pre-loaded sample data:
 
 ### ⚠️ Security Notice
 
-**The web interfaces (submitter.html and reviewer.html) do not include authentication.** They are designed for local development and testing.
+**The web interfaces are designed for local development and testing.** For local testing, simply run `./serve.sh` and access via `http://localhost:8000`.
 
-**For production deployments:**
-- ✅ **Do NOT expose these pages publicly without authentication**
-- ✅ **Recommended**: Place behind authentication layer:
-  - **Basic Auth** (simple HTTP authentication)
-  - **AWS Cognito** (user pools with federated identity)
-  - **Okta, Auth0, or similar** (enterprise SSO)
-  - **CloudFront + Lambda@Edge** (custom auth at CDN level)
-- ✅ The backend API uses API key authentication stored in Secrets Manager and is secure enough for demo purposes
-- ✅ Glean integration uses Glean's built-in authentication provided by Glean's WebSDK & Glean Actions
-
-**Local testing is safe** - just run `./serve.sh` and access via `http://localhost:8000`
+**For production deployments**, see **[AWS_HOSTING.md](AWS_HOSTING.md)** for a complete secure hosting setup with CloudFront, Cognito authentication, and Lambda@Edge.
 
 ---
 
