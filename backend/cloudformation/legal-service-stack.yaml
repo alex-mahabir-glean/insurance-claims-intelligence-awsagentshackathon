@@ -707,7 +707,8 @@ Resources:
       RestApiId: !Ref LegalServiceAPI
       ResourceId: !Ref SubmitClaimResource
       HttpMethod: POST
-      AuthorizationType: NONE
+      AuthorizationType: CUSTOM
+      AuthorizerId: !Ref AgentCoreApiRequestAuthorizer
       Integration:
         Type: AWS_PROXY
         IntegrationHttpMethod: POST
@@ -812,18 +813,6 @@ Resources:
       ParentId: !GetAtt LegalServiceAPI.RootResourceId
       PathPart: approve-claim
 
-  ApproveClaimMethod:
-    Type: AWS::ApiGateway::Method
-    Properties:
-      RestApiId: !Ref LegalServiceAPI
-      ResourceId: !Ref ApproveClaimResource
-      HttpMethod: POST
-      AuthorizationType: NONE
-      Integration:
-        Type: AWS_PROXY
-        IntegrationHttpMethod: POST
-        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApproveClaimFunction.Arn}/invocations"
-
   DenyClaimResource:
     Type: AWS::ApiGateway::Resource
     Properties:
@@ -831,36 +820,12 @@ Resources:
       ParentId: !GetAtt LegalServiceAPI.RootResourceId
       PathPart: deny-claim
 
-  DenyClaimMethod:
-    Type: AWS::ApiGateway::Method
-    Properties:
-      RestApiId: !Ref LegalServiceAPI
-      ResourceId: !Ref DenyClaimResource
-      HttpMethod: POST
-      AuthorizationType: NONE
-      Integration:
-        Type: AWS_PROXY
-        IntegrationHttpMethod: POST
-        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${DenyClaimFunction.Arn}/invocations"
-
   ReassignClaimResource:
     Type: AWS::ApiGateway::Resource
     Properties:
       RestApiId: !Ref LegalServiceAPI
       ParentId: !GetAtt LegalServiceAPI.RootResourceId
       PathPart: reassign-claim
-
-  ReassignClaimMethod:
-    Type: AWS::ApiGateway::Method
-    Properties:
-      RestApiId: !Ref LegalServiceAPI
-      ResourceId: !Ref ReassignClaimResource
-      HttpMethod: POST
-      AuthorizationType: NONE
-      Integration:
-        Type: AWS_PROXY
-        IntegrationHttpMethod: POST
-        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ReassignClaimFunction.Arn}/invocations"
 
   # Lambda Permissions
   SubmitClaimLambdaPermission:
@@ -2102,6 +2067,7 @@ Resources:
     Properties:
       RestApiId: !Ref LegalServiceAPI
       StageName: prod
+      Description: "Deployment with authentication on submit-claim endpoint - 2025-10-18"
 
 
 Outputs:
