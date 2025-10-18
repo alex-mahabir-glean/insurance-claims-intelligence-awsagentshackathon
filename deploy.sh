@@ -335,7 +335,7 @@ done
 # Update invoke agent Lambda functions
 $AWS_CMD lambda update-function-configuration \
   --function-name "LegalService-InvokeIntakeAgent-${DEPLOYMENT_ID}" \
-  --environment "Variables={AGENT_RUNTIME_ARN=${INTAKE_ARN}}" \
+  --environment "Variables={INTAKE_AGENT_ARN=${INTAKE_ARN}}" \
   --region "$REGION" > /dev/null
 
 $AWS_CMD lambda update-function-configuration \
