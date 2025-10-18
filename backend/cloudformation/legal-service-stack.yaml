@@ -1126,14 +1126,13 @@ Resources:
                   )
                   
                   response_body = response['response'].read().decode('utf-8')
-                  agent_response = json.loads(response_body)
                   
                   return {
                       'statusCode': 200,
                       'headers': headers,
                       'body': json.dumps({
                           'success': True,
-                          'response': agent_response.get('output', agent_response.get('response', 'No response from agent')),
+                          'response': response_body,
                           'sessionId': session_id
                       })
                   }
