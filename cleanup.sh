@@ -71,33 +71,50 @@ echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━�
 echo -e "${BLUE}Step 1/2: Deleting AgentCore Agents${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
-if [ -d "deployment/agentcore-venv" ]; then
-    cd deployment
-    source agentcore-venv/bin/activate
-    
-    # Delete intake agent
-    if [ -d "agentcore-deploy/intake-agent" ] && [ -f "agentcore-deploy/intake-agent/.bedrock_agentcore.yaml" ]; then
-        echo -e "${BLUE}Deleting intake agent...${NC}"
-        cd agentcore-deploy/intake-agent
-        agentcore destroy --non-interactive || echo -e "${YELLOW}⚠️  Intake agent may not exist${NC}"
-        cd ../..
-    fi
-    
-    # Delete review agent
-    if [ -d "agentcore-deploy/review-agent" ] && [ -f "agentcore-deploy/review-agent/.bedrock_agentcore.yaml" ]; then
-        echo -e "${BLUE}Deleting review agent...${NC}"
-        cd agentcore-deploy/review-agent
-        agentcore destroy --non-interactive || echo -e "${YELLOW}⚠️  Review agent may not exist${NC}"
-        cd ../..
-    fi
-    
-    deactivate
-    cd ..
-    echo -e "${GREEN}✓ AgentCore agents deleted${NC}"
+# Agent names based on deployment ID
+INTAKE_AGENT_NAME="legal_intake_agent_${DEPLOYMENT_ID}"
+REVIEW_AGENT_NAME="legal_review_agent_${DEPLOYMENT_ID}"
+
+echo -e "${BLUE}Looking for agents with deployment ID: ${YELLOW}${DEPLOYMENT_ID}${NC}"
+echo -e "${BLUE}  - Intake agent: ${YELLOW}${INTAKE_AGENT_NAME}${NC}"
+echo -e "${BLUE}  - Review agent: ${YELLOW}${REVIEW_AGENT_NAME}${NC}"
+echo ""
+
+# Try to delete agents using AWS CLI directly (more reliable than agentcore destroy)
+echo -e "${BLUE}Attempting to delete agents via AWS CLI...${NC}"
+
+# Delete intake agent
+echo -e "${BLUE}Deleting intake agent: ${INTAKE_AGENT_NAME}${NC}"
+INTAKE_DELETE_OUTPUT=$($AWS_CMD bedrock-agent-runtime delete-agent-runtime \
+  --agent-runtime-name "${INTAKE_AGENT_NAME}" \
+  --region "$REGION" 2>&1)
+
+if echo "$INTAKE_DELETE_OUTPUT" | grep -q "ResourceNotFoundException\|does not exist"; then
+    echo -e "${YELLOW}⚠️  Intake agent not found (may have been deleted already)${NC}"
+elif echo "$INTAKE_DELETE_OUTPUT" | grep -q "error\|Error\|ERROR"; then
+    echo -e "${YELLOW}⚠️  Error deleting intake agent: ${INTAKE_DELETE_OUTPUT}${NC}"
 else
-    echo -e "${YELLOW}⚠️  AgentCore venv not found, skipping agent deletion${NC}"
-    echo -e "${YELLOW}   Agents may need to be deleted manually from AWS Console${NC}"
+    echo -e "${GREEN}✓ Intake agent deleted${NC}"
 fi
+
+# Delete review agent
+echo -e "${BLUE}Deleting review agent: ${REVIEW_AGENT_NAME}${NC}"
+REVIEW_DELETE_OUTPUT=$($AWS_CMD bedrock-agent-runtime delete-agent-runtime \
+  --agent-runtime-name "${REVIEW_AGENT_NAME}" \
+  --region "$REGION" 2>&1)
+
+if echo "$REVIEW_DELETE_OUTPUT" | grep -q "ResourceNotFoundException\|does not exist"; then
+    echo -e "${YELLOW}⚠️  Review agent not found (may have been deleted already)${NC}"
+elif echo "$REVIEW_DELETE_OUTPUT" | grep -q "error\|Error\|ERROR"; then
+    echo -e "${YELLOW}⚠️  Error deleting review agent: ${REVIEW_DELETE_OUTPUT}${NC}"
+else
+    echo -e "${GREEN}✓ Review agent deleted${NC}"
+fi
+
+echo ""
+echo -e "${GREEN}✓ AgentCore agent deletion attempted${NC}"
+echo -e "${BLUE}Note: If agents still exist, they can be deleted from the AWS Console:${NC}"
+echo -e "${BLUE}  https://${REGION}.console.aws.amazon.com/bedrock-agentcore/agents${NC}"
 
 echo ""
 
