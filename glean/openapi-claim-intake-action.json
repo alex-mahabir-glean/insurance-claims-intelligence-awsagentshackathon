@@ -12,16 +12,11 @@
     }
   ],
   "paths": {
-    "/invoke-intake-agent": {
+    "/submit-claim": {
       "post": {
         "operationId": "fileInsuranceClaim",
         "summary": "File an insurance claim with structured data",
         "description": "Submit an insurance claim with all required information. The Glean agent will extract information from conversation and present a form modal for user review before submission.",
-        "security": [
-          {
-            "ApiKeyAuth": []
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -176,22 +171,6 @@
               }
             }
           },
-          "401": {
-            "description": "Unauthorized - Missing or invalid API key",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Unauthorized"
-                    }
-                  }
-                }
-              }
-            }
-          },
           "500": {
             "description": "Internal server error",
             "content": {
@@ -205,7 +184,7 @@
                     },
                     "error": {
                       "type": "string",
-                      "example": "Failed to invoke agent"
+                      "example": "Failed to process claim"
                     }
                   }
                 }
@@ -213,16 +192,6 @@
             }
           }
         }
-      }
-    }
-  },
-  "components": {
-    "securitySchemes": {
-      "ApiKeyAuth": {
-        "type": "apiKey",
-        "in": "header",
-        "name": "Authorization",
-        "description": "API key for authentication. Provide the token as a raw string in the Authorization header (no 'Bearer' prefix)."
       }
     }
   }
