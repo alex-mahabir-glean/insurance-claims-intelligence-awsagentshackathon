@@ -81,7 +81,12 @@ fi
 export AWS_REGION="$REGION"
 export DEPLOYMENT_ID="$DEPLOYMENT_ID"
 
-python3 deployment/delete_agentcore_agents.py
+# Use venv if available for updated boto3, otherwise use system python3
+if [ -d "deployment/agentcore-venv" ]; then
+    deployment/agentcore-venv/bin/python3 deployment/delete_agentcore_agents.py
+else
+    python3 deployment/delete_agentcore_agents.py
+fi
 
 echo ""
 
