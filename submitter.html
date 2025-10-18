@@ -22,7 +22,17 @@
     <script src="config.js"></script>
     
     <!-- Configuration -->
-    <!-- demoConfig is loaded from config.js -->
+    <script>
+        // Map deploymentConfig to demoConfig for backward compatibility
+        window.demoConfig = window.demoConfig || {};
+        if (window.deploymentConfig) {
+            window.demoConfig.apiBaseUrl = window.deploymentConfig.apiBaseUrl;
+            window.demoConfig.authToken = window.deploymentConfig.authToken;
+            window.demoConfig.agentId = window.deploymentConfig.gleanIntakeAgentId;
+            window.demoConfig.intakeAgentId = window.deploymentConfig.gleanIntakeAgentId;
+            window.demoConfig.reviewAgentId = window.deploymentConfig.gleanReviewAgentId;
+        }
+    </script>
     
     <style>
         :root {
