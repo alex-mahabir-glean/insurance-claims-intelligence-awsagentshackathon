@@ -1120,10 +1120,12 @@ Resources:
                   response = agentcore_client.invoke_agent_runtime(
                       agentRuntimeArn=INTAKE_AGENT_ARN,
                       runtimeSessionId=session_id,
+                      contentType='application/json',
+                      accept='application/json',
                       payload=agent_payload
                   )
                   
-                  response_body = response['outputPayload'].read().decode('utf-8')
+                  response_body = response['response'].read().decode('utf-8')
                   agent_response = json.loads(response_body)
                   
                   return {
