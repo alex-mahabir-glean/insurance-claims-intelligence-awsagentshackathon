@@ -76,11 +76,16 @@
     function storeTokens(authResult, username) {
         const expiryTime = Date.now() + (authResult.ExpiresIn * 1000);
         
+        // Store in sessionStorage
         sessionStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, authResult.AccessToken);
         sessionStorage.setItem(STORAGE_KEYS.ID_TOKEN, authResult.IdToken);
         sessionStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, authResult.RefreshToken);
         sessionStorage.setItem(STORAGE_KEYS.TOKEN_EXPIRY, expiryTime.toString());
         sessionStorage.setItem(STORAGE_KEYS.USER_EMAIL, username);
+        
+        // Also store ID token in cookie for Lambda@Edge to read
+        const expiryDate = new Date(expiryTime);
+        document.cookie = `cognito_id_token=${authResult.IdToken}; expires=${expiryDate.toUTCString()}; path=/; secure; samesite=strict`;
     }
 
     /**
@@ -133,6 +138,8 @@
         Object.values(STORAGE_KEYS).forEach(key => {
             sessionStorage.removeItem(key);
         });
+        // Clear cookie
+        document.cookie = 'cognito_id_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     }
 
     /**
