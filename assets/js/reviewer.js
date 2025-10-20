@@ -1554,9 +1554,9 @@ function initChatOverlay() {
             const container = document.getElementById('glean-agent-overlay');
             if (container) {
                 container.innerHTML = '';
-                // Reset and reinitialize properly
+                // Reset and reinitialize properly without initial message
                 chatInitialized = false;
-                renderGleanChatOverlay(lastInitialMessage);
+                renderGleanChatOverlay(null);
                 chatInitialized = true;
             }
         });
