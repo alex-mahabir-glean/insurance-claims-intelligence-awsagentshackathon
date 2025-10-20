@@ -345,8 +345,8 @@ DynamoDB (Data Storage)
 
 ## 📚 Additional Resources
 
-- **Glean Actions Documentation**: https://help.glean.com/en/articles/actions
-- **Glean Agents Documentation**: https://help.glean.com/en/articles/agents
+- **Glean Actions Documentation**: [https://help.glean.com/en/articles/actions](https://developers.glean.com/guides/actions/create-actions)
+- **Glean Agents Documentation**: [https://help.glean.com/en/articles/agents](https://developers.glean.com/guides/agents/overview)
 - **AWS Bedrock AgentCore**: https://docs.aws.amazon.com/bedrock/latest/userguide/agents.html
 
 ---
