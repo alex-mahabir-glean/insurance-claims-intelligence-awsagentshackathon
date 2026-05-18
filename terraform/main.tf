@@ -37,8 +37,7 @@ module "data" {
 # Lambdas (TF-3 #35) — Option B topology: 3 Lambdas total
 # ============================================================================
 
-# api_handler: 6 CRUD routes (submit/get/approve/deny/reassign).
-# IAM: DynamoDB only — no Bedrock — keeps blast radius tight.
+# api_handler: 6 CRUD routes. IAM: DynamoDB only.
 module "api_handler" {
   source = "./modules/lambda_function"
 
@@ -87,10 +86,8 @@ module "api_handler" {
   })
 }
 
-# agent_invoker: 2 agent-invocation routes.
-# IAM: bedrock-agentcore:InvokeAgentRuntime — scoped to specific agent ARNs by
-# TF-5 (#37) once the agents are deployed. Until then, the wildcard here is a
-# known regression on SEC-4 #4 to be tightened in the next sub-PR.
+# agent_invoker: 2 agent-invocation routes. IAM: bedrock-agentcore only.
+# TF-5 #37 will replace Resource:"*" with specific agent ARNs (closes SEC-4 #4).
 module "agent_invoker" {
   source = "./modules/lambda_function"
 
@@ -102,26 +99,25 @@ module "agent_invoker" {
   log_retention_days   = var.log_retention_days
 
   environment = {
-    POWERTOOLS_SERVICE_NAME = "agent_invoker"
-    POWERTOOLS_LOG_LEVEL    = "INFO"
-    INTAKE_AGENT_ARN        = "" # populated in TF-5 once agents are deployed
-    REVIEW_AGENT_ARN        = "" # populated in TF-5 once agents are deployed
+    POWERTOOLS_SERVICE_NAME      = "agent_invoker"
+    POWERTOOLS_LOG_LEVEL         = "INFO"
+    POWERTOOLS_METRICS_NAMESPACE = "InsuranceClaims/AgentInvoker"
+    INTAKE_AGENT_ARN             = "" # populated in TF-5 once agents are deployed
+    REVIEW_AGENT_ARN             = "" # populated in TF-5 once agents are deployed
   }
 
   inline_policy_json = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Sid    = "InvokeAgentCore"
-      Effect = "Allow"
-      Action = ["bedrock-agentcore:InvokeAgentRuntime"]
-      # TF-5 will replace "*" with the specific agent ARNs (closes SEC-4 #4)
-      Resource = "*"
+      Sid      = "InvokeAgentCore"
+      Effect   = "Allow"
+      Action   = ["bedrock-agentcore:InvokeAgentRuntime"]
+      Resource = "*" # TF-5 will replace with specific agent ARNs
     }]
   })
 }
 
-# authorizer: HTTP API v2 simple authorizer.
-# IAM: secretsmanager:GetSecretValue on the AgentCore API token secret only.
+# authorizer: HTTP API v2 simple authorizer. IAM: secret read only.
 module "authorizer" {
   source = "./modules/lambda_function"
 
@@ -157,7 +153,25 @@ module "authorizer" {
   })
 }
 
+# ============================================================================
+# API tier (TF-4 #36) — HTTP API v2 + authorizer + CORS + WAF toggle
+# ============================================================================
+module "api" {
+  source = "./modules/api"
+
+  deployment_id            = var.deployment_id
+  api_handler_lambda_arn   = module.api_handler.function_arn
+  api_handler_invoke_arn   = module.api_handler.invoke_arn
+  agent_invoker_lambda_arn = module.agent_invoker.function_arn
+  agent_invoker_invoke_arn = module.agent_invoker.invoke_arn
+  authorizer_lambda_arn    = module.authorizer.function_arn
+  authorizer_invoke_arn    = module.authorizer.invoke_arn
+
+  allowed_origins    = var.allowed_origins
+  enable_waf         = var.enable_waf
+  log_retention_days = var.log_retention_days
+}
+
 # Modules wired in subsequent tickets:
-# - module "api"           (TF-4 #36): HTTP API v2 + authorizer + CORS
 # - module "agents"        (TF-5 #37): AgentCore Runtime via null_resource
 # - module "observability" (TF-6 #38): alarms + SNS + dashboard + budgets
