@@ -1,0 +1,13 @@
+# Terraform backend config for the prod environment.
+#
+# Copy this file to prod.tfbackend and fill in the bucket name from your
+# state-backend bootstrap (terraform/bootstrap/state-backend/).
+#
+# Then init with:
+#   terraform init -backend-config=env/prod.tfbackend
+
+bucket         = "tfstate-XXXXXXXXXXXX-us-east-1"
+key            = "insurance-claims-intelligence/prod/terraform.tfstate"
+region         = "us-east-1"
+dynamodb_table = "tfstate-locks"
+encrypt        = true
