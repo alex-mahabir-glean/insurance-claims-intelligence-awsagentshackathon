@@ -1,0 +1,13 @@
+# Terraform backend config for the dev environment.
+#
+# Copy this file to dev.tfbackend and fill in the bucket name from your
+# state-backend bootstrap (terraform/bootstrap/state-backend/).
+#
+# Then init with:
+#   terraform init -backend-config=env/dev.tfbackend
+
+bucket         = "tfstate-XXXXXXXXXXXX-us-east-1"
+key            = "insurance-claims-intelligence/dev/terraform.tfstate"
+region         = "us-east-1"
+dynamodb_table = "tfstate-locks"
+encrypt        = true
