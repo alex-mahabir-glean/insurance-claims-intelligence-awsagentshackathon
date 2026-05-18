@@ -75,3 +75,27 @@ output "authorizer_invoke_arn" {
   description = "authorizer Lambda invoke ARN. Used by module.api in TF-4."
   value       = module.authorizer.invoke_arn
 }
+
+# ============================================================================
+# API tier (TF-4)
+# ============================================================================
+
+output "api_endpoint" {
+  description = "HTTP API endpoint base URL."
+  value       = module.api.api_endpoint
+}
+
+output "api_invoke_url" {
+  description = "Full invoke URL for the stage. Use this in the frontend config.js."
+  value       = module.api.stage_invoke_url
+}
+
+output "api_id" {
+  description = "HTTP API id."
+  value       = module.api.api_id
+}
+
+output "api_access_log_group_name" {
+  description = "CloudWatch log group name receiving stage access logs."
+  value       = module.api.access_log_group_name
+}

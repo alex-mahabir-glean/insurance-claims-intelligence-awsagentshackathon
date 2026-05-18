@@ -57,3 +57,19 @@ variable "log_retention_days" {
   type        = number
   default     = 7
 }
+
+# ============================================================================
+# API module (TF-4 #36) — passthrough variables
+# ============================================================================
+
+variable "allowed_origins" {
+  description = "CORS allow-list. Replaces the wildcard origin from the legacy CFN. Closes SEC-1 #1."
+  type        = list(string)
+  default     = ["http://localhost:8000"]
+}
+
+variable "enable_waf" {
+  description = "When true, attach AWS WAFv2 with Common + KnownBadInputs managed rule groups to the API stage. Default false (opt-in)."
+  type        = bool
+  default     = false
+}
