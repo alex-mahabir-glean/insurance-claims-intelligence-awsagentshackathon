@@ -15,8 +15,19 @@ provider "aws" {
   }
 }
 
-# Modules are wired in subsequent tickets:
-# - module "data"          (TF-2 #34): DynamoDB + KMS + Secrets
+# ============================================================================
+# Data tier (TF-2 #34) — DynamoDB + KMS + Secrets
+# ============================================================================
+module "data" {
+  source = "./modules/data"
+
+  deployment_id                 = var.deployment_id
+  billing_mode                  = var.billing_mode
+  audit_trail_retention_seconds = var.audit_trail_retention_seconds
+  allow_destroy                 = var.allow_destroy
+}
+
+# Modules wired in subsequent tickets:
 # - module "lambdas"       (TF-3 #35): api_handler + agent_invoker + authorizer
 # - module "api"           (TF-4 #36): HTTP API v2 + authorizer + CORS
 # - module "agents"        (TF-5 #37): AgentCore Runtime via null_resource
