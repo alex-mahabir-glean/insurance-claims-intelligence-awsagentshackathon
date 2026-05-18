@@ -36,3 +36,42 @@ output "agentcore_api_token_secret_name" {
 # - api_url           (from module.api,  TF-4)
 # - intake_agent_arn  (from module.agents, TF-5)
 # - review_agent_arn  (from module.agents, TF-5)
+
+# ============================================================================
+# Lambdas (TF-3)
+# ============================================================================
+
+output "api_handler_function_name" {
+  description = "api_handler Lambda function name."
+  value       = module.api_handler.function_name
+}
+
+output "api_handler_invoke_arn" {
+  description = "api_handler Lambda invoke ARN. Used by module.api in TF-4."
+  value       = module.api_handler.invoke_arn
+}
+
+output "agent_invoker_function_name" {
+  description = "agent_invoker Lambda function name."
+  value       = module.agent_invoker.function_name
+}
+
+output "agent_invoker_invoke_arn" {
+  description = "agent_invoker Lambda invoke ARN. Used by module.api in TF-4."
+  value       = module.agent_invoker.invoke_arn
+}
+
+output "agent_invoker_role_name" {
+  description = "agent_invoker IAM role name. TF-5 will update its scoped policy with specific agent ARNs."
+  value       = module.agent_invoker.role_name
+}
+
+output "authorizer_function_name" {
+  description = "authorizer Lambda function name."
+  value       = module.authorizer.function_name
+}
+
+output "authorizer_invoke_arn" {
+  description = "authorizer Lambda invoke ARN. Used by module.api in TF-4."
+  value       = module.authorizer.invoke_arn
+}

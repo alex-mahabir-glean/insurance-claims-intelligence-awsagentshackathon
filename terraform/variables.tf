@@ -47,3 +47,13 @@ variable "allow_destroy" {
   type        = bool
   default     = false
 }
+
+# ============================================================================
+# Lambda module (TF-3 #35) — passthrough variables
+# ============================================================================
+
+variable "log_retention_days" {
+  description = "CloudWatch log retention for all Lambda log groups. Closes COST-1."
+  type        = number
+  default     = 7
+}
