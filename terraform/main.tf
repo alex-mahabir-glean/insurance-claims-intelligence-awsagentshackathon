@@ -6,10 +6,6 @@ locals {
     ManagedBy    = "terraform"
   }
 
-  # AWS-managed Powertools Lambda Layer (Python 3.12, x86_64).
-  # Includes Pydantic v2 — saves us from packaging it in the deployment zip.
-  # Account 017000801446 is AWS-published. Pin a version per region.
-  # https://docs.powertools.aws.dev/lambda/python/latest/
   powertools_layer_arn = "arn:aws:lambda:${var.aws_region}:017000801446:layer:AWSLambdaPowertoolsPythonV3-python312-x86_64:8"
 }
 
@@ -34,10 +30,37 @@ module "data" {
 }
 
 # ============================================================================
+# Agents (TF-5 #37) — AgentCore Runtime via null_resource + external data
+# ============================================================================
+module "agents" {
+  source = "./modules/agents"
+
+  deployment_id = var.deployment_id
+  aws_region    = var.aws_region
+
+  agents = {
+    intake = {
+      source_dir   = "${path.module}/agents/intake"
+      runtime_name = "legal_intake_agent_${var.deployment_id}"
+    }
+    review = {
+      source_dir   = "${path.module}/agents/review"
+      runtime_name = "legal_review_agent_${var.deployment_id}"
+    }
+  }
+
+  claims_table_arn        = module.data.claims_table_arn
+  claims_table_index_arns = [for arn in values(module.data.claims_index_arns) : arn]
+  reviewers_table_arn     = module.data.reviewers_table_arn
+  audit_trail_table_arn   = module.data.audit_trail_table_arn
+  kms_key_arn             = module.data.kms_key_arn
+  bedrock_model_ids       = var.bedrock_model_ids
+}
+
+# ============================================================================
 # Lambdas (TF-3 #35) — Option B topology: 3 Lambdas total
 # ============================================================================
 
-# api_handler: 6 CRUD routes. IAM: DynamoDB only.
 module "api_handler" {
   source = "./modules/lambda_function"
 
@@ -86,8 +109,7 @@ module "api_handler" {
   })
 }
 
-# agent_invoker: 2 agent-invocation routes. IAM: bedrock-agentcore only.
-# TF-5 #37 will replace Resource:"*" with specific agent ARNs (closes SEC-4 #4).
+# agent_invoker — IAM is now scoped to specific agent ARNs (closes SEC-4 #4).
 module "agent_invoker" {
   source = "./modules/lambda_function"
 
@@ -102,8 +124,8 @@ module "agent_invoker" {
     POWERTOOLS_SERVICE_NAME      = "agent_invoker"
     POWERTOOLS_LOG_LEVEL         = "INFO"
     POWERTOOLS_METRICS_NAMESPACE = "InsuranceClaims/AgentInvoker"
-    INTAKE_AGENT_ARN             = "" # populated in TF-5 once agents are deployed
-    REVIEW_AGENT_ARN             = "" # populated in TF-5 once agents are deployed
+    INTAKE_AGENT_ARN             = module.agents.intake_agent_arn
+    REVIEW_AGENT_ARN             = module.agents.review_agent_arn
   }
 
   inline_policy_json = jsonencode({
@@ -112,12 +134,11 @@ module "agent_invoker" {
       Sid      = "InvokeAgentCore"
       Effect   = "Allow"
       Action   = ["bedrock-agentcore:InvokeAgentRuntime"]
-      Resource = "*" # TF-5 will replace with specific agent ARNs
+      Resource = [module.agents.intake_agent_arn, module.agents.review_agent_arn]
     }]
   })
 }
 
-# authorizer: HTTP API v2 simple authorizer. IAM: secret read only.
 module "authorizer" {
   source = "./modules/lambda_function"
 
@@ -154,7 +175,7 @@ module "authorizer" {
 }
 
 # ============================================================================
-# API tier (TF-4 #36) — HTTP API v2 + authorizer + CORS + WAF toggle
+# API tier (TF-4 #36) — HTTP API v2
 # ============================================================================
 module "api" {
   source = "./modules/api"
@@ -173,5 +194,4 @@ module "api" {
 }
 
 # Modules wired in subsequent tickets:
-# - module "agents"        (TF-5 #37): AgentCore Runtime via null_resource
 # - module "observability" (TF-6 #38): alarms + SNS + dashboard + budgets
