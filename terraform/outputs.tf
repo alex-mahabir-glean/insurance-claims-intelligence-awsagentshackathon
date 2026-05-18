@@ -99,3 +99,22 @@ output "api_access_log_group_name" {
   description = "CloudWatch log group name receiving stage access logs."
   value       = module.api.access_log_group_name
 }
+
+# ============================================================================
+# Agents (TF-5)
+# ============================================================================
+
+output "intake_agent_arn" {
+  description = "Bedrock AgentCore Runtime ARN of the intake agent."
+  value       = module.agents.intake_agent_arn
+}
+
+output "review_agent_arn" {
+  description = "Bedrock AgentCore Runtime ARN of the review agent."
+  value       = module.agents.review_agent_arn
+}
+
+output "agentcore_role_arn" {
+  description = "AgentCore Runtime execution role ARN."
+  value       = module.agents.agentcore_role_arn
+}

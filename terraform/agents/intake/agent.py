@@ -9,14 +9,14 @@ from bedrock_agentcore.runtime import BedrockAgentCoreApp
 import json
 import boto3
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 
 # Initialize the AgentCore app
 app = BedrockAgentCoreApp()
 
 # Initialize AWS clients
-dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+dynamodb = boto3.resource('dynamodb', region_name=os.environ.get('AWS_REGION', 'us-east-1'))
 # Table name will be replaced during deployment with correct DEPLOYMENT_ID
 claims_table = dynamodb.Table(os.environ.get('CLAIMS_TABLE', 'LegalService-Claims-legal'))
 
@@ -93,7 +93,7 @@ def submit_claim(
             }
         
         # Generate claim ID
-        timestamp = datetime.utcnow()
+        timestamp = datetime.now(timezone.utc)
         claim_id = f"CL-{timestamp.strftime('%Y-%m%d%H%M%S')}"
         
         # Prepare claim record
@@ -145,7 +145,7 @@ def submit_claim(
 nova_model = BedrockModel(
     model_id="amazon.nova-pro-v1:0",
     temperature=0.7,
-    region_name="us-east-1"
+    region_name=os.environ.get('AWS_REGION', 'us-east-1')
 )
 
 # Initialize the Strands agent with system prompt, tools, and Nova model

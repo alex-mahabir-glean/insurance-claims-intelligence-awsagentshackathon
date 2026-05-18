@@ -9,14 +9,14 @@ from bedrock_agentcore.runtime import BedrockAgentCoreApp
 import json
 import boto3
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 
 # Initialize the AgentCore app
 app = BedrockAgentCoreApp()
 
 # Initialize AWS clients
-dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+dynamodb = boto3.resource('dynamodb', region_name=os.environ.get('AWS_REGION', 'us-east-1'))
 # Table names will be replaced during deployment with correct DEPLOYMENT_ID
 claims_table = dynamodb.Table(os.environ.get('CLAIMS_TABLE', 'LegalService-Claims-legal'))
 audit_table = dynamodb.Table(os.environ.get('AUDIT_TABLE', 'LegalService-AuditTrail-legal'))
@@ -145,7 +145,7 @@ def approve_claim(claim_id: str, reviewer_id: str, notes: str = ""):
         dict: Success status and updated claim info
     """
     try:
-        timestamp = datetime.utcnow().isoformat()
+        timestamp = datetime.now(timezone.utc).isoformat()
         
         # Update claim status
         claims_table.update_item(
@@ -163,7 +163,7 @@ def approve_claim(claim_id: str, reviewer_id: str, notes: str = ""):
         
         # Log to audit trail
         audit_record = {
-            'auditId': f"AUDIT-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}",
+            'auditId': f"AUDIT-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}",
             'claimId': claim_id,
             'action': 'approve',
             'performedBy': reviewer_id,
@@ -210,7 +210,7 @@ def deny_claim(claim_id: str, reviewer_id: str, reason: str):
                 'error': 'Denial reason is required'
             }
         
-        timestamp = datetime.utcnow().isoformat()
+        timestamp = datetime.now(timezone.utc).isoformat()
         
         # Update claim status
         claims_table.update_item(
@@ -228,7 +228,7 @@ def deny_claim(claim_id: str, reviewer_id: str, reason: str):
         
         # Log to audit trail
         audit_record = {
-            'auditId': f"AUDIT-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}",
+            'auditId': f"AUDIT-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}",
             'claimId': claim_id,
             'action': 'deny',
             'performedBy': reviewer_id,
@@ -270,7 +270,7 @@ def reassign_claim(claim_id: str, to_reviewer_id: str, reason: str = ""):
         dict: Success status and updated assignment info with reviewer display name
     """
     try:
-        timestamp = datetime.utcnow().isoformat()
+        timestamp = datetime.now(timezone.utc).isoformat()
         
         # Update claim assignment
         claims_table.update_item(
@@ -285,7 +285,7 @@ def reassign_claim(claim_id: str, to_reviewer_id: str, reason: str = ""):
         
         # Log to audit trail
         audit_record = {
-            'auditId': f"AUDIT-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}",
+            'auditId': f"AUDIT-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}",
             'claimId': claim_id,
             'action': 'reassign',
             'performedBy': 'system',
@@ -318,7 +318,7 @@ def reassign_claim(claim_id: str, to_reviewer_id: str, reason: str = ""):
 nova_model = BedrockModel(
     model_id="amazon.nova-pro-v1:0",
     temperature=0.7,
-    region_name="us-east-1"
+    region_name=os.environ.get('AWS_REGION', 'us-east-1')
 )
 
 # Initialize the Strands agent with system prompt, tools, and Nova model

@@ -73,3 +73,13 @@ variable "enable_waf" {
   type        = bool
   default     = false
 }
+
+# ============================================================================
+# Agents module (TF-5 #37) — passthrough variables
+# ============================================================================
+
+variable "bedrock_model_ids" {
+  description = "List of Bedrock foundation model IDs the agents may invoke. Closes SEC-4 #4 by pinning the IAM scope."
+  type        = list(string)
+  default     = ["amazon.nova-pro-v1:0"]
+}
