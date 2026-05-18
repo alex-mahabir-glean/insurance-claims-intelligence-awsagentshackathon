@@ -83,3 +83,19 @@ variable "bedrock_model_ids" {
   type        = list(string)
   default     = ["amazon.nova-pro-v1:0"]
 }
+
+# ============================================================================
+# Observability (TF-6 #38) — passthrough variables
+# ============================================================================
+
+variable "alert_email" {
+  description = "Email subscribed to the SNS alert topic. Optional."
+  type        = string
+  default     = null
+}
+
+variable "monthly_bedrock_budget_usd" {
+  description = "Monthly AWS Budget for Bedrock spend. 0 disables. Closes part of COST-3."
+  type        = number
+  default     = 50
+}
