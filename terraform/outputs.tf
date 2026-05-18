@@ -118,3 +118,17 @@ output "agentcore_role_arn" {
   description = "AgentCore Runtime execution role ARN."
   value       = module.agents.agentcore_role_arn
 }
+
+# ============================================================================
+# Observability (TF-6)
+# ============================================================================
+
+output "alert_topic_arn" {
+  description = "SNS topic ARN for alarms."
+  value       = module.observability.alert_topic_arn
+}
+
+output "dashboard_url" {
+  description = "Direct link to the CloudWatch dashboard."
+  value       = module.observability.dashboard_url
+}

@@ -30,7 +30,7 @@ module "data" {
 }
 
 # ============================================================================
-# Agents (TF-5 #37) — AgentCore Runtime via null_resource + external data
+# Agents (TF-5 #37)
 # ============================================================================
 module "agents" {
   source = "./modules/agents"
@@ -58,7 +58,7 @@ module "agents" {
 }
 
 # ============================================================================
-# Lambdas (TF-3 #35) — Option B topology: 3 Lambdas total
+# Lambdas (TF-3 #35)
 # ============================================================================
 
 module "api_handler" {
@@ -88,11 +88,8 @@ module "api_handler" {
         Sid    = "DynamoDBData"
         Effect = "Allow"
         Action = [
-          "dynamodb:GetItem",
-          "dynamodb:PutItem",
-          "dynamodb:UpdateItem",
-          "dynamodb:Query",
-          "dynamodb:Scan",
+          "dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem",
+          "dynamodb:Query", "dynamodb:Scan",
         ]
         Resource = concat(
           module.data.all_table_arns,
@@ -109,7 +106,6 @@ module "api_handler" {
   })
 }
 
-# agent_invoker — IAM is now scoped to specific agent ARNs (closes SEC-4 #4).
 module "agent_invoker" {
   source = "./modules/lambda_function"
 
@@ -175,7 +171,7 @@ module "authorizer" {
 }
 
 # ============================================================================
-# API tier (TF-4 #36) — HTTP API v2
+# API tier (TF-4 #36)
 # ============================================================================
 module "api" {
   source = "./modules/api"
@@ -193,5 +189,29 @@ module "api" {
   log_retention_days = var.log_retention_days
 }
 
-# Modules wired in subsequent tickets:
-# - module "observability" (TF-6 #38): alarms + SNS + dashboard + budgets
+# ============================================================================
+# Observability (TF-6 #38) — alarms, dashboard, SNS, Bedrock budget
+# ============================================================================
+module "observability" {
+  source = "./modules/observability"
+
+  deployment_id = var.deployment_id
+  alert_email   = var.alert_email
+
+  lambdas = {
+    api_handler   = module.api_handler.function_name
+    agent_invoker = module.agent_invoker.function_name
+    authorizer    = module.authorizer.function_name
+  }
+
+  api_id         = module.api.api_id
+  api_stage_name = "prod"
+
+  table_names = {
+    claims      = module.data.claims_table_name
+    reviewers   = module.data.reviewers_table_name
+    audit_trail = module.data.audit_trail_table_name
+  }
+
+  monthly_bedrock_budget_usd = var.monthly_bedrock_budget_usd
+}
