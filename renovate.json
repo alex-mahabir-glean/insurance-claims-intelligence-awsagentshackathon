@@ -1,0 +1,32 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "labels": ["dependencies", "renovate"],
+  "schedule": ["after 9am and before 5pm every weekday"],
+  "timezone": "America/New_York",
+  "prConcurrentLimit": 5,
+  "packageRules": [
+    {
+      "matchManagers": ["terraform"],
+      "groupName": "terraform providers",
+      "labels": ["dependencies", "terraform"]
+    },
+    {
+      "matchManagers": ["pip_requirements"],
+      "groupName": "python deps (lambda)",
+      "labels": ["dependencies", "python"],
+      "matchFileNames": ["terraform/lambdas/**/requirements.txt", "terraform/agents/**/requirements.txt"]
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "github-actions",
+      "labels": ["dependencies", "ci"]
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "labels": ["security"],
+    "automerge": false
+  }
+}
