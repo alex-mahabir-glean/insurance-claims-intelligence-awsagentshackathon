@@ -8,7 +8,7 @@
 
     // Load Cognito config
     const cognitoConfig = window.cognitoConfig || {};
-    
+
     // Check if we have required config
     if (!cognitoConfig.userPoolId || !cognitoConfig.userPoolClientId || !cognitoConfig.region) {
         console.warn('Cognito configuration not loaded. Authentication disabled.');
@@ -17,7 +17,7 @@
 
     // Cognito endpoints
     const COGNITO_DOMAIN = `cognito-idp.${cognitoConfig.region}.amazonaws.com`;
-    
+
     // Session storage keys
     const STORAGE_KEYS = {
         ACCESS_TOKEN: 'cognito_access_token',
@@ -56,7 +56,7 @@
             }
 
             const data = await response.json();
-            
+
             if (data.AuthenticationResult) {
                 // Store tokens
                 storeTokens(data.AuthenticationResult, username);
@@ -75,14 +75,14 @@
      */
     function storeTokens(authResult, username) {
         const expiryTime = Date.now() + (authResult.ExpiresIn * 1000);
-        
+
         // Store in sessionStorage
         sessionStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, authResult.AccessToken);
         sessionStorage.setItem(STORAGE_KEYS.ID_TOKEN, authResult.IdToken);
         sessionStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, authResult.RefreshToken);
         sessionStorage.setItem(STORAGE_KEYS.TOKEN_EXPIRY, expiryTime.toString());
         sessionStorage.setItem(STORAGE_KEYS.USER_EMAIL, username);
-        
+
         // Also store ID token in cookie for Lambda@Edge to read
         const expiryDate = new Date(expiryTime);
         document.cookie = `cognito_id_token=${authResult.IdToken}; expires=${expiryDate.toUTCString()}; path=/; secure; samesite=strict`;
@@ -94,7 +94,7 @@
     function isAuthenticated() {
         const accessToken = sessionStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
         const expiry = sessionStorage.getItem(STORAGE_KEYS.TOKEN_EXPIRY);
-        
+
         if (!accessToken || !expiry) {
             return false;
         }

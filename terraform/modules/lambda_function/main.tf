@@ -76,6 +76,10 @@ resource "aws_sqs_queue" "dlq" {
   name                      = "${var.name}-dlq"
   message_retention_seconds = 1209600 # 14 days
 
+  # Encryption at rest with the AWS-managed SQS key (free; no perms to manage).
+  # Customer can swap to a CMK if compliance requires.
+  kms_master_key_id = "alias/aws/sqs"
+
   tags = var.tags
 }
 

@@ -110,7 +110,7 @@ def submit_claim(claim_data):
 
 def main():
     print(f"Seeding {len(claims_to_seed)} claims via API...")
-    
+
     for i, claim in enumerate(claims_to_seed, 1):
         print(f"\n[{i}/{len(claims_to_seed)}] Submitting claim for {claim['claimantName']}...")
         try:
@@ -121,7 +121,7 @@ def main():
                 print(f"  ✗ Failed: {result}")
         except Exception as e:
             print(f"  ✗ Error: {e}")
-    
+
     print(f"\n✓ Seeding complete!")
 
 if __name__ == "__main__":

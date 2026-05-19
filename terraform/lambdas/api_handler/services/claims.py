@@ -1,4 +1,5 @@
 """DynamoDB operations for the Claims table."""
+
 from __future__ import annotations
 
 import os
@@ -64,7 +65,9 @@ def get_claim(claim_id: str) -> dict[str, Any] | None:
     return resp.get("Item")
 
 
-def list_claims(reviewer_id: str | None = None, status: str | None = None) -> list[dict[str, Any]]:
+def list_claims(
+    reviewer_id: str | None = None, status: str | None = None
+) -> list[dict[str, Any]]:
     """List claims with optional filtering. Uses Query on GSI when possible
     (closes part of PERF-1 #23) and falls back to Scan only when no filter is
     given."""
@@ -144,7 +147,11 @@ def reassign_claim(claim_id: str, to_reviewer_id: str) -> str:
         Key={"claimId": claim_id},
         UpdateExpression="SET assignedTo = :new, assignedDate = :d, lastUpdated = :u",
         ConditionExpression="attribute_exists(claimId)",
-        ExpressionAttributeValues={":new": to_reviewer_id, ":d": timestamp, ":u": timestamp},
+        ExpressionAttributeValues={
+            ":new": to_reviewer_id,
+            ":d": timestamp,
+            ":u": timestamp,
+        },
         ReturnValues="UPDATED_OLD",
     )
     return resp.get("Attributes", {}).get("assignedTo", "")

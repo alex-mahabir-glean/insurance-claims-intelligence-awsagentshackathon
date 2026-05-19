@@ -8,6 +8,7 @@ SEC-2 (#2) replaces this with Cognito JWT in a follow-up.
 
 HTTP API v2 simple authorizer response: {"isAuthorized": bool, "context": {...}}
 """
+
 from __future__ import annotations
 
 import json

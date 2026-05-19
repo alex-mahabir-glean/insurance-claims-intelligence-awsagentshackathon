@@ -42,11 +42,11 @@ def test_intake_agent():
     print("=" * 80)
     print("Testing Intake Agent")
     print("=" * 80)
-    
+
     payload = json.dumps({
         "prompt": "I need to file a vehicle accident claim"
     })
-    
+
     try:
         response = client.invoke_agent_runtime(
             agentRuntimeArn=INTAKE_AGENT_ARN,
@@ -55,16 +55,16 @@ def test_intake_agent():
             contentType='application/json',
             accept='application/json'
         )
-        
+
         # Read the streaming response
         response_body = response['response'].read()
         agent_response = response_body.decode('utf-8')
-        
+
         print(f"\nSession ID: {response.get('runtimeSessionId')}")
         print(f"\nAgent Response:\n{agent_response}")
         print("\n✅ Intake agent test PASSED")
         return True
-        
+
     except Exception as e:
         print(f"\n❌ Intake agent test FAILED: {str(e)}")
         return False
@@ -74,11 +74,11 @@ def test_review_agent():
     print("\n" + "=" * 80)
     print("Testing Review Agent")
     print("=" * 80)
-    
+
     payload = json.dumps({
         "prompt": "Show me all pending claims"
     })
-    
+
     try:
         response = client.invoke_agent_runtime(
             agentRuntimeArn=REVIEW_AGENT_ARN,
@@ -87,34 +87,34 @@ def test_review_agent():
             contentType='application/json',
             accept='application/json'
         )
-        
+
         # Read the streaming response
         response_body = response['response'].read()
         agent_response = response_body.decode('utf-8')
-        
+
         print(f"\nSession ID: {response.get('runtimeSessionId')}")
         print(f"\nAgent Response:\n{agent_response}")
         print("\n✅ Review agent test PASSED")
         return True
-        
+
     except Exception as e:
         print(f"\n❌ Review agent test FAILED: {str(e)}")
         return False
 
 if __name__ == "__main__":
     print("\n🧪 Testing AgentCore Agent Invocation via boto3\n")
-    
+
     # Test both agents
     intake_success = test_intake_agent()
     review_success = test_review_agent()
-    
+
     # Summary
     print("\n" + "=" * 80)
     print("Test Summary")
     print("=" * 80)
     print(f"Intake Agent: {'✅ PASSED' if intake_success else '❌ FAILED'}")
     print(f"Review Agent: {'✅ PASSED' if review_success else '❌ FAILED'}")
-    
+
     if intake_success and review_success:
         print("\n🎉 All tests passed! Ready to implement Lambda proxy.")
         sys.exit(0)

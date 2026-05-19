@@ -13,6 +13,7 @@ before any DynamoDB access (closes SEC-7 #7 + PERF-3 #25).
 IAM scoping: this Lambda has DynamoDB access only — no Bedrock — to keep
 the blast radius tight (supports SEC-4 #4 by construction).
 """
+
 from __future__ import annotations
 
 import json
@@ -20,7 +21,11 @@ from decimal import Decimal
 from typing import Any
 
 from aws_lambda_powertools import Logger, Metrics, Tracer
-from aws_lambda_powertools.event_handler import APIGatewayHttpResolver, Response, content_types
+from aws_lambda_powertools.event_handler import (
+    APIGatewayHttpResolver,
+    Response,
+    content_types,
+)
 from aws_lambda_powertools.event_handler.exceptions import (
     BadRequestError,
     NotFoundError,
@@ -61,7 +66,9 @@ def _bad_request(field_errors: list[dict[str, Any]]) -> Response:
     return Response(
         status_code=400,
         content_type=content_types.APPLICATION_JSON,
-        body=json.dumps({"success": False, "error": "validation_failed", "details": field_errors}),
+        body=json.dumps(
+            {"success": False, "error": "validation_failed", "details": field_errors}
+        ),
     )
 
 
@@ -90,7 +97,9 @@ def post_submit_claim() -> Response:
 @app.get("/claims")
 def get_list_claims() -> Response:
     qs = app.current_event.query_string_parameters or {}
-    items = claims.list_claims(reviewer_id=qs.get("reviewerId"), status=qs.get("status"))
+    items = claims.list_claims(
+        reviewer_id=qs.get("reviewerId"), status=qs.get("status")
+    )
 
     # Decorate with display names (closes OPS-6 #22 by sourcing from DDB instead of hardcoded dict)
     for c in items:

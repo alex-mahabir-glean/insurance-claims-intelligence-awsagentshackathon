@@ -95,7 +95,7 @@ if [ -d "deployment/agentcore-venv" ]; then
     echo -e "${BLUE}Cleaning up AgentCore supporting infrastructure (ECR, CodeBuild, IAM)...${NC}"
     cd deployment
     source agentcore-venv/bin/activate
-    
+
     # Clean up intake agent infrastructure
     if [ -d "agentcore-deploy/intake-agent" ] && [ -f "agentcore-deploy/intake-agent/.bedrock_agentcore.yaml" ]; then
         echo -e "${BLUE}Cleaning intake agent infrastructure...${NC}"
@@ -107,7 +107,7 @@ if [ -d "deployment/agentcore-venv" ]; then
         fi
         cd ../..
     fi
-    
+
     # Clean up review agent infrastructure
     if [ -d "agentcore-deploy/review-agent" ] && [ -f "agentcore-deploy/review-agent/.bedrock_agentcore.yaml" ]; then
         echo -e "${BLUE}Cleaning review agent infrastructure...${NC}"
@@ -119,7 +119,7 @@ if [ -d "deployment/agentcore-venv" ]; then
         fi
         cd ../..
     fi
-    
+
     deactivate
     cd ..
     echo -e "${GREEN}✓ AgentCore infrastructure cleanup complete${NC}"
@@ -167,14 +167,14 @@ echo ""
   fi
   export AWS_REGION="$REGION"
   export DEPLOYMENT_ID="$DEPLOYMENT_ID"
-  
+
   # Use venv Python if available for bedrock-agentcore-control service
   if [ -d "deployment/agentcore-venv" ]; then
     PYTHON_CMD="deployment/agentcore-venv/bin/python3"
   else
     PYTHON_CMD="python3"
   fi
-  
+
   $PYTHON_CMD << 'PYTHON_WAIT_AGENTS'
 import boto3
 import os
@@ -201,13 +201,13 @@ while time.time() - start_time < max_wait:
     try:
         response = client.list_agent_runtimes()
         agents = response.get('agentRuntimes', [])
-        
+
         remaining = [a for a in agents if a.get('agentRuntimeName') in [intake_agent_name, review_agent_name]]
-        
+
         if not remaining:
             print("✅ All agents deleted successfully")
             sys.exit(0)
-        
+
         statuses = [f"{a.get('agentRuntimeName')}: {a.get('status')}" for a in remaining]
         print(f"  Still deleting: {', '.join(statuses)}")
         time.sleep(10)

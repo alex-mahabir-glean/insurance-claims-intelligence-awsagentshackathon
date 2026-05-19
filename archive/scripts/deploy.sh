@@ -384,7 +384,7 @@ if [ -n "$AGENTCORE_ROLES" ]; then
   ]
 }
 EOF
-    
+
     # Attach the policy to each role
     for ROLE in $AGENTCORE_ROLES; do
         echo -e "${BLUE}Granting permissions to role: $ROLE${NC}"
@@ -393,14 +393,14 @@ EOF
           --policy-name "DynamoDBTableAccess-${DEPLOYMENT_ID}" \
           --policy-document file:///tmp/agentcore-dynamodb-policy.json \
           --region "$REGION" > /dev/null 2>&1
-        
+
         if [ $? -eq 0 ]; then
             echo -e "${GREEN}  ✅ Permissions granted to $ROLE${NC}"
         else
             echo -e "${YELLOW}  ⚠️  Failed to grant permissions to $ROLE (may already exist)${NC}"
         fi
     done
-    
+
     rm /tmp/agentcore-dynamodb-policy.json
     echo -e "${GREEN}✅ DynamoDB permissions update complete${NC}"
 else
@@ -451,11 +451,11 @@ cat > config.js << EOF
 window.deploymentConfig = {
     // API Gateway URL from your deployment
     apiBaseUrl: '$API_URL',
-    
+
     // Glean Agent IDs (optional - only if using embedded Glean agents)
     gleanIntakeAgentId: '${GLEAN_INTAKE_AGENT_ID:-your-glean-agent-id}',
     gleanReviewAgentId: '${GLEAN_REVIEW_AGENT_ID:-your-glean-agent-id}',
-    
+
     // Auth token for AgentCore API endpoints
     authToken: '$API_TOKEN'
 };
@@ -507,10 +507,10 @@ for spec_file in glean/openapi-*.json; do
     if [ -f "$spec_file" ]; then
         filename=$(basename "$spec_file")
         output_file="glean/generated/$filename"
-        
+
         # Replace the API URL placeholder with actual deployed URL
         sed "s|https://YOUR_API_GATEWAY_URL|$API_URL|g" "$spec_file" > "$output_file"
-        
+
         echo -e "${GREEN}✓ Generated: $output_file${NC}"
         ((SPEC_COUNT++))
     fi
