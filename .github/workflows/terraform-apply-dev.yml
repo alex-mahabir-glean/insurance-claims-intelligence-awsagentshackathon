@@ -1,0 +1,49 @@
+name: Terraform apply (dev)
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'terraform/**'
+      - '.github/workflows/terraform-*.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  AWS_REGION: us-east-1
+  TF_DIR: terraform
+
+jobs:
+  apply:
+    name: apply to dev
+    runs-on: ubuntu-latest
+    environment: dev
+    if: ${{ vars.AWS_OIDC_ROLE_ARN != '' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.14.8
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_OIDC_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: terraform init
+        run: terraform -chdir=${{ env.TF_DIR }} init -backend-config=env/dev.tfbackend
+
+      - name: terraform apply (excluding agents — laptop-only per locked decision)
+        run: |
+          terraform -chdir=${{ env.TF_DIR }} apply -auto-approve \
+            -target=module.data \
+            -target=module.api_handler \
+            -target=module.agent_invoker \
+            -target=module.authorizer \
+            -target=module.api \
+            -target=module.observability
