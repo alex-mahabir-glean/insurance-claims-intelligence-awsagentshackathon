@@ -8,6 +8,7 @@ IAM scoping: this Lambda has bedrock-agentcore:InvokeAgentRuntime on the
 two agent ARNs only — no DynamoDB, no other Bedrock — to keep the blast
 radius tight (supports SEC-4 #4 by construction).
 """
+
 from __future__ import annotations
 
 import json
@@ -15,8 +16,12 @@ import os
 from typing import Any
 
 from aws_lambda_powertools import Logger, Metrics, Tracer
-from aws_lambda_powertools.event_handler import APIGatewayHttpResolver, Response, content_types
-from aws_lambda_powertools.event_handler.exceptions import BadRequestError, ServiceError
+from aws_lambda_powertools.event_handler import (
+    APIGatewayHttpResolver,
+    Response,
+    content_types,
+)
+from aws_lambda_powertools.event_handler.exceptions import ServiceError
 from aws_lambda_powertools.logging import correlation_paths
 from pydantic import BaseModel, Field, ValidationError
 
@@ -48,7 +53,9 @@ def _bad_request(field_errors: list[dict[str, Any]]) -> Response:
     return Response(
         status_code=400,
         content_type=content_types.APPLICATION_JSON,
-        body=json.dumps({"success": False, "error": "validation_failed", "details": field_errors}),
+        body=json.dumps(
+            {"success": False, "error": "validation_failed", "details": field_errors}
+        ),
     )
 
 

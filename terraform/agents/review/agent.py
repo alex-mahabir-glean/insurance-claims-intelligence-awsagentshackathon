@@ -61,14 +61,14 @@ When reviewing claims, consider policy coverage, documentation quality, fraud in
 def get_all_claims():
     """
     Retrieve all claims in the system.
-    
+
     Returns:
         dict: Success status and list of claims
     """
     try:
         response = claims_table.scan()
         claims = response.get('Items', [])
-        
+
         # Convert Decimal to float and transform reviewer IDs for JSON serialization
         for claim in claims:
             if 'claimValue' in claim:
@@ -77,13 +77,13 @@ def get_all_claims():
                 claim['aiConfidence'] = str(claim['aiConfidence'])
             if 'assignedTo' in claim:
                 claim['assignedToName'] = get_reviewer_display_name(claim['assignedTo'])
-        
+
         return {
             'success': True,
             'claims': claims,
             'count': len(claims)
         }
-        
+
     except Exception as e:
         return {
             'success': False,
@@ -94,24 +94,24 @@ def get_all_claims():
 def get_claim_details(claim_id: str):
     """
     Get detailed information about a specific claim.
-    
+
     Args:
         claim_id: Unique claim identifier
-    
+
     Returns:
         dict: Success status and claim details
     """
     try:
         response = claims_table.get_item(Key={'claimId': claim_id})
-        
+
         if 'Item' not in response:
             return {
                 'success': False,
                 'error': f'Claim {claim_id} not found'
             }
-        
+
         claim = response['Item']
-        
+
         # Convert Decimal to string and transform reviewer IDs for JSON serialization
         if 'claimValue' in claim:
             claim['claimValue'] = str(claim['claimValue'])
@@ -119,12 +119,12 @@ def get_claim_details(claim_id: str):
             claim['aiConfidence'] = str(claim['aiConfidence'])
         if 'assignedTo' in claim:
             claim['assignedToName'] = get_reviewer_display_name(claim['assignedTo'])
-        
+
         return {
             'success': True,
             'claim': claim
         }
-        
+
     except Exception as e:
         return {
             'success': False,
@@ -135,18 +135,18 @@ def get_claim_details(claim_id: str):
 def approve_claim(claim_id: str, reviewer_id: str, notes: str = ""):
     """
     Approve a claim and update its status.
-    
+
     Args:
         claim_id: Unique claim identifier
         reviewer_id: ID of the reviewer approving the claim
         notes: Optional approval notes
-    
+
     Returns:
         dict: Success status and updated claim info
     """
     try:
         timestamp = datetime.now(timezone.utc).isoformat()
-        
+
         # Update claim status
         claims_table.update_item(
             Key={'claimId': claim_id},
@@ -160,7 +160,7 @@ def approve_claim(claim_id: str, reviewer_id: str, notes: str = ""):
                 ':updated': timestamp
             }
         )
-        
+
         # Log to audit trail
         audit_record = {
             'auditId': f"AUDIT-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}",
@@ -174,16 +174,16 @@ def approve_claim(claim_id: str, reviewer_id: str, notes: str = ""):
                 'newStatus': 'approved'
             }
         }
-        
+
         audit_table.put_item(Item=audit_record)
-        
+
         return {
             'success': True,
             'claimId': claim_id,
             'status': 'approved',
             'message': f'Claim {claim_id} approved successfully'
         }
-        
+
     except Exception as e:
         return {
             'success': False,
@@ -194,12 +194,12 @@ def approve_claim(claim_id: str, reviewer_id: str, notes: str = ""):
 def deny_claim(claim_id: str, reviewer_id: str, reason: str):
     """
     Deny a claim with a reason and update its status.
-    
+
     Args:
         claim_id: Unique claim identifier
         reviewer_id: ID of the reviewer denying the claim
         reason: Reason for denial (required)
-    
+
     Returns:
         dict: Success status and updated claim info
     """
@@ -209,9 +209,9 @@ def deny_claim(claim_id: str, reviewer_id: str, reason: str):
                 'success': False,
                 'error': 'Denial reason is required'
             }
-        
+
         timestamp = datetime.now(timezone.utc).isoformat()
-        
+
         # Update claim status
         claims_table.update_item(
             Key={'claimId': claim_id},
@@ -225,7 +225,7 @@ def deny_claim(claim_id: str, reviewer_id: str, reason: str):
                 ':updated': timestamp
             }
         )
-        
+
         # Log to audit trail
         audit_record = {
             'auditId': f"AUDIT-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}",
@@ -239,16 +239,16 @@ def deny_claim(claim_id: str, reviewer_id: str, reason: str):
                 'newStatus': 'denied'
             }
         }
-        
+
         audit_table.put_item(Item=audit_record)
-        
+
         return {
             'success': True,
             'claimId': claim_id,
             'status': 'denied',
             'message': f'Claim {claim_id} denied'
         }
-        
+
     except Exception as e:
         return {
             'success': False,
@@ -260,18 +260,18 @@ def reassign_claim(claim_id: str, to_reviewer_id: str, reason: str = ""):
     """
     Reassign a claim to another reviewer.
     Supports "next-available" as to_reviewer_id for intelligent auto-assignment.
-    
+
     Args:
         claim_id: Unique claim identifier
         to_reviewer_id: ID of the reviewer to assign the claim to, or "next-available" for auto-assignment
         reason: Optional reason for reassignment
-    
+
     Returns:
         dict: Success status and updated assignment info with reviewer display name
     """
     try:
         timestamp = datetime.now(timezone.utc).isoformat()
-        
+
         # Update claim assignment
         claims_table.update_item(
             Key={'claimId': claim_id},
@@ -282,7 +282,7 @@ def reassign_claim(claim_id: str, to_reviewer_id: str, reason: str = ""):
                 ':updated': timestamp
             }
         )
-        
+
         # Log to audit trail
         audit_record = {
             'auditId': f"AUDIT-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}",
@@ -295,11 +295,11 @@ def reassign_claim(claim_id: str, to_reviewer_id: str, reason: str = ""):
                 'reason': reason or 'Claim reassignment'
             }
         }
-        
+
         audit_table.put_item(Item=audit_record)
-        
+
         reviewer_name = get_reviewer_display_name(to_reviewer_id)
-        
+
         return {
             'success': True,
             'claimId': claim_id,
@@ -307,7 +307,7 @@ def reassign_claim(claim_id: str, to_reviewer_id: str, reason: str = ""):
             'assignedToName': reviewer_name,
             'message': f'Claim {claim_id} reassigned successfully to {reviewer_name}'
         }
-        
+
     except Exception as e:
         return {
             'success': False,
@@ -333,13 +333,13 @@ def invoke(payload):
     """Process user input and return a response"""
     try:
         user_message = payload.get("prompt", "Hello")
-        
+
         # Process the message through the Strands agent
         response = agent(user_message)
-        
+
         # Return the response as a string
         return str(response)
-        
+
     except Exception as e:
         return f"I apologize, but I encountered an error: {str(e)}. Please try again or contact support."
 

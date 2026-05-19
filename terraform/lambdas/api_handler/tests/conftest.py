@@ -3,6 +3,7 @@
 Env vars must be set BEFORE pytest collects test files because the test
 files import services.* which create boto3 resources at module load time.
 """
+
 from __future__ import annotations
 
 import os
@@ -64,7 +65,9 @@ def dynamo_tables() -> object:
         ddb.create_table(
             TableName="TestReviewers",
             KeySchema=[{"AttributeName": "reviewerId", "KeyType": "HASH"}],
-            AttributeDefinitions=[{"AttributeName": "reviewerId", "AttributeType": "S"}],
+            AttributeDefinitions=[
+                {"AttributeName": "reviewerId", "AttributeType": "S"}
+            ],
             BillingMode="PAY_PER_REQUEST",
         )
         ddb.create_table(
@@ -80,6 +83,10 @@ def dynamo_tables() -> object:
             BillingMode="PAY_PER_REQUEST",
         )
         ddb.Table("TestReviewers").put_item(
-            Item={"reviewerId": "sarah-chen", "displayName": "Sarah Chen", "currentWorkload": 3}
+            Item={
+                "reviewerId": "sarah-chen",
+                "displayName": "Sarah Chen",
+                "currentWorkload": 3,
+            }
         )
         yield ddb

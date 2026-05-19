@@ -4,7 +4,7 @@ info:
   description: |
     API for AI-Powered Legal Service Management System.
     Enables Glean AI agents to interact with claims, reviewers, and audit data.
-    
+
     **For Glean Actions Configuration:**
     - Base URL: Use URL from deployment-outputs.json after running ./deploy.sh
     - Authentication: API Key (retrieved from AWS Secrets Manager)
@@ -25,7 +25,7 @@ paths:
       description: |
         Submits a new claim to the system. The claim will be automatically assigned to an available reviewer
         and processed through AI analysis for initial recommendation.
-        
+
         **Use this action when:** A claimant wants to file a new insurance claim through conversational AI.
       operationId: submitClaim
       requestBody:
@@ -131,7 +131,7 @@ paths:
       summary: Get all claims
       description: |
         Retrieves all claims in the system, sorted by submission date (newest first).
-        
+
         **Use this action when:** A reviewer wants to see all claims or get an overview of the claims queue.
       operationId: getAllClaims
       responses:
@@ -165,7 +165,7 @@ paths:
       summary: Get specific claim details
       description: |
         Retrieves detailed information about a specific claim by its ID.
-        
+
         **Use this action when:** A reviewer wants to see full details of a specific claim.
       operationId: getClaimDetails
       parameters:
@@ -207,7 +207,7 @@ paths:
       summary: Approve a claim
       description: |
         Approves a claim and updates its status. This action logs the approval in the audit trail.
-        
+
         **Use this action when:** A reviewer decides to approve a claim after review.
       operationId: approveClaim
       requestBody:
@@ -270,7 +270,7 @@ paths:
       summary: Deny a claim
       description: |
         Denies a claim with a reason and updates its status. This action logs the denial in the audit trail.
-        
+
         **Use this action when:** A reviewer decides to deny a claim after review.
       operationId: denyClaim
       requestBody:
@@ -334,7 +334,7 @@ paths:
       summary: Reassign a claim to another reviewer
       description: |
         Reassigns a claim to a different reviewer. This action logs the reassignment in the audit trail.
-        
+
         **Use this action when:** A claim needs to be transferred to another reviewer due to workload, expertise, or other factors.
       operationId: reassignClaim
       requestBody:

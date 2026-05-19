@@ -3,6 +3,7 @@
 Schema: HASH claimId, RANGE timestamp. Optional TTL on `expires_at`
 (only set when AUDIT_TRAIL_RETENTION_SECONDS env var is configured).
 """
+
 from __future__ import annotations
 
 import os

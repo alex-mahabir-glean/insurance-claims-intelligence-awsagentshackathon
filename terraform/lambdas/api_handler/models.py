@@ -5,6 +5,7 @@ at request entry; malformed payloads return 400 before any DDB access
 (closes SEC-7 #7 + PERF-3 #25 inside the Lambda since HTTP API v2 has
 no built-in request validators).
 """
+
 from __future__ import annotations
 
 from datetime import datetime

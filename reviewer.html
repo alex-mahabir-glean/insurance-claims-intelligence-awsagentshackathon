@@ -14,13 +14,13 @@
     <script defer src="/assets/js/auth-helpers.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
-    
+
     <!-- Shared Breadcrumb Navigation Styles -->
     <link rel="stylesheet" href="/assets/css/breadcrumb.css">
-    
+
     <!-- Load deployment configuration (gitignored) -->
     <script src="config.js"></script>
-    
+
     <!-- Configuration -->
     <script>
         // Map deploymentConfig to demoConfig for backward compatibility
@@ -31,18 +31,18 @@
             window.demoConfig.intakeAgentId = window.deploymentConfig.gleanIntakeAgentId;
             window.demoConfig.reviewAgentId = window.deploymentConfig.gleanReviewAgentId;
         }
-        
+
         // Add reviewer-specific configuration
         window.demoConfig.reviewerId = 'sarah-chen'; // Current reviewer ID
         window.demoConfig.reviewerName = 'Sarah Chen'; // Display name
         window.demoConfig.debug = true; // Debug Mode
-        
+
         // Use reviewAgentId for the overlay agent
         if (window.demoConfig.reviewAgentId) {
             window.demoConfig.agentId = window.demoConfig.reviewAgentId;
         }
     </script>
-    
+
     <style>
         :root {
             --primary-color: #2563eb;
@@ -64,13 +64,13 @@
             --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
             --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
         }
-        
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body, html {
             height: 100%;
             margin: 0;
@@ -81,7 +81,7 @@
             display: flex;
             flex-direction: column;
         }
-        
+
         /* Header Styles */
         .header {
             background: white;
@@ -89,22 +89,22 @@
             padding: 1.25rem 2rem;
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
         }
-        
+
         .header-wrapper {
             display: flex;
             align-items: center;
             gap: 1rem;
             width: 100%;
         }
-        
+
         .logout-btn-wrapper {
             flex-shrink: 0;
         }
-        
+
         .back-btn-wrapper {
             flex-shrink: 0;
         }
-        
+
         .back-btn {
             background: white;
             border: 1px solid var(--border-color);
@@ -120,13 +120,13 @@
             transition: all 0.3s ease;
             text-decoration: none;
         }
-        
+
         .back-btn:hover {
             background: var(--bg-light);
             border-color: var(--primary-color);
             color: var(--primary-color);
         }
-        
+
         .header-content {
             display: flex;
             align-items: center;
@@ -135,7 +135,7 @@
             flex: 1;
             min-width: 0;
         }
-        
+
         .logout-btn {
             background: white;
             border: 1px solid var(--border-color);
@@ -151,20 +151,20 @@
             transition: all 0.3s ease;
             white-space: nowrap;
         }
-        
+
         .logout-btn:hover {
             background: var(--bg-light);
             border-color: var(--primary-color);
             color: var(--primary-color);
         }
-        
+
         .header-center {
             display: flex;
             flex-direction: column;
             gap: 0.25rem;
             flex: 1;
         }
-        
+
         .company-name {
             font-size: 0.75rem;
             font-weight: 600;
@@ -172,7 +172,7 @@
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
-        
+
         .page-title {
             font-size: 1.5rem;
             font-weight: 700;
@@ -181,17 +181,17 @@
             letter-spacing: -0.025em;
             line-height: 1.2;
         }
-        
+
         .header-actions {
             display: none;
         }
-        
+
         .header-actions.visible {
             display: flex;
             align-items: center;
             gap: 1.5rem;
         }
-        
+
         .select-assessor-btn {
             padding: 0.75rem 1.5rem;
             background: white;
@@ -209,7 +209,7 @@
             overflow: hidden;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
-        
+
         .select-assessor-btn::before {
             content: '';
             position: absolute;
@@ -220,30 +220,30 @@
             background: linear-gradient(90deg, transparent, rgba(37, 99, 235, 0.1), transparent);
             transition: left 0.5s;
         }
-        
+
         .select-assessor-btn:hover::before {
             left: 100%;
         }
-        
+
         .select-assessor-btn:hover {
             background: var(--bg-light);
             border-color: var(--primary-color);
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
         }
-        
+
         .current-assessor {
             font-size: 0.875rem;
             color: var(--text-light);
             display: flex;
             gap: 0.5rem;
         }
-        
+
         .current-assessor strong {
             color: var(--text-color);
             font-weight: 600;
         }
-        
+
         /* Landing Page */
         .landing-page {
             flex: 1;
@@ -253,11 +253,11 @@
             justify-content: center;
             padding: 3rem 2rem;
         }
-        
+
         .landing-page.hidden {
             display: none;
         }
-        
+
         .landing-title {
             font-size: 2rem;
             font-weight: 600;
@@ -266,7 +266,7 @@
             text-align: center;
             letter-spacing: -0.02em;
         }
-        
+
         .landing-subtitle {
             font-size: 1.125rem;
             color: var(--text-light);
@@ -274,7 +274,7 @@
             text-align: center;
             max-width: 600px;
         }
-        
+
         .action-cards {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -282,7 +282,7 @@
             max-width: 800px;
             width: 100%;
         }
-        
+
         .action-card {
             background: white;
             border: 2px solid #e5e7eb;
@@ -296,13 +296,13 @@
             text-align: center;
             gap: 1.5rem;
         }
-        
+
         .action-card:hover {
             border-color: var(--primary-color);
             box-shadow: 0 8px 24px rgba(37, 99, 235, 0.15);
             transform: translateY(-4px);
         }
-        
+
         .action-card-icon {
             width: 80px;
             height: 80px;
@@ -314,21 +314,21 @@
             font-size: 2.5rem;
             color: white;
         }
-        
+
         .action-card-title {
             font-size: 1.5rem;
             font-weight: 600;
             color: var(--text-color);
             margin: 0;
         }
-        
+
         .action-card-description {
             font-size: 0.9375rem;
             color: var(--text-light);
             line-height: 1.6;
             margin: 0;
         }
-        
+
         /* Assessor Selection Modal */
         .assessor-modal {
             position: fixed;
@@ -343,11 +343,11 @@
             z-index: 1000;
             padding: 2rem;
         }
-        
+
         .assessor-modal.active {
             display: flex;
         }
-        
+
         .assessor-modal-content {
             background: white;
             border-radius: 16px;
@@ -359,27 +359,27 @@
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             position: relative;
         }
-        
+
         .assessor-modal-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
             margin-bottom: 2rem;
         }
-        
+
         .assessor-modal-title {
             font-size: 1.75rem;
             font-weight: 600;
             color: var(--text-color);
             margin: 0 0 0.5rem 0;
         }
-        
+
         .assessor-modal-subtitle {
             font-size: 1rem;
             color: var(--text-light);
             margin: 0;
         }
-        
+
         .modal-close-btn {
             background: none;
             border: none;
@@ -390,11 +390,11 @@
             line-height: 1;
             transition: color 0.2s ease;
         }
-        
+
         .modal-close-btn:hover {
             color: var(--text-color);
         }
-        
+
         .assessor-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -403,7 +403,7 @@
             width: 100%;
             margin-top: 2rem;
         }
-        
+
         .assessor-tile {
             background: white;
             border: 2px solid #e5e7eb;
@@ -417,13 +417,13 @@
             text-align: center;
             gap: 1rem;
         }
-        
+
         .assessor-tile:hover {
             border-color: var(--primary-color);
             box-shadow: 0 4px 16px rgba(37, 99, 235, 0.15);
             transform: translateY(-2px);
         }
-        
+
         .assessor-avatar {
             width: 64px;
             height: 64px;
@@ -436,46 +436,46 @@
             color: white;
             font-weight: 600;
         }
-        
+
         .assessor-name {
             font-size: 1.125rem;
             font-weight: 600;
             color: var(--text-color);
             margin: 0;
         }
-        
+
         .assessor-info {
             font-size: 0.8125rem;
             color: var(--text-light);
             margin: 0;
         }
-        
+
         .assessor-stats {
             display: flex;
             gap: 1rem;
             margin-top: 0.5rem;
         }
-        
+
         .assessor-stat {
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 0.25rem;
         }
-        
+
         .assessor-stat-value {
             font-size: 1.25rem;
             font-weight: 700;
             color: var(--primary-color);
         }
-        
+
         .assessor-stat-label {
             font-size: 0.6875rem;
             color: var(--text-light);
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-        
+
         /* Back Button */
         .back-to-landing {
             display: none;
@@ -496,21 +496,21 @@
             top: 50%;
             transform: translateY(-50%);
         }
-        
+
         .back-to-landing.visible {
             display: flex;
         }
-        
+
         .back-to-landing:hover {
             background: var(--bg-light);
             border-color: var(--primary-color);
             color: var(--primary-color);
         }
-        
+
         .back-to-landing i {
             font-size: 0.875rem;
         }
-        
+
         /* Main Container */
         .main-container {
             flex: 1;
@@ -518,7 +518,7 @@
             flex-direction: column;
             overflow: hidden;
         }
-        
+
         /* Dashboard View */
         .dashboard-view {
             flex: 1;
@@ -527,23 +527,23 @@
             padding: 2rem;
             overflow-y: auto;
         }
-        
+
         .dashboard-view.active {
             display: flex;
         }
-        
+
         /* KPI Cards */
         .kpi-section {
             margin-bottom: 1.5rem;
             margin-top: 0;
         }
-        
+
         .kpi-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 1rem;
         }
-        
+
         .kpi-card {
             background: white;
             padding: 1rem 1.25rem;
@@ -552,12 +552,12 @@
             border: 1px solid var(--border-color);
             transition: all 0.2s ease;
         }
-        
+
         .kpi-card:hover {
             box-shadow: var(--shadow);
             border-color: var(--primary-light);
         }
-        
+
         .kpi-card h3 {
             font-size: 0.6875rem;
             font-weight: 600;
@@ -566,7 +566,7 @@
             letter-spacing: 0.05em;
             margin-bottom: 0.5rem;
         }
-        
+
         .kpi-value {
             font-size: 1.875rem;
             font-weight: 700;
@@ -575,37 +575,37 @@
             line-height: 1;
             letter-spacing: -0.02em;
         }
-        
+
         .kpi-card p {
             font-size: 0.75rem;
             color: var(--text-lighter);
             margin: 0;
             line-height: 1.4;
         }
-        
+
         /* Claims Section */
         .claims-section {
             margin-bottom: 2rem;
         }
-        
+
         .section-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1rem;
         }
-        
+
         .section-header h2 {
             font-size: 1.5rem;
             font-weight: 700;
             color: var(--text-color);
         }
-        
+
         .filter-buttons {
             display: flex;
             gap: 0.5rem;
         }
-        
+
         .filter-btn {
             padding: 0.625rem 1.25rem;
             background: white;
@@ -619,7 +619,7 @@
             position: relative;
             overflow: hidden;
         }
-        
+
         .filter-btn::before {
             content: '';
             position: absolute;
@@ -630,33 +630,33 @@
             background: linear-gradient(90deg, transparent, rgba(37, 99, 235, 0.1), transparent);
             transition: left 0.5s;
         }
-        
+
         .filter-btn:hover::before {
             left: 100%;
         }
-        
+
         .filter-btn:hover {
             background: var(--bg-light);
             border-color: var(--primary-color);
             transform: translateY(-1px);
             box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
         }
-        
+
         .filter-btn.active {
             background: linear-gradient(135deg, var(--primary-color) 0%, #4f46e5 100%);
             color: white;
             border-color: var(--primary-color);
             box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
         }
-        
+
         .filter-btn.active::before {
             background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
         }
-        
+
         .filter-btn:hover:not(.active) {
             background: var(--bg-light);
         }
-        
+
         /* Refresh Button */
         .refresh-btn {
             padding: 0.625rem 1.25rem;
@@ -674,41 +674,41 @@
             margin-left: auto;
             box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
         }
-        
+
         .refresh-btn:hover {
             background: linear-gradient(135deg, #059669 0%, #047857 100%);
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         }
-        
+
         .refresh-btn:active {
             transform: translateY(0);
         }
-        
+
         .refresh-btn i {
             transition: transform 0.5s ease;
         }
-        
+
         .refresh-btn:hover i {
             transform: rotate(180deg);
         }
-        
+
         .refresh-btn.refreshing i {
             animation: spin 1s linear infinite;
         }
-        
+
         @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
-        
+
         /* Claims List */
         .claims-list {
             display: flex;
             flex-direction: column;
             gap: 0.75rem;
         }
-        
+
         .claim-card {
             background: white;
             padding: 1.25rem 1.5rem;
@@ -718,27 +718,27 @@
             cursor: pointer;
             transition: all 0.2s ease;
         }
-        
+
         .claim-card:hover {
             box-shadow: var(--shadow);
             border-color: var(--primary-color);
             transform: translateY(-1px);
         }
-        
+
         .claim-card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 0.875rem;
         }
-        
+
         .claim-id {
             font-size: 1rem;
             font-weight: 700;
             color: var(--text-color);
             letter-spacing: -0.01em;
         }
-        
+
         .claim-badge {
             padding: 0.375rem 0.875rem;
             border-radius: 16px;
@@ -750,49 +750,49 @@
             align-items: center;
             gap: 0.375rem;
         }
-        
+
         .claim-badge i {
             font-size: 0.75rem;
         }
-        
+
         .badge-pending, .badge-assigned {
             background: #fef3c7;
             color: #92400e;
         }
-        
+
         .badge-review, .badge-under_review {
             background: #dbeafe;
             color: #1e40af;
         }
-        
+
         .badge-approved {
             background: #d1fae5;
             color: #065f46;
         }
-        
+
         .badge-denied {
             background: #fee2e2;
             color: #991b1b;
         }
-        
+
         .badge-submitted {
             background: #f3f4f6;
             color: #4b5563;
         }
-        
+
         .claim-card-body {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 1rem 1.25rem;
             margin-bottom: 0.75rem;
         }
-        
+
         .claim-info-item {
             display: flex;
             flex-direction: column;
             gap: 0.25rem;
         }
-        
+
         .claim-info-label {
             font-size: 0.6875rem;
             font-weight: 600;
@@ -800,7 +800,7 @@
             margin-top: 0.125rem;
             color: #64748b;
         }
-        
+
         .ai-recommendation-bar {
             display: flex;
             align-items: flex-start;
@@ -808,7 +808,7 @@
             gap: 1rem;
             margin-top: 0.75rem;
         }
-        
+
         .ai-recommendation {
             flex: 1;
             max-width: 600px;
@@ -820,45 +820,45 @@
             border-left: 3px solid;
             transition: all 0.3s ease;
         }
-        
+
         .ai-recommendation.recommend-approve {
             background: #f0fdf4;
             border-left-color: #10b981;
         }
-        
+
         .ai-recommendation.recommend-approve i {
             color: #10b981;
         }
-        
+
         .ai-recommendation.recommend-deny {
             background: #fef2f2;
             border-left-color: #ef4444;
         }
-        
+
         .ai-recommendation.recommend-deny i {
             color: #ef4444;
         }
-        
+
         .ai-recommendation > i {
             font-size: 0.875rem;
             margin-top: 0.125rem;
             flex-shrink: 0;
         }
-        
+
         .ai-recommendation-content {
             flex: 1;
             display: flex;
             flex-direction: column;
             gap: 0.25rem;
         }
-        
+
         .ai-recommendation-text {
             font-size: 0.8125rem;
             font-weight: 600;
             color: #1e293b;
             line-height: 1.4;
         }
-        
+
         .ai-recommendation-reason {
             font-size: 0.75rem;
             color: #64748b;
@@ -870,32 +870,32 @@
             overflow: hidden;
             transition: all 0.3s ease;
         }
-        
+
         .ai-recommendation:has(.expand-icon) {
             cursor: pointer;
         }
-        
+
         .ai-recommendation:has(.expand-icon):hover {
             background: rgba(0, 0, 0, 0.02);
         }
-        
+
         .expand-icon {
             font-size: 0.75rem;
             color: #64748b;
             transition: transform 0.3s ease;
             flex-shrink: 0;
         }
-        
+
         .ai-recommendation.expanded .expand-icon {
             transform: rotate(180deg);
         }
-        
+
         .ai-recommendation.expanded .ai-recommendation-reason {
             display: block;
             -webkit-line-clamp: unset;
             line-clamp: unset;
         }
-        
+
         .ai-recommendation-detail {
             display: flex;
             align-items: flex-start;
@@ -905,56 +905,56 @@
             border-left: 3px solid;
             transition: all 0.3s ease;
         }
-        
+
         .ai-recommendation-detail > i {
             font-size: 0.875rem;
             margin-top: 0.125rem;
             flex-shrink: 0;
         }
-        
+
         .ai-recommendation-detail:has(.expand-icon) {
             cursor: pointer;
         }
-        
+
         .ai-recommendation-detail:has(.expand-icon):hover {
             background: rgba(0, 0, 0, 0.02);
         }
-        
+
         .ai-recommendation-detail.expanded .expand-icon {
             transform: rotate(180deg);
         }
-        
+
         .ai-recommendation-detail.expanded .ai-recommendation-reason {
             display: block;
             -webkit-line-clamp: unset;
             line-clamp: unset;
         }
-        
+
         .ai-recommendation-detail.recommend-approve {
             background: #f0fdf4;
             border-left-color: #10b981;
         }
-        
+
         .ai-recommendation-detail.recommend-approve i {
             color: #10b981;
         }
-        
+
         .ai-recommendation-detail.recommend-deny {
             background: #fef2f2;
             border-left-color: #ef4444;
         }
-        
+
         .ai-recommendation-detail.recommend-deny i {
             color: #ef4444;
         }
-        
+
         /* Claim Card Actions */
         .claim-card-actions {
             display: flex;
             gap: 0.375rem;
             flex-shrink: 0;
         }
-        
+
         .claim-card-action-btn {
             flex: 0 1 auto;
             padding: 0.4rem 0.5rem;
@@ -972,7 +972,7 @@
             overflow: hidden;
             white-space: nowrap;
         }
-        
+
         .claim-card-action-btn::before {
             content: '';
             position: absolute;
@@ -983,51 +983,51 @@
             background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
             transition: left 0.5s;
         }
-        
+
         .claim-card-action-btn:hover::before {
             left: 100%;
         }
-        
+
         .claim-card-action-btn i {
             font-size: 0.75rem;
         }
-        
+
         .claim-card-action-btn.approve {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
             box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
         }
-        
+
         .claim-card-action-btn.approve:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
             border-color: #10b981;
         }
-        
+
         .claim-card-action-btn.deny {
             background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
             color: white;
             box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
         }
-        
+
         .claim-card-action-btn.deny:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
             border-color: #ef4444;
         }
-        
+
         .claim-card-action-btn.assess {
             background: linear-gradient(135deg, var(--primary-color) 0%, #4f46e5 100%);
             color: white;
             box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
         }
-        
+
         .claim-card-action-btn.assess:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
             border-color: var(--primary-color);
         }
-        
+
         /* Detail View Modal */
         .detail-view {
             position: fixed;
@@ -1042,12 +1042,12 @@
             z-index: 1000;
             padding: 2rem;
         }
-        
+
         .detail-view.active {
             display: flex;
             animation: fadeIn 0.2s ease;
         }
-        
+
         @keyframes fadeIn {
             from {
                 opacity: 0;
@@ -1056,7 +1056,7 @@
                 opacity: 1;
             }
         }
-        
+
         .detail-modal {
             position: relative;
             width: 100%;
@@ -1070,7 +1070,7 @@
             overflow: hidden;
             animation: slideDown 0.3s ease;
         }
-        
+
         @keyframes slideDown {
             from {
                 opacity: 0;
@@ -1081,7 +1081,7 @@
                 transform: translateY(0) scale(1);
             }
         }
-        
+
         .modal-close {
             position: absolute;
             top: 1rem;
@@ -1100,31 +1100,31 @@
             transition: all 0.2s ease;
             z-index: 10;
         }
-        
+
         .modal-close:hover {
             background: rgba(0, 0, 0, 0.2);
             transform: rotate(90deg);
         }
-        
+
         .detail-header {
             background: white;
             padding: 1.5rem 2rem;
             border-bottom: 1px solid var(--border-color);
         }
-        
+
         .detail-title {
             font-size: 1.5rem;
             font-weight: 700;
             color: var(--text-color);
             padding-right: 3rem;
         }
-        
+
         .detail-content {
             flex: 1;
             display: flex;
             overflow: hidden;
         }
-        
+
         /* Split View */
         .claim-info-panel {
             width: 100%;
@@ -1134,11 +1134,11 @@
             overflow-y: auto;
             padding: 2rem 3rem;
         }
-        
+
         .claim-info-section {
             margin-bottom: 2rem;
         }
-        
+
         .claim-info-section h3 {
             font-size: 1.125rem;
             font-weight: 700;
@@ -1147,14 +1147,14 @@
             padding-bottom: 0.5rem;
             border-bottom: 2px solid var(--border-color);
         }
-        
+
         .info-row {
             display: flex;
             flex-direction: column;
             gap: 0.25rem;
             margin-bottom: 1rem;
         }
-        
+
         .info-row-label {
             font-size: 0.75rem;
             font-weight: 600;
@@ -1162,19 +1162,19 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-        
+
         .info-row-value {
             font-size: 0.875rem;
             color: var(--text-color);
             font-weight: 500;
         }
-        
+
         .document-list {
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
         }
-        
+
         .document-item {
             display: flex;
             align-items: center;
@@ -1184,11 +1184,11 @@
             border-radius: 6px;
             font-size: 0.875rem;
         }
-        
+
         .document-item i {
             color: var(--primary-color);
         }
-        
+
         /* Claim Action Buttons */
         .claim-actions {
             display: flex;
@@ -1197,7 +1197,7 @@
             padding-top: 2rem;
             border-top: 2px solid var(--border-color);
         }
-        
+
         .action-btn {
             flex: 1;
             padding: 1rem 1.75rem;
@@ -1214,7 +1214,7 @@
             position: relative;
             overflow: hidden;
         }
-        
+
         .action-btn::before {
             content: '';
             position: absolute;
@@ -1225,68 +1225,68 @@
             background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
             transition: left 0.5s;
         }
-        
+
         .action-btn:hover::before {
             left: 100%;
         }
-        
+
         .action-btn i {
             font-size: 1.125rem;
         }
-        
+
         .action-btn-approve {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
             box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
         }
-        
+
         .action-btn-approve:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
             border-color: #10b981;
         }
-        
+
         .action-btn-deny {
             background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
             color: white;
             box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3);
         }
-        
+
         .action-btn-deny:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
             border-color: #ef4444;
         }
-        
+
         .action-btn-assess {
             background: linear-gradient(135deg, var(--primary-color) 0%, #4f46e5 100%);
             color: white;
             box-shadow: 0 4px 16px rgba(37, 99, 235, 0.3);
         }
-        
+
         .action-btn-assess:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
             border-color: var(--primary-color);
         }
-        
+
         /* AI Chat Panel - REMOVED (using overlay instead) */
         .ai-chat-panel {
             display: none;
         }
-        
+
         #glean-agent-detail {
             width: 100%;
             height: 100%;
             border: none;
         }
-        
+
         #glean-agent-detail iframe {
             width: 100% !important;
             height: 100% !important;
             border: none !important;
         }
-        
+
         /* Loading State */
         .loading-overlay {
             position: absolute;
@@ -1300,7 +1300,7 @@
             justify-content: center;
             z-index: 100;
         }
-        
+
         .loading-spinner {
             width: 40px;
             height: 40px;
@@ -1309,34 +1309,34 @@
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
-        
+
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-        
+
         /* Empty State */
         .empty-state {
             text-align: center;
             padding: 3rem;
             color: var(--text-light);
         }
-        
+
         .empty-state i {
             font-size: 3rem;
             margin-bottom: 1rem;
             opacity: 0.5;
         }
-        
+
         .empty-state h3 {
             font-size: 1.25rem;
             font-weight: 600;
             margin-bottom: 0.5rem;
         }
-        
+
         .empty-state p {
             font-size: 0.875rem;
         }
-        
+
         /* Chat Overlay */
         .chat-overlay {
             position: fixed;
@@ -1354,12 +1354,12 @@
             z-index: 10001;
             border: 1px solid #e5e7eb;
         }
-        
+
         .chat-overlay.show {
             display: flex;
             animation: slideUp 0.3s ease;
         }
-        
+
         .chat-overlay.expanded {
             position: fixed !important;
             top: 20px !important;
@@ -1372,7 +1372,7 @@
             max-width: none !important;
             max-height: none !important;
         }
-        
+
         @keyframes slideUp {
             from {
                 opacity: 0;
@@ -1383,7 +1383,7 @@
                 transform: translateY(0) scale(1);
             }
         }
-        
+
         .chat-header {
             background: var(--primary-color);
             color: white;
@@ -1393,19 +1393,19 @@
             justify-content: space-between;
             align-items: center;
         }
-        
+
         .chat-title {
             font-weight: 600;
             display: flex;
             align-items: center;
             gap: 0.5rem;
         }
-        
+
         .chat-controls {
             display: flex;
             gap: 0.5rem;
         }
-        
+
         .chat-controls button {
             background: rgba(255,255,255,0.2);
             border: none;
@@ -1415,11 +1415,11 @@
             cursor: pointer;
             transition: background 0.2s ease;
         }
-        
+
         .chat-controls button:hover {
             background: rgba(255,255,255,0.3);
         }
-        
+
         /* Resize Handle */
         .resize-handle {
             position: absolute;
@@ -1437,22 +1437,22 @@
             z-index: 10;
             transform: rotate(-45deg);
         }
-        
+
         .resize-handle:hover {
             color: rgba(0,0,0,0.6);
             transform: rotate(-45deg) scale(1.2);
         }
-        
+
         .chat-overlay.expanded .resize-handle {
             display: none;
         }
-        
+
         .chat-overlay .chat-container {
             flex: 1;
             overflow: hidden;
             border-radius: 0 0 12px 12px;
         }
-        
+
         .chat-container {
             flex: 1;
             width: 100%;
@@ -1461,7 +1461,7 @@
             padding: 0;
             margin: 0;
         }
-        
+
         #glean-agent-overlay {
             width: 100%;
             height: 100%;
@@ -1470,11 +1470,11 @@
             border-radius: 0;
             box-shadow: none;
         }
-        
+
         .chat-overlay.expanded #glean-agent-overlay {
             min-height: calc(100vh - 120px);
         }
-        
+
         /* AI Agent Button in Header */
         .ai-agent-btn {
             padding: 0.75rem 1.5rem;
@@ -1494,7 +1494,7 @@
             box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
             transform: translateY(-1px);
         }
-        
+
         .ai-agent-btn::before {
             content: '';
             position: absolute;
@@ -1505,94 +1505,94 @@
             background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
             transition: left 0.5s;
         }
-        
+
         .ai-agent-btn:hover::before {
             left: 100%;
         }
-        
+
         .ai-agent-btn:hover {
             border-color: var(--primary-color);
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
         }
-        
+
         /* Responsive */
         @media (max-width: 1024px) {
             .header-center {
                 flex-shrink: 1;
                 min-width: 0;
             }
-            
+
             .page-title {
                 font-size: 1.25rem;
             }
         }
-        
+
         @media (max-width: 768px) {
             .header {
                 padding: 1rem;
             }
-            
+
             .header-wrapper {
                 flex-wrap: wrap;
             }
-            
+
             .back-btn-wrapper {
                 order: 1;
             }
-            
+
             .logout-btn-wrapper {
                 order: 2;
                 margin-left: 0;
             }
-            
+
             .header-content {
                 order: 3;
                 width: 100%;
                 flex-wrap: wrap;
             }
-            
+
             .page-title {
                 font-size: 1.125rem;
             }
-            
+
             .header-actions {
                 width: 100%;
                 margin-top: 0.5rem;
                 justify-content: flex-end;
             }
         }
-        
+
         @media (max-width: 768px) {
             .assessor-modal-content {
                 padding: 1.5rem;
             }
-            
+
             .landing-title {
                 font-size: 1.5rem;
             }
-            
+
             .landing-subtitle {
                 font-size: 1rem;
                 margin-bottom: 2rem;
             }
-            
+
             .action-card {
                 padding: 2rem 1.5rem;
             }
-            
+
             .action-card-icon {
                 width: 64px;
                 height: 64px;
                 font-size: 2rem;
             }
-            
+
             .assessor-grid {
                 grid-template-columns: 1fr;
                 max-width: 400px;
             }
         }
-        
+
         /* Footer */
         .footer {
             position: fixed;
@@ -1607,7 +1607,7 @@
             z-index: 100;
             box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
         }
-        
+
         .footer p {
             margin: 0;
             font-weight: 500;
@@ -1653,14 +1653,14 @@
             </div>
         </div>
     </header>
-    
+
     <!-- Main Container -->
     <div class="main-container">
         <!-- Landing Page -->
         <div class="landing-page" id="landing-page">
             <h2 class="landing-title">Welcome to Claims Management</h2>
             <p class="landing-subtitle">Choose your role to access the appropriate dashboard</p>
-            
+
             <div class="action-cards">
                 <div class="action-card" onclick="selectRole('admin')">
                     <div class="action-card-icon">
@@ -1669,7 +1669,7 @@
                     <h3 class="action-card-title">Admin Dashboard</h3>
                     <p class="action-card-description">View and manage all claims across all assessors. Monitor team performance and system-wide metrics.</p>
                 </div>
-                
+
                 <div class="action-card" onclick="selectRole('assessor')">
                     <div class="action-card-icon">
                         <i class="fas fa-user-check"></i>
@@ -1679,7 +1679,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Assessor Selection Modal -->
         <div class="assessor-modal" id="assessor-modal" onclick="closeAssessorModalOnBackdrop(event)">
             <div class="assessor-modal-content">
@@ -1692,7 +1692,7 @@
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
-                
+
                 <div class="assessor-grid">
                     <div class="assessor-tile" onclick="selectAssessor('sarah-chen')">
                         <div class="assessor-avatar">SC</div>
@@ -1709,7 +1709,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="assessor-tile" onclick="selectAssessor('mike-torres')">
                         <div class="assessor-avatar">MT</div>
                         <h3 class="assessor-name">Mike Torres</h3>
@@ -1725,7 +1725,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="assessor-tile" onclick="selectAssessor('lisa-park')">
                         <div class="assessor-avatar">LP</div>
                         <h3 class="assessor-name">Lisa Park</h3>
@@ -1741,7 +1741,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="assessor-tile" onclick="selectAssessor('alex-rivera')">
                         <div class="assessor-avatar">AR</div>
                         <h3 class="assessor-name">Alex Rivera</h3>
@@ -1757,7 +1757,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="assessor-tile" onclick="selectAssessor('jordan-kim')">
                         <div class="assessor-avatar">JK</div>
                         <h3 class="assessor-name">Jordan Kim</h3>
@@ -1773,7 +1773,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="assessor-tile" onclick="selectAssessor('taylor-brooks')">
                         <div class="assessor-avatar">TB</div>
                         <h3 class="assessor-name">Taylor Brooks</h3>
@@ -1792,7 +1792,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Dashboard View -->
         <div class="dashboard-view" id="dashboard-view">
             <!-- KPI Section -->
@@ -1820,7 +1820,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Claims Section -->
             <div class="claims-section">
                 <div class="section-header">
@@ -1835,30 +1835,30 @@
                         </button>
                     </div>
                 </div>
-                
+
                 <div class="claims-list" id="claims-list">
                     <!-- Claims will be loaded here dynamically -->
                 </div>
             </div>
         </div>
-        
+
         <!-- Detail View Modal -->
         <div class="detail-view" id="detail-view" onclick="closeModalOnBackdrop(event)">
             <div class="detail-modal" onclick="event.stopPropagation()">
                 <button class="modal-close" onclick="backToDashboard()" title="Close">
                     <i class="fas fa-times"></i>
                 </button>
-                
+
                 <div class="detail-header">
                     <div class="detail-title" id="detail-claim-id">Claim Details</div>
                 </div>
-                
+
                 <div class="detail-content">
                     <!-- Claim Info Panel -->
                     <div class="claim-info-panel" id="claim-info-panel">
                         <!-- Will be populated dynamically -->
                     </div>
-                    
+
                     <!-- AI Chat Panel -->
                     <div class="ai-chat-panel">
                         <div class="chat-panel-header">
@@ -1873,9 +1873,9 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Agent ID Selector - REMOVED (hardcoded in config) -->
-    
+
     <!-- AI Chat Overlay -->
     <div class="chat-overlay" id="chat-overlay">
         <div class="resize-handle" id="resize-handle" title="Drag to resize">
@@ -1902,17 +1902,17 @@
             <div id="glean-agent-overlay"></div>
         </div>
     </div>
-    
+
     <!-- Footer -->
     <footer class="footer">
         <p>Powered by Amazon Bedrock AgentCore + Glean | AWS AI Agent Global Hackathon 2025</p>
     </footer>
-    
+
     <!-- Scripts -->
     <script src="data/sample-claims.js"></script>
     <script src="assets/js/api-client.js"></script>
     <script src="assets/js/reviewer.js"></script>
-    
+
     <script>
         // Require authentication
         if (window.CognitoAuth) {

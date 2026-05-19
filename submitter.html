@@ -14,13 +14,13 @@
     <script defer src="/assets/js/auth-helpers.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
-    
+
     <!-- Shared Breadcrumb Navigation Styles -->
     <link rel="stylesheet" href="/assets/css/breadcrumb.css">
-    
+
     <!-- Load deployment configuration (gitignored) -->
     <script src="config.js"></script>
-    
+
     <!-- Configuration -->
     <script>
         // Map deploymentConfig to demoConfig for backward compatibility
@@ -33,7 +33,7 @@
             window.demoConfig.reviewAgentId = window.deploymentConfig.gleanReviewAgentId;
         }
     </script>
-    
+
     <style>
         :root {
             --primary-color: #2563eb;
@@ -55,13 +55,13 @@
             --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
             --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
         }
-        
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body, html {
             height: 100%;
             margin: 0;
@@ -72,7 +72,7 @@
             display: flex;
             flex-direction: column;
         }
-        
+
         /* Floating Help Button */
         .help-button {
             position: fixed;
@@ -93,16 +93,16 @@
             transition: all 0.3s ease;
             z-index: 1000;
         }
-        
+
         .help-button:hover {
             transform: scale(1.1);
             box-shadow: 0 6px 30px rgba(37, 99, 235, 0.5);
         }
-        
+
         .help-button:active {
             transform: scale(0.95);
         }
-        
+
         /* Main Content */
         .main-container {
             flex: 1;
@@ -111,7 +111,7 @@
             overflow: hidden;
             background: #f8fafc;
         }
-        
+
         .content-wrapper {
             flex: 1;
             display: flex;
@@ -122,7 +122,7 @@
             margin: 0 auto;
             width: 100%;
         }
-        
+
         /* Professional Header */
         .page-header {
             background: white;
@@ -131,21 +131,21 @@
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
             position: relative;
         }
-        
+
         .logout-btn-wrapper {
             position: absolute;
             right: 2rem;
             top: 50%;
             transform: translateY(-50%);
         }
-        
+
         .back-btn-wrapper {
             position: absolute;
             left: 2rem;
             top: 50%;
             transform: translateY(-50%);
         }
-        
+
         .back-btn {
             background: white;
             border: 1px solid var(--border-color);
@@ -161,13 +161,13 @@
             transition: all 0.3s ease;
             text-decoration: none;
         }
-        
+
         .back-btn:hover {
             background: var(--bg-light);
             border-color: var(--primary-color);
             color: var(--primary-color);
         }
-        
+
         .page-header-content {
             max-width: 1400px;
             margin: 0 auto;
@@ -176,7 +176,7 @@
             justify-content: space-between;
             gap: 1rem;
         }
-        
+
         .logout-btn {
             background: white;
             border: 1px solid var(--border-color);
@@ -192,13 +192,13 @@
             transition: all 0.3s ease;
             white-space: nowrap;
         }
-        
+
         .logout-btn:hover {
             background: var(--bg-light);
             border-color: var(--primary-color);
             color: var(--primary-color);
         }
-        
+
         .company-name {
             font-size: 0.75rem;
             font-weight: 500;
@@ -206,7 +206,7 @@
             text-transform: uppercase;
             letter-spacing: 0.075em;
         }
-        
+
         .page-title {
             font-size: 1.375rem;
             font-weight: 600;
@@ -214,11 +214,11 @@
             margin: 0;
             letter-spacing: -0.02em;
         }
-        
+
         .info-cards {
             display: none;
         }
-        
+
         /* Landing Page */
         .landing-page {
             flex: 1;
@@ -228,11 +228,11 @@
             justify-content: center;
             padding: 3rem 2rem;
         }
-        
+
         .landing-page.hidden {
             display: none;
         }
-        
+
         .landing-title {
             font-size: 2rem;
             font-weight: 600;
@@ -241,7 +241,7 @@
             text-align: center;
             letter-spacing: -0.02em;
         }
-        
+
         .landing-subtitle {
             font-size: 1.125rem;
             color: var(--text-light);
@@ -249,7 +249,7 @@
             text-align: center;
             max-width: 600px;
         }
-        
+
         .landing-trust-badges {
             display: flex;
             gap: 3rem;
@@ -257,7 +257,7 @@
             margin-top: 3rem;
             flex-wrap: wrap;
         }
-        
+
         .landing-trust-badge {
             display: flex;
             flex-direction: column;
@@ -266,7 +266,7 @@
             position: relative;
             cursor: pointer;
         }
-        
+
         .landing-trust-badge-icon {
             width: 56px;
             height: 56px;
@@ -279,20 +279,20 @@
             color: var(--primary-color);
             transition: all 0.3s ease;
         }
-        
+
         .landing-trust-badge:hover .landing-trust-badge-icon {
             background: linear-gradient(135deg, var(--primary-color) 0%, #4f46e5 100%);
             color: white;
             transform: translateY(-4px);
         }
-        
+
         .landing-trust-badge-text {
             font-size: 0.875rem;
             font-weight: 500;
             color: var(--text-color);
             text-align: center;
         }
-        
+
         /* Trust Badge Tooltip */
         .trust-badge-tooltip {
             position: absolute;
@@ -311,7 +311,7 @@
             z-index: 100;
             pointer-events: none;
         }
-        
+
         .trust-badge-tooltip::after {
             content: '';
             position: absolute;
@@ -321,7 +321,7 @@
             border: 8px solid transparent;
             border-top-color: white;
         }
-        
+
         .trust-badge-tooltip::before {
             content: '';
             position: absolute;
@@ -332,13 +332,13 @@
             border-top-color: #e5e7eb;
             margin-top: 1px;
         }
-        
+
         .landing-trust-badge:hover .trust-badge-tooltip {
             opacity: 1;
             visibility: visible;
             bottom: calc(100% + 1.5rem);
         }
-        
+
         .tooltip-title {
             font-size: 0.9375rem;
             font-weight: 600;
@@ -348,19 +348,19 @@
             align-items: center;
             gap: 0.5rem;
         }
-        
+
         .tooltip-title i {
             color: var(--primary-color);
             font-size: 1rem;
         }
-        
+
         .tooltip-description {
             font-size: 0.8125rem;
             color: var(--text-light);
             line-height: 1.6;
             margin: 0;
         }
-        
+
         .action-cards {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -368,7 +368,7 @@
             max-width: 800px;
             width: 100%;
         }
-        
+
         .action-card {
             background: white;
             border: 2px solid #e5e7eb;
@@ -382,13 +382,13 @@
             text-align: center;
             gap: 1.5rem;
         }
-        
+
         .action-card:hover {
             border-color: var(--primary-color);
             box-shadow: 0 8px 24px rgba(37, 99, 235, 0.15);
             transform: translateY(-4px);
         }
-        
+
         .action-card-icon {
             width: 80px;
             height: 80px;
@@ -400,21 +400,21 @@
             font-size: 2.5rem;
             color: white;
         }
-        
+
         .action-card-title {
             font-size: 1.5rem;
             font-weight: 600;
             color: var(--text-color);
             margin: 0;
         }
-        
+
         .action-card-description {
             font-size: 0.9375rem;
             color: var(--text-light);
             line-height: 1.6;
             margin: 0;
         }
-        
+
         /* Chat Container */
         .chat-container {
             flex: 1;
@@ -427,35 +427,35 @@
             flex-direction: column;
             min-height: 600px;
         }
-        
+
         .chat-container.active {
             display: flex;
         }
-        
+
         .chat-header-bar {
             display: none;
         }
-        
+
         .chat-content-area {
             flex: 1;
             overflow: hidden;
             position: relative;
             background: #fafbfc;
         }
-        
+
         #glean-agent {
             width: 100%;
             height: 100%;
             border: none;
             background: white;
         }
-        
+
         #glean-agent iframe {
             width: 100% !important;
             height: 100% !important;
             border: none !important;
         }
-        
+
         /* Chat Controls Container */
         .chat-controls-container {
             display: none;
@@ -463,11 +463,11 @@
             align-items: center;
             margin-bottom: 0.5rem;
         }
-        
+
         .chat-controls-container.active {
             display: flex;
         }
-        
+
         /* Back Button */
         .back-button {
             display: flex;
@@ -482,7 +482,7 @@
             padding: 0.5rem 0;
             transition: color 0.2s ease;
         }
-        
+
         /* Switch Mode Button */
         .switch-mode-btn {
             background: white;
@@ -499,100 +499,100 @@
             height: 36px;
             transition: all 0.3s ease;
         }
-        
+
         .switch-mode-btn:hover {
             background: var(--bg-light);
             border-color: var(--primary-color);
             color: var(--primary-color);
         }
-        
+
         .back-button:hover {
             color: var(--primary-dark);
         }
-        
+
         .back-button i {
             font-size: 0.875rem;
         }
-        
+
         /* Responsive adjustments */
         @media (max-width: 1024px) {
             .content-wrapper {
                 padding: 2rem 1.5rem;
             }
-            
+
             .chat-container {
                 min-height: 500px;
             }
-            
+
             .action-cards {
                 grid-template-columns: 1fr;
                 max-width: 500px;
             }
-            
+
             .landing-trust-badges {
                 gap: 2rem;
             }
         }
-        
+
         @media (max-width: 768px) {
             .page-header {
                 padding: 1rem;
             }
-            
+
             .page-title {
                 font-size: 1.125rem;
             }
-            
+
             .content-wrapper {
                 padding: 1.5rem 1rem;
             }
-            
+
             .chat-container {
                 min-height: 450px;
                 border-radius: 8px;
             }
-            
+
             .landing-title {
                 font-size: 1.5rem;
             }
-            
+
             .landing-subtitle {
                 font-size: 1rem;
                 margin-bottom: 1.5rem;
             }
-            
+
             .landing-trust-badges {
                 gap: 1.5rem;
                 margin-top: 2rem;
             }
-            
+
             .trust-badge-tooltip {
                 width: 240px;
                 padding: 1rem;
             }
-            
+
             .landing-trust-badge-icon {
                 width: 48px;
                 height: 48px;
                 font-size: 1.5rem;
             }
-            
+
             .action-card {
                 padding: 2rem 1.5rem;
             }
-            
+
             .action-card-icon {
                 width: 64px;
                 height: 64px;
                 font-size: 2rem;
             }
         }
-        
+
         /* Agent ID Selector - Hidden from UI but logic preserved */
         .agent-id-selector {
             display: none;
         }
-        
+
         /* Help Modal */
         .help-modal {
             display: none;
@@ -608,11 +608,11 @@
             justify-content: center;
             animation: fadeIn 0.2s ease;
         }
-        
+
         .help-modal.active {
             display: flex;
         }
-        
+
         .help-modal-content {
             background: white;
             border-radius: 20px;
@@ -625,7 +625,7 @@
             position: relative;
             animation: slideUp 0.3s ease;
         }
-        
+
         .help-modal-header {
             display: flex;
             align-items: center;
@@ -634,7 +634,7 @@
             padding-bottom: 1rem;
             border-bottom: 2px solid var(--border-color);
         }
-        
+
         .help-modal-header h2 {
             font-size: 1.75rem;
             font-weight: 700;
@@ -644,11 +644,11 @@
             align-items: center;
             gap: 0.75rem;
         }
-        
+
         .help-modal-header h2 i {
             color: var(--primary-color);
         }
-        
+
         .help-modal-close {
             background: none;
             border: none;
@@ -663,24 +663,24 @@
             border-radius: 8px;
             transition: all 0.2s ease;
         }
-        
+
         .help-modal-close:hover {
             background: var(--bg-light);
             color: var(--text-color);
         }
-        
+
         .help-modal-body {
             color: var(--text-color);
         }
-        
+
         .help-section {
             margin-bottom: 2rem;
         }
-        
+
         .help-section:last-child {
             margin-bottom: 0;
         }
-        
+
         .help-section h3 {
             font-size: 1.25rem;
             font-weight: 600;
@@ -690,18 +690,18 @@
             align-items: center;
             gap: 0.5rem;
         }
-        
+
         .help-section h3 i {
             color: var(--primary-color);
             font-size: 1.125rem;
         }
-        
+
         .help-steps {
             list-style: none;
             padding: 0;
             margin: 0;
         }
-        
+
         .help-steps li {
             padding: 0.75rem 0;
             padding-left: 2rem;
@@ -709,7 +709,7 @@
             line-height: 1.6;
             color: var(--text-light);
         }
-        
+
         .help-steps li:before {
             content: attr(data-step);
             position: absolute;
@@ -726,30 +726,30 @@
             font-size: 0.75rem;
             font-weight: 600;
         }
-        
+
         .help-contact {
             background: var(--bg-light);
             padding: 1.25rem;
             border-radius: 12px;
             margin-top: 1.5rem;
         }
-        
+
         .help-contact p {
             margin: 0;
             color: var(--text-light);
             line-height: 1.6;
         }
-        
+
         .help-contact strong {
             color: var(--primary-color);
             font-weight: 600;
         }
-        
+
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
         }
-        
+
         @keyframes slideUp {
             from {
                 opacity: 0;
@@ -760,7 +760,7 @@
                 transform: translateY(0);
             }
         }
-        
+
         /* Footer */
         .footer {
             background: transparent;
@@ -770,7 +770,7 @@
             font-size: 0.75rem;
             color: #94a3b8;
         }
-        
+
         /* Loading State */
         .loading-overlay {
             position: absolute;
@@ -784,7 +784,7 @@
             justify-content: center;
             z-index: 100;
         }
-        
+
         .loading-spinner {
             width: 40px;
             height: 40px;
@@ -793,7 +793,7 @@
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
-        
+
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
@@ -821,7 +821,7 @@
             </button>
         </div>
     </header>
-    
+
     <!-- Main Content -->
     <div class="main-container">
         <div class="content-wrapper">
@@ -829,7 +829,7 @@
             <div class="landing-page" id="landing-page">
                 <h2 class="landing-title">How can we help you today?</h2>
                 <p class="landing-subtitle">Choose an option below to get started with your insurance claim</p>
-                
+
                 <div class="action-cards">
                     <div class="action-card" onclick="startNewClaim()">
                         <div class="action-card-icon">
@@ -838,7 +838,7 @@
                         <h3 class="action-card-title">Submit New Claim</h3>
                         <p class="action-card-description">File a new insurance claim with our AI-powered assistant. Quick, easy, and secure.</p>
                     </div>
-                    
+
                     <div class="action-card" onclick="checkExistingClaim()">
                         <div class="action-card-icon">
                             <i class="fas fa-search"></i>
@@ -847,7 +847,7 @@
                         <p class="action-card-description">Track the status of your submitted claim and get real-time updates.</p>
                     </div>
                 </div>
-                
+
                 <!-- Trust Badges -->
                 <div class="landing-trust-badges">
                     <div class="landing-trust-badge">
@@ -897,7 +897,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Chat Controls -->
             <div class="chat-controls-container" id="chat-controls">
                 <button class="back-button" onclick="returnToLanding()">
@@ -908,7 +908,7 @@
                     <i class="fas fa-exchange-alt"></i>
                 </button>
             </div>
-            
+
             <!-- Chat Container -->
             <div class="chat-container" id="chat-container">
                 <div class="chat-content-area">
@@ -917,17 +917,17 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Footer -->
     <footer class="footer">
         <p>Powered by Amazon Bedrock AgentCore + Glean | AWS AI Agent Global Hackathon 2025</p>
     </footer>
-    
+
     <!-- Floating Help Button -->
     <button class="help-button" onclick="toggleHelpModal()" aria-label="Help">
         <i class="fas fa-question"></i>
     </button>
-    
+
     <!-- Help Modal -->
     <div class="help-modal" id="help-modal" onclick="closeHelpModalOnBackdrop(event)">
         <div class="help-modal-content">
@@ -948,7 +948,7 @@
                         <li data-step="5">Receive your claim ID and estimated review timeline</li>
                     </ul>
                 </div>
-                
+
                 <div class="help-section">
                     <h3><i class="fas fa-lightbulb"></i> Tips for Success</h3>
                     <ul class="help-steps">
@@ -958,7 +958,7 @@
                         <li data-step="✓">Keep your claim ID for future reference</li>
                     </ul>
                 </div>
-                
+
                 <div class="help-contact">
                     <p><strong>Need Additional Help?</strong></p>
                     <p>Contact our support team at <strong>support@legalservices.com</strong> or call <strong>1-800-CLAIMS-1</strong></p>
@@ -966,18 +966,18 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Agent ID Selector - Hidden but preserved for programmatic access -->
     <div class="agent-id-selector" style="display: none;">
         <label for="agent-id-input">Agent ID:</label>
         <input type="text" id="agent-id-input" placeholder="Enter Glean Agent ID">
         <button onclick="updateAgentId()">Update</button>
     </div>
-    
+
     <!-- Scripts -->
     <script src="assets/js/api-client.js"></script>
     <script src="assets/js/submitter.js"></script>
-    
+
     <script>
         // Require authentication
         if (window.CognitoAuth) {

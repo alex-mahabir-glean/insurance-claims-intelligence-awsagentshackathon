@@ -5,6 +5,10 @@
 resource "aws_sns_topic" "alerts" {
   name = "InsuranceClaims-Alerts-${var.deployment_id}"
 
+  # Encryption at rest with the AWS-managed SNS key (free).
+  # Customer can swap to a CMK if compliance requires.
+  kms_master_key_id = "alias/aws/sns"
+
   tags = var.tags
 }
 

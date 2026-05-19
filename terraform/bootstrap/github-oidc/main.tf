@@ -22,7 +22,6 @@ provider "aws" {
   }
 }
 
-data "aws_caller_identity" "current" {}
 
 # OIDC provider — one per account. If you already have one, skip this resource
 # and reference its ARN in the role's assume_role_policy.

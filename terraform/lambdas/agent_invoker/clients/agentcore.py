@@ -1,4 +1,5 @@
 """Bedrock AgentCore Runtime client wrapper."""
+
 from __future__ import annotations
 
 import os
@@ -28,7 +29,9 @@ def _normalize_session_id(session_id: str) -> str:
 
 def invoke(*, agent_arn: str, prompt: str, session_id: str | None = None) -> dict:
     if not session_id:
-        session_id = f"session-{int(datetime.now(timezone.utc).timestamp() * 1_000_000)}"
+        session_id = (
+            f"session-{int(datetime.now(timezone.utc).timestamp() * 1_000_000)}"
+        )
     session_id = _normalize_session_id(session_id)
 
     payload = {"prompt": prompt}

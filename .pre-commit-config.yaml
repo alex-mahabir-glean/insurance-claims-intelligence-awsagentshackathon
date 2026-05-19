@@ -1,6 +1,12 @@
 # Pre-commit hooks for the Terraform migration.
 # Install:  pip install pre-commit && pre-commit install
 # Run all:  pre-commit run --all-files
+#
+# `archive/` is excluded from most hooks — it holds the legacy CloudFormation
+# template (with intentionally-preserved REL-1 bugs) and bash scripts kept
+# for reference only. New code lives under terraform/ and the repo root.
+exclude: '^archive/'
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
@@ -25,17 +31,17 @@ repos:
         args:
           - '--args=--recursive'
 
-  - repo: https://github.com/aquasecurity/trivy
-    rev: v0.58.1
+  - repo: local
     hooks:
-      - id: trivy
-        name: trivy IaC scan
-        args:
-          - 'config'
-          - '--severity=HIGH,CRITICAL'
-          - '--ignore-unfixed'
-          - '--exit-code=1'
-          - 'terraform/'
+      - id: trivy-config
+        name: trivy IaC scan (HIGH/CRITICAL only)
+        # Uses the locally-installed trivy binary (`brew install trivy`).
+        # The aquasecurity/trivy repo doesn't ship a .pre-commit-hooks.yaml manifest.
+        entry: trivy config --severity HIGH,CRITICAL --exit-code 1 --skip-dirs terraform/modules/agents/scripts terraform
+        language: system
+        files: '^terraform/.*\.(tf|yaml|yml|json)$'
+        pass_filenames: false
+        require_serial: true
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.9.4

@@ -9,6 +9,7 @@ route handlers are thin wrappers that:
   3. Format the response
 The route layer is exercised via integration tests during deploy verification.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -41,7 +42,9 @@ def test_generate_claim_id_is_unique() -> None:
     assert all(cid.startswith("CL-") for cid in ids)
 
 
-def test_submit_claim_writes_record(dynamo_tables: object, sample_claim_payload: dict) -> None:  # noqa: ARG001
+def test_submit_claim_writes_record(
+    dynamo_tables: object, sample_claim_payload: dict
+) -> None:  # noqa: ARG001
     result = claims.submit_claim(sample_claim_payload)
     assert result["claimId"].startswith("CL-")
     assert result["status"] == "submitted"
@@ -54,7 +57,9 @@ def test_submit_claim_writes_record(dynamo_tables: object, sample_claim_payload:
     assert stored["claimType"] == "vehicle"
 
 
-def test_submit_claim_rejects_overwrite(dynamo_tables: object, sample_claim_payload: dict) -> None:  # noqa: ARG001
+def test_submit_claim_rejects_overwrite(
+    dynamo_tables: object, sample_claim_payload: dict
+) -> None:  # noqa: ARG001
     """ConditionExpression closes the put-item-overwrite hole flagged in REL-4."""
     from botocore.exceptions import ClientError
 
@@ -81,7 +86,9 @@ def test_approve_unknown_claim_raises(dynamo_tables: object) -> None:  # noqa: A
         claims.approve_claim("CL-DOES-NOT-EXIST", "approved")
 
 
-def test_approve_then_get_reflects_status(dynamo_tables: object, sample_claim_payload: dict) -> None:  # noqa: ARG001
+def test_approve_then_get_reflects_status(
+    dynamo_tables: object, sample_claim_payload: dict
+) -> None:  # noqa: ARG001
     submitted = claims.submit_claim(sample_claim_payload)
     claims.approve_claim(submitted["claimId"], "Looks fine")
 
@@ -92,7 +99,9 @@ def test_approve_then_get_reflects_status(dynamo_tables: object, sample_claim_pa
     assert stored["decisionReason"] == "Looks fine"
 
 
-def test_deny_then_get_reflects_status(dynamo_tables: object, sample_claim_payload: dict) -> None:  # noqa: ARG001
+def test_deny_then_get_reflects_status(
+    dynamo_tables: object, sample_claim_payload: dict
+) -> None:  # noqa: ARG001
     submitted = claims.submit_claim(sample_claim_payload)
     claims.deny_claim(submitted["claimId"], "Insufficient documentation")
 
@@ -102,7 +111,9 @@ def test_deny_then_get_reflects_status(dynamo_tables: object, sample_claim_paylo
     assert stored["decisionReason"] == "Insufficient documentation"
 
 
-def test_reassign_returns_previous_assignee(dynamo_tables: object, sample_claim_payload: dict) -> None:  # noqa: ARG001
+def test_reassign_returns_previous_assignee(
+    dynamo_tables: object, sample_claim_payload: dict
+) -> None:  # noqa: ARG001
     submitted = claims.submit_claim(sample_claim_payload)
 
     prev = claims.reassign_claim(submitted["claimId"], "sarah-chen")
@@ -112,7 +123,9 @@ def test_reassign_returns_previous_assignee(dynamo_tables: object, sample_claim_
     assert prev2 == "sarah-chen"
 
 
-def test_list_claims_filters_by_status(dynamo_tables: object, sample_claim_payload: dict) -> None:  # noqa: ARG001
+def test_list_claims_filters_by_status(
+    dynamo_tables: object, sample_claim_payload: dict
+) -> None:  # noqa: ARG001
     """PERF-1 #23: list_claims uses Query on StatusIndex, not Scan."""
     s1 = claims.submit_claim(sample_claim_payload)
     s2 = claims.submit_claim(sample_claim_payload)
@@ -130,7 +143,9 @@ def test_list_claims_filters_by_status(dynamo_tables: object, sample_claim_paylo
     assert s2["claimId"] not in approved_ids
 
 
-def test_list_claims_filters_by_reviewer(dynamo_tables: object, sample_claim_payload: dict) -> None:  # noqa: ARG001
+def test_list_claims_filters_by_reviewer(
+    dynamo_tables: object, sample_claim_payload: dict
+) -> None:  # noqa: ARG001
     s = claims.submit_claim(sample_claim_payload)
     claims.reassign_claim(s["claimId"], "sarah-chen")
 

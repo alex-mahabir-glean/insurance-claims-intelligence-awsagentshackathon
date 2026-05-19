@@ -1,7 +1,7 @@
 """Tests for agent_invoker validation and the agentcore client wrapper."""
+
 from __future__ import annotations
 
-import os
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -39,7 +39,9 @@ def test_invoke_calls_bedrock_with_expected_args() -> None:
     fake_response = {"response": MagicMock()}
     fake_response["response"].read.return_value = b'{"hello":"world"}'
 
-    with patch.object(agentcore._client, "invoke_agent_runtime", return_value=fake_response) as mock:
+    with patch.object(
+        agentcore._client, "invoke_agent_runtime", return_value=fake_response
+    ) as mock:
         result = agentcore.invoke(
             agent_arn="arn:aws:bedrock-agentcore:us-east-1:1:runtime/x",
             prompt="hello",
@@ -47,13 +49,17 @@ def test_invoke_calls_bedrock_with_expected_args() -> None:
         )
         mock.assert_called_once()
         kwargs = mock.call_args.kwargs
-        assert kwargs["agentRuntimeArn"] == "arn:aws:bedrock-agentcore:us-east-1:1:runtime/x"
+        assert (
+            kwargs["agentRuntimeArn"]
+            == "arn:aws:bedrock-agentcore:us-east-1:1:runtime/x"
+        )
         assert kwargs["contentType"] == "application/json"
         assert kwargs["accept"] == "application/json"
         # session id is padded
         assert len(kwargs["runtimeSessionId"]) == 33
         # payload is JSON with our prompt
         import json as _json
+
         sent = _json.loads(kwargs["payload"].decode())
         assert sent == {"prompt": "hello"}
 
@@ -67,7 +73,9 @@ def test_invoke_generates_session_id_when_missing() -> None:
     fake_response = {"response": MagicMock()}
     fake_response["response"].read.return_value = b"{}"
 
-    with patch.object(agentcore._client, "invoke_agent_runtime", return_value=fake_response):
+    with patch.object(
+        agentcore._client, "invoke_agent_runtime", return_value=fake_response
+    ):
         result = agentcore.invoke(
             agent_arn="arn:aws:bedrock-agentcore:us-east-1:1:runtime/x",
             prompt="hi",

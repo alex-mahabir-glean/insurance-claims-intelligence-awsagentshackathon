@@ -51,7 +51,7 @@ Always confirm all details before submitting a claim. Once you have all required
 @tool
 def submit_claim(
     claimant_name: str,
-    claimant_email: str, 
+    claimant_email: str,
     policy_number: str,
     claim_type: str,
     incident_date: str,
@@ -65,7 +65,7 @@ def submit_claim(
 ):
     """
     Submit a new insurance claim to the system.
-    
+
     Args:
         claimant_name: Full name of the claimant
         claimant_email: Email address of the claimant
@@ -79,7 +79,7 @@ def submit_claim(
         police_report: Police report number (optional)
         injuries: Whether there were injuries (optional)
         injury_description: Description of injuries (optional)
-    
+
     Returns:
         dict: Success status and claim ID
     """
@@ -91,11 +91,11 @@ def submit_claim(
                 'success': False,
                 'error': f'Invalid claim type. Must be one of: {", ".join(valid_types)}'
             }
-        
+
         # Generate claim ID
         timestamp = datetime.now(timezone.utc)
         claim_id = f"CL-{timestamp.strftime('%Y-%m%d%H%M%S')}"
-        
+
         # Prepare claim record
         claim_record = {
             'claimId': claim_id,
@@ -118,23 +118,23 @@ def submit_claim(
             'submittedDate': timestamp.isoformat(),
             'lastUpdated': timestamp.isoformat()
         }
-        
+
         # Remove None values
         claim_record = {k: v for k, v in claim_record.items() if v is not None}
         if claim_record['claimantInfo']['phone'] == "":
             del claim_record['claimantInfo']['phone']
         if claim_record['claimantInfo']['address'] == "":
             del claim_record['claimantInfo']['address']
-        
+
         # Save to DynamoDB
         claims_table.put_item(Item=claim_record)
-        
+
         return {
             'success': True,
             'claimId': claim_id,
             'message': f'Claim {claim_id} submitted successfully. You will receive updates via email at {claimant_email}.'
         }
-        
+
     except Exception as e:
         return {
             'success': False,
@@ -160,13 +160,13 @@ def invoke(payload):
     """Process user input and return a response"""
     try:
         user_message = payload.get("prompt", "Hello")
-        
+
         # Process the message through the Strands agent
         response = agent(user_message)
-        
+
         # Return the response as a string
         return str(response)
-        
+
     except Exception as e:
         return f"I apologize, but I encountered an error: {str(e)}. Please try again or contact support."
 
