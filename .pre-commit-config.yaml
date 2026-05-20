@@ -1,0 +1,53 @@
+# Pre-commit hooks for the Terraform migration.
+# Install:  pip install pre-commit && pre-commit install
+# Run all:  pre-commit run --all-files
+#
+# `archive/` is excluded from most hooks — it holds the legacy CloudFormation
+# template (with intentionally-preserved REL-1 bugs) and bash scripts kept
+# for reference only. New code lives under terraform/ and the repo root.
+exclude: '^archive/'
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '\.md$'
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.96.2
+    hooks:
+      - id: terraform_fmt
+      - id: terraform_validate
+        args:
+          - '--init-args=-backend=false'
+        exclude: 'terraform/bootstrap/'  # bootstrap modules use local state
+      - id: terraform_tflint
+        args:
+          - '--args=--recursive'
+
+  - repo: local
+    hooks:
+      - id: trivy-config
+        name: trivy IaC scan (HIGH/CRITICAL only)
+        # Uses the locally-installed trivy binary (`brew install trivy`).
+        # The aquasecurity/trivy repo doesn't ship a .pre-commit-hooks.yaml manifest.
+        entry: trivy config --severity HIGH,CRITICAL --exit-code 1 --skip-dirs terraform/modules/agents/scripts terraform
+        language: system
+        files: '^terraform/.*\.(tf|yaml|yml|json)$'
+        pass_filenames: false
+        require_serial: true
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.4
+    hooks:
+      - id: ruff
+        args: [--fix]
+        files: '^terraform/lambdas/.*\.py$'
+      - id: ruff-format
+        files: '^terraform/lambdas/.*\.py$'

@@ -1,0 +1,6 @@
+# Copy this file to terraform.tfvars (gitignored) and customize.
+# Or pass -var=key=value flags directly to terraform.
+
+aws_region    = "us-east-1"
+environment   = "dev"
+deployment_id = "legal"

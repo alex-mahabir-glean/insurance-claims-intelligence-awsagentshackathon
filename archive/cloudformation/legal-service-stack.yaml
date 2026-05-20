@@ -1,0 +1,2108 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  CloudFormation stack for AI-Powered Legal Service Management System.
+  AWS AI Agent Global Hackathon 2025 submission.
+  Includes DynamoDB tables, Lambda functions, API Gateway, and AgentCore integration.
+
+Parameters:
+  DeploymentID:
+    Type: String
+    Description: A unique identifier for the deployment
+    Default: 'legal'
+
+Resources:
+  # Secrets Manager Secret for API Token
+  ApiTokenSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub "LegalService/ApiToken/${DeploymentID}"
+      Description: "API Token for Glean Actions authentication"
+      GenerateSecretString:
+        SecretStringTemplate: '{"token": ""}'
+        GenerateStringKey: 'token'
+        PasswordLength: 32
+        ExcludeCharacters: '"@/\\`()~,;:$|&<>#+_{}[]*'
+
+  # DynamoDB Tables
+  ClaimsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "LegalService-Claims-${DeploymentID}"
+      AttributeDefinitions:
+        - AttributeName: claimId
+          AttributeType: S
+        - AttributeName: status
+          AttributeType: S
+        - AttributeName: assignedTo
+          AttributeType: S
+      KeySchema:
+        - AttributeName: claimId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: StatusIndex
+          KeySchema:
+            - AttributeName: status
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+        - IndexName: AssignedToIndex
+          KeySchema:
+            - AttributeName: assignedTo
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      BillingMode: PAY_PER_REQUEST
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+
+  ReviewersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "LegalService-Reviewers-${DeploymentID}"
+      AttributeDefinitions:
+        - AttributeName: reviewerId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: reviewerId
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+  AuditTrailTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "LegalService-AuditTrail-${DeploymentID}"
+      AttributeDefinitions:
+        - AttributeName: claimId
+          AttributeType: S
+        - AttributeName: timestamp
+          AttributeType: S
+      KeySchema:
+        - AttributeName: claimId
+          KeyType: HASH
+        - AttributeName: timestamp
+          KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+
+  # =============================================================================
+  # IAM Role for AgentCore Runtime
+  # =============================================================================
+  # This role is used by the AgentCore agents when they execute
+  # It needs permissions to access DynamoDB, Bedrock, and other AWS services
+  AgentCoreRuntimeExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "LegalService-AgentCoreRuntimeRole-${DeploymentID}"
+      Description: "Execution role for Bedrock AgentCore agents with DynamoDB access"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: bedrock-agentcore.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: DynamoDBAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                  - dynamodb:BatchGetItem
+                  - dynamodb:BatchWriteItem
+                Resource:
+                  - !GetAtt ClaimsTable.Arn
+                  - !GetAtt ReviewersTable.Arn
+                  - !GetAtt AuditTrailTable.Arn
+                  - !Sub "${ClaimsTable.Arn}/index/*"
+        - PolicyName: BedrockAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                  - bedrock:InvokeModelWithResponseStream
+                  - bedrock:ApplyGuardrail
+                Resource:
+                  - "arn:aws:bedrock:*::foundation-model/*"
+                  - "arn:aws:bedrock:*:*:inference-profile/*"
+        - PolicyName: CloudWatchLogs
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - logs:DescribeLogStreams
+                  - logs:DescribeLogGroups
+                Resource:
+                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/bedrock-agentcore/runtimes/*"
+                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:*"
+        - PolicyName: XRayAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - xray:PutTraceSegments
+                  - xray:PutTelemetryRecords
+                  - xray:GetSamplingRules
+                  - xray:GetSamplingTargets
+                Resource: "*"
+        - PolicyName: CloudWatchMetrics
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: cloudwatch:PutMetricData
+                Resource: "*"
+                Condition:
+                  StringEquals:
+                    cloudwatch:namespace: "bedrock-agentcore"
+        - PolicyName: ECRAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecr:GetAuthorizationToken
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - ecr:BatchGetImage
+                  - ecr:GetDownloadUrlForLayer
+                Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/bedrock-agentcore-*"
+
+  # IAM Role for Lambda Functions
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "LegalService-LambdaRole-${DeploymentID}"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DynamoDBAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                  - dynamodb:BatchGetItem
+                  - dynamodb:BatchWriteItem
+                Resource:
+                  - !GetAtt ClaimsTable.Arn
+                  - !GetAtt ReviewersTable.Arn
+                  - !GetAtt AuditTrailTable.Arn
+                  - !Sub "${ClaimsTable.Arn}/index/*"
+        - PolicyName: BedrockAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - bedrock:InvokeAgent
+                  - bedrock:InvokeModel
+                  - bedrock-agent-runtime:InvokeAgent
+                Resource: "*"
+        - PolicyName: SecretsManagerAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: !Ref ApiTokenSecret
+
+  # Lambda Functions
+  SubmitClaimFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "LegalService-SubmitClaim-${DeploymentID}"
+      Runtime: python3.11
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 60
+      Environment:
+        Variables:
+          CLAIMS_TABLE: !Ref ClaimsTable
+          REVIEWERS_TABLE: !Ref ReviewersTable
+          AUDIT_TABLE: !Ref AuditTrailTable
+          INTAKE_AGENT_ID: "PLACEHOLDER_INTAKE_AGENT"
+          ASSIGNMENT_AGENT_ID: "PLACEHOLDER_ASSIGNMENT_AGENT"
+          REVIEW_AGENT_ID: "PLACEHOLDER_REVIEW_AGENT"
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          from datetime import datetime
+          from decimal import Decimal
+
+          dynamodb = boto3.resource('dynamodb')
+          claims_table = dynamodb.Table(os.environ['CLAIMS_TABLE'])
+
+          def generate_ai_analysis(claim_value, claim_type, injuries, description):
+              """Generate AI recommendation based on claim details"""
+              import random
+
+              # Simple AI logic based on claim characteristics
+              risk_score = 0
+              risk_factors = []
+
+              # Check claim value
+              if claim_value > 20000:
+                  risk_score += 0.3
+                  risk_factors.append("High claim value")
+              elif claim_value > 10000:
+                  risk_score += 0.15
+                  risk_factors.append("Moderate claim value")
+
+              # Check for injuries
+              if injuries:
+                  risk_score += 0.2
+                  risk_factors.append("Injuries reported")
+
+              # Check description length (proxy for documentation quality)
+              if len(description) < 50:
+                  risk_score += 0.15
+                  risk_factors.append("Limited documentation")
+
+              # Determine recommendation
+              if risk_score < 0.3:
+                  recommendation = "approve"
+                  confidence = round(random.uniform(0.88, 0.95), 2)
+                  reasoning = f"Low risk {claim_type} claim with adequate documentation"
+              elif risk_score < 0.5:
+                  recommendation = "approve"
+                  confidence = round(random.uniform(0.75, 0.88), 2)
+                  reasoning = f"Moderate risk {claim_type} claim, documentation appears complete"
+              else:
+                  recommendation = "deny"
+                  confidence = round(random.uniform(0.70, 0.85), 2)
+                  reasoning = f"High risk {claim_type} claim, recommend additional review or denial"
+                  risk_factors.append("Multiple risk factors present")
+
+              return {
+                  'recommendation': recommendation,
+                  'confidence': str(confidence),
+                  'reasoning': reasoning,
+                  'riskFactors': risk_factors
+              }
+
+          def lambda_handler(event, context):
+              try:
+                  body = json.loads(event.get('body', '{}'))
+
+                  # Generate claim ID
+                  timestamp = datetime.utcnow()
+                  claim_id = f"CL-{timestamp.strftime('%Y-%m%d%H%M%S')}"
+
+                  # Extract claim details
+                  claim_value = float(body.get('claimValue', 0))
+                  claim_type = body.get('claimType', '')
+                  injuries = body.get('injuries', False)
+                  description = body.get('incidentDescription', '')
+
+                  # Generate AI analysis
+                  ai_analysis = generate_ai_analysis(claim_value, claim_type, injuries, description)
+
+                  # Save claim to DynamoDB with AI analysis
+                  claim_record = {
+                      'claimId': claim_id,
+                      'version': 'v1',
+                      'claimantInfo': {
+                          'name': body.get('claimantName', ''),
+                          'email': body.get('claimantEmail', ''),
+                          'phone': body.get('claimantPhone', ''),
+                          'address': body.get('claimantAddress', '')
+                      },
+                      'policyNumber': body.get('policyNumber', ''),
+                      'claimType': claim_type,
+                      'incidentDate': body.get('incidentDate', ''),
+                      'incidentDescription': description,
+                      'claimValue': Decimal(str(claim_value)),
+                      'policeReport': body.get('policeReport'),
+                      'injuries': injuries,
+                      'injuryDescription': body.get('injuryDescription'),
+                      'status': 'assigned',
+                      'aiRecommendation': ai_analysis['recommendation'],
+                      'aiConfidence': ai_analysis['confidence'],
+                      'aiReasoning': ai_analysis['reasoning'],
+                      'riskFactors': ai_analysis['riskFactors'],
+                      'submittedDate': timestamp.isoformat(),
+                      'lastUpdated': timestamp.isoformat()
+                  }
+
+                  claims_table.put_item(Item=claim_record)
+
+                  return {
+                      'statusCode': 200,
+                      'headers': {
+                          'Content-Type': 'application/json',
+                          'Access-Control-Allow-Origin': '*'
+                      },
+                      'body': json.dumps({
+                          'success': True,
+                          'claimId': claim_id,
+                          'message': f"Claim {claim_id} submitted successfully"
+                      })
+                  }
+
+              except Exception as e:
+                  return {
+                      'statusCode': 500,
+                      'headers': {
+                          'Content-Type': 'application/json',
+                          'Access-Control-Allow-Origin': '*'
+                      },
+                      'body': json.dumps({
+                          'success': False,
+                          'error': str(e)
+                      })
+                  }
+
+  GetClaimsFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "LegalService-GetClaims-${DeploymentID}"
+      Runtime: python3.11
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 30
+      Environment:
+        Variables:
+          CLAIMS_TABLE: !Ref ClaimsTable
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          from boto3.dynamodb.conditions import Attr
+
+          dynamodb = boto3.resource('dynamodb')
+          claims_table = dynamodb.Table(os.environ['CLAIMS_TABLE'])
+
+          def lambda_handler(event, context):
+              try:
+                  params = event.get('queryStringParameters', {}) or {}
+                  claim_id = event.get('pathParameters', {}).get('claimId') if event.get('pathParameters') else None
+
+                  if claim_id:
+                      response = claims_table.get_item(Key={'claimId': claim_id})
+                      claim = response.get('Item')
+
+                      if not claim:
+                          return {
+                              'statusCode': 404,
+                              'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                              'body': json.dumps({'success': False, 'error': 'Claim not found'})
+                          }
+
+                      return {
+                          'statusCode': 200,
+                          'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                          'body': json.dumps({'success': True, 'claim': claim}, default=str)
+                      }
+
+                  # Get all claims
+                  response = claims_table.scan()
+                  claims = response.get('Items', [])
+                  claims.sort(key=lambda x: x.get('submittedDate', ''), reverse=True)
+
+                  return {
+                      'statusCode': 200,
+                      'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                      'body': json.dumps({'success': True, 'claims': claims, 'count': len(claims)}, default=str)
+                  }
+
+              except Exception as e:
+                  return {
+                      'statusCode': 500,
+                      'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                      'body': json.dumps({'success': False, 'error': str(e)})
+                  }
+
+  ApproveClaimFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "LegalService-ApproveClaim-${DeploymentID}"
+      Runtime: python3.11
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 30
+      Environment:
+        Variables:
+          CLAIMS_TABLE: !Ref ClaimsTable
+          AUDIT_TABLE: !Ref AuditTrailTable
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          from datetime import datetime
+
+          dynamodb = boto3.resource('dynamodb')
+          claims_table = dynamodb.Table(os.environ['CLAIMS_TABLE'])
+          audit_table = dynamodb.Table(os.environ['AUDIT_TABLE'])
+
+          def lambda_handler(event, context):
+              try:
+                  body = json.loads(event.get('body', '{}'))
+                  claim_id = body.get('claimId')
+                  reviewer_id = body.get('reviewerId')
+                  notes = body.get('notes', '')
+
+                  if not claim_id or not reviewer_id:
+                      return {
+                          'statusCode': 400,
+                          'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                          'body': json.dumps({'success': False, 'error': 'claimId and reviewerId are required'})
+                      }
+
+                  timestamp = datetime.utcnow().isoformat()
+
+                  # Update claim status
+                  claims_table.update_item(
+                      Key={'claimId': claim_id},
+                      UpdateExpression='SET #status = :status, finalDecision = :decision, reviewedDate = :reviewed, lastUpdated = :updated',
+                      ExpressionAttributeNames={'#status': 'status'},
+                      ExpressionAttributeValues={
+                          ':status': 'approved',
+                          ':decision': 'approve',
+                          ':reviewed': timestamp,
+                          ':updated': timestamp
+                      }
+                  )
+
+                  # Log to audit trail
+                  audit_table.put_item(Item={
+                      'claimId': claim_id,
+                      'timestamp': timestamp,
+                      'action': 'claim_approved',
+                      'actor': reviewer_id,
+                      'actorType': 'reviewer',
+                      'details': {'decision': 'approve', 'notes': notes}
+                  })
+
+                  return {
+                      'statusCode': 200,
+                      'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                      'body': json.dumps({
+                          'success': True,
+                          'claimId': claim_id,
+                          'status': 'approved',
+                          'message': f"Claim {claim_id} approved successfully"
+                      })
+                  }
+
+              except Exception as e:
+                  return {
+                      'statusCode': 500,
+                      'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                      'body': json.dumps({'success': False, 'error': str(e)})
+                  }
+
+  DenyClaimFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "LegalService-DenyClaim-${DeploymentID}"
+      Runtime: python3.11
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 30
+      Environment:
+        Variables:
+          CLAIMS_TABLE: !Ref ClaimsTable
+          AUDIT_TABLE: !Ref AuditTrailTable
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          from datetime import datetime
+
+          dynamodb = boto3.resource('dynamodb')
+          claims_table = dynamodb.Table(os.environ['CLAIMS_TABLE'])
+          audit_table = dynamodb.Table(os.environ['AUDIT_TABLE'])
+
+          def lambda_handler(event, context):
+              try:
+                  body = json.loads(event.get('body', '{}'))
+                  claim_id = body.get('claimId')
+                  reviewer_id = body.get('reviewerId')
+                  reason = body.get('reason', '')
+
+                  if not claim_id or not reviewer_id or not reason:
+                      return {
+                          'statusCode': 400,
+                          'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                          'body': json.dumps({'success': False, 'error': 'claimId, reviewerId, and reason are required'})
+                      }
+
+                  timestamp = datetime.utcnow().isoformat()
+
+                  # Update claim status
+                  claims_table.update_item(
+                      Key={'claimId': claim_id},
+                      UpdateExpression='SET #status = :status, finalDecision = :decision, decisionReason = :reason, reviewedDate = :reviewed, lastUpdated = :updated',
+                      ExpressionAttributeNames={'#status': 'status'},
+                      ExpressionAttributeValues={
+                          ':status': 'denied',
+                          ':decision': 'deny',
+                          ':reason': reason,
+                          ':reviewed': timestamp,
+                          ':updated': timestamp
+                      }
+                  )
+
+                  # Log to audit trail
+                  audit_table.put_item(Item={
+                      'claimId': claim_id,
+                      'timestamp': timestamp,
+                      'action': 'claim_denied',
+                      'actor': reviewer_id,
+                      'actorType': 'reviewer',
+                      'details': {'decision': 'deny', 'reason': reason}
+                  })
+
+                  return {
+                      'statusCode': 200,
+                      'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                      'body': json.dumps({
+                          'success': True,
+                          'claimId': claim_id,
+                          'status': 'denied',
+                          'message': f"Claim {claim_id} denied"
+                      })
+                  }
+
+              except Exception as e:
+                  return {
+                      'statusCode': 500,
+                      'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                      'body': json.dumps({'success': False, 'error': str(e)})
+                  }
+
+  ReassignClaimFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "LegalService-ReassignClaim-${DeploymentID}"
+      Runtime: python3.11
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 30
+      Environment:
+        Variables:
+          CLAIMS_TABLE: !Ref ClaimsTable
+          REVIEWERS_TABLE: !Ref ReviewersTable
+          AUDIT_TABLE: !Ref AuditTrailTable
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          from datetime import datetime
+
+          dynamodb = boto3.resource('dynamodb')
+          claims_table = dynamodb.Table(os.environ['CLAIMS_TABLE'])
+          audit_table = dynamodb.Table(os.environ['AUDIT_TABLE'])
+
+          def lambda_handler(event, context):
+              try:
+                  body = json.loads(event.get('body', '{}'))
+                  claim_id = body.get('claimId')
+                  to_reviewer_id = body.get('toReviewerId')
+                  reason = body.get('reason', 'Reassignment requested')
+
+                  if not claim_id or not to_reviewer_id:
+                      return {
+                          'statusCode': 400,
+                          'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                          'body': json.dumps({'success': False, 'error': 'claimId and toReviewerId are required'})
+                      }
+
+                  timestamp = datetime.utcnow().isoformat()
+
+                  # Update claim assignment
+                  claims_table.update_item(
+                      Key={'claimId': claim_id},
+                      UpdateExpression='SET assignedTo = :reviewer, assignedDate = :date, lastUpdated = :updated',
+                      ExpressionAttributeValues={
+                          ':reviewer': to_reviewer_id,
+                          ':date': timestamp,
+                          ':updated': timestamp
+                      }
+                  )
+
+                  # Log to audit trail
+                  audit_table.put_item(Item={
+                      'claimId': claim_id,
+                      'timestamp': timestamp,
+                      'action': 'claim_reassigned',
+                      'actor': 'system',
+                      'actorType': 'reviewer',
+                      'details': {'toReviewer': to_reviewer_id, 'reason': reason}
+                  })
+
+                  return {
+                      'statusCode': 200,
+                      'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                      'body': json.dumps({
+                          'success': True,
+                          'claimId': claim_id,
+                          'assignedTo': to_reviewer_id,
+                          'message': f"Claim {claim_id} reassigned successfully"
+                      })
+                  }
+
+              except Exception as e:
+                  return {
+                      'statusCode': 500,
+                      'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                      'body': json.dumps({'success': False, 'error': str(e)})
+                  }
+
+  # API Gateway
+  LegalServiceAPI:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Sub "LegalServiceManagementAPI-${DeploymentID}"
+      Description: API for AI-Powered Legal Service Management System
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+
+  # API Gateway Resources and Methods
+  SubmitClaimResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref LegalServiceAPI
+      ParentId: !GetAtt LegalServiceAPI.RootResourceId
+      PathPart: submit-claim
+
+  SubmitClaimMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref LegalServiceAPI
+      ResourceId: !Ref SubmitClaimResource
+      HttpMethod: POST
+      AuthorizationType: CUSTOM
+      AuthorizerId: !Ref AgentCoreApiRequestAuthorizer
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SubmitClaimFunction.Arn}/invocations"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+
+  SubmitClaimOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref LegalServiceAPI
+      ResourceId: !Ref SubmitClaimResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,x-api-key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
+  ClaimsResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref LegalServiceAPI
+      ParentId: !GetAtt LegalServiceAPI.RootResourceId
+      PathPart: claims
+
+  ClaimsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref LegalServiceAPI
+      ResourceId: !Ref ClaimsResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetClaimsFunction.Arn}/invocations"
+
+  ClaimsOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref LegalServiceAPI
+      ResourceId: !Ref ClaimsResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,x-api-key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+            ResponseTemplates:
+              application/json: ''
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
+  ClaimIdResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref LegalServiceAPI
+      ParentId: !Ref ClaimsResource
+      PathPart: "{claimId}"
+
+  ClaimIdMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref LegalServiceAPI
+      ResourceId: !Ref ClaimIdResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetClaimsFunction.Arn}/invocations"
+
+  ApproveClaimResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref LegalServiceAPI
+      ParentId: !GetAtt LegalServiceAPI.RootResourceId
+      PathPart: approve-claim
+
+  DenyClaimResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref LegalServiceAPI
+      ParentId: !GetAtt LegalServiceAPI.RootResourceId
+      PathPart: deny-claim
+
+  ReassignClaimResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref LegalServiceAPI
+      ParentId: !GetAtt LegalServiceAPI.RootResourceId
+      PathPart: reassign-claim
+
+  # Lambda Permissions
+  SubmitClaimLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref SubmitClaimFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${LegalServiceAPI}/*/*"
+
+  GetClaimsLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref GetClaimsFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${LegalServiceAPI}/*/*"
+
+  ApproveClaimLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ApproveClaimFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${LegalServiceAPI}/*/*"
+
+  DenyClaimLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref DenyClaimFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${LegalServiceAPI}/*/*"
+
+  ReassignClaimLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ReassignClaimFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${LegalServiceAPI}/*/*"
+
+  # =============================================================================
+  # AgentCore API Resources - Expose agents via HTTP with API Key authentication
+  # =============================================================================
+
+  # Secrets Manager Secret for AgentCore API Token
+  AgentCoreApiTokenSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub "LegalService/AgentCoreApiToken/${DeploymentID}"
+      Description: "API Token for AgentCore agent invocation endpoints"
+      GenerateSecretString:
+        SecretStringTemplate: '{"token": ""}'
+        GenerateStringKey: 'token'
+        PasswordLength: 32
+        ExcludeCharacters: '"@/\\`()~,;:$|&<>#+_{}[]*'
+
+  # IAM Role for AgentCore Proxy Lambda Functions
+  AgentCoreProxyLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "LegalService-AgentCoreProxyRole-${DeploymentID}"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: BedrockAgentCoreAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - bedrock-agentcore:InvokeAgentRuntime
+                Resource: "*"
+
+  # IAM Role for Lambda Authorizer
+  AgentCoreAuthorizerLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "LegalService-AgentCoreAuthorizerRole-${DeploymentID}"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: SecretsManagerAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource: !Ref AgentCoreApiTokenSecret
+
+  # Lambda Authorizer Function
+  AgentCoreAuthorizerLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "LegalService-AgentCoreAuthorizer-${DeploymentID}"
+      Handler: index.lambda_handler
+      Role: !GetAtt AgentCoreAuthorizerLambdaRole.Arn
+      Runtime: python3.12
+      Timeout: 30
+      MemorySize: 128
+      Environment:
+        Variables:
+          API_KEY_SECRET_ARN: !Ref AgentCoreApiTokenSecret
+      Code:
+        ZipFile: |
+          import os
+          import json
+          import boto3
+          import logging
+
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+
+          secretsmanager = boto3.client('secretsmanager')
+          API_KEY_SECRET_ARN = os.environ['API_KEY_SECRET_ARN']
+          cached_api_key = None
+
+          def lambda_handler(event, context):
+              logger.info("AgentCore Authorizer Lambda triggered")
+
+              headers = event.get('headers', {})
+              # Check for x-api-key header (case-insensitive)
+              api_key = headers.get('x-api-key') or headers.get('X-Api-Key') or headers.get('X-API-KEY')
+
+              # Fallback to Authorization header for backward compatibility
+              if not api_key:
+                  auth_header = headers.get('Authorization') or headers.get('authorization')
+                  if auth_header:
+                      try:
+                          api_key = auth_header.split(' ')[1] if ' ' in auth_header else auth_header
+                      except IndexError:
+                          pass
+
+              if not api_key:
+                  logger.error("No x-api-key or Authorization header found")
+                  raise Exception('Unauthorized')
+
+              method_arn = event['methodArn']
+
+              if validate_token(api_key):
+                  logger.info("Token is valid, allowing access")
+                  return generate_policy(api_key, 'Allow', method_arn)
+              else:
+                  logger.error("Token is invalid, denying access")
+                  return generate_policy(api_key, 'Deny', method_arn)
+
+          def validate_token(token):
+              global cached_api_key
+
+              if not cached_api_key:
+                  try:
+                      response = secretsmanager.get_secret_value(SecretId=API_KEY_SECRET_ARN)
+                      secret_data = json.loads(response['SecretString'])
+                      cached_api_key = secret_data['token']
+                      logger.info("API key retrieved and cached")
+                  except Exception as e:
+                      logger.error(f"Failed to retrieve API key: {str(e)}")
+                      return False
+
+              return token == cached_api_key
+
+          def generate_policy(token, effect, method_arn):
+              principal_id = 'user'
+              if token:
+                  principal_id = f"user-{token[:8]}"
+
+              arn_parts = method_arn.split(':')
+              region = arn_parts[3]
+              account_id = arn_parts[4]
+              api_gateway_arn_part = arn_parts[5]
+
+              api_id = api_gateway_arn_part.split('/')[0]
+              stage = api_gateway_arn_part.split('/')[1]
+
+              resource_arn = f"arn:aws:execute-api:{region}:{account_id}:{api_id}/{stage}/*/*"
+
+              logger.info(f"Generated policy resource ARN: {resource_arn}")
+
+              return {
+                  'principalId': principal_id,
+                  'policyDocument': {
+                      'Version': '2012-10-17',
+                      'Statement': [{
+                          'Action': 'execute-api:Invoke',
+                          'Effect': effect,
+                          'Resource': resource_arn
+                      }]
+                  }
+              }
+
+  # Lambda Function: Invoke Intake Agent (AgentCore Chat)
+  InvokeIntakeAgentFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "LegalService-InvokeIntakeAgent-${DeploymentID}"
+      Runtime: python3.12
+      Handler: index.lambda_handler
+      Role: !GetAtt AgentCoreProxyLambdaRole.Arn
+      Timeout: 30
+      MemorySize: 256
+      Environment:
+        Variables:
+          INTAKE_AGENT_ARN: "placeholder-will-be-updated-by-deployment-script"
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          from datetime import datetime
+
+          agentcore_client = boto3.client('bedrock-agentcore', region_name='us-east-1')
+          INTAKE_AGENT_ARN = os.environ.get('INTAKE_AGENT_ARN')
+
+          def lambda_handler(event, context):
+              headers = {
+                  'Content-Type': 'application/json',
+                  'Access-Control-Allow-Origin': '*',
+                  'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+                  'Access-Control-Allow-Methods': 'POST,OPTIONS'
+              }
+
+              try:
+                  if event.get('httpMethod') == 'OPTIONS':
+                      return {'statusCode': 200, 'headers': headers, 'body': ''}
+
+                  body = json.loads(event.get('body', '{}'))
+                  user_prompt = body.get('prompt', '')
+                  session_id = body.get('sessionId', f'session-{int(datetime.now().timestamp() * 1000000)}')
+
+                  if len(session_id) < 33:
+                      session_id = f"{session_id}-{'0' * (33 - len(session_id))}"
+
+                  if not user_prompt:
+                      return {
+                          'statusCode': 400,
+                          'headers': headers,
+                          'body': json.dumps({'success': False, 'error': 'Missing required field: prompt'})
+                      }
+
+                  agent_payload = json.dumps({"prompt": user_prompt}).encode('utf-8')
+
+                  response = agentcore_client.invoke_agent_runtime(
+                      agentRuntimeArn=INTAKE_AGENT_ARN,
+                      runtimeSessionId=session_id,
+                      contentType='application/json',
+                      accept='application/json',
+                      payload=agent_payload
+                  )
+
+                  response_body = response['response'].read().decode('utf-8')
+
+                  return {
+                      'statusCode': 200,
+                      'headers': headers,
+                      'body': json.dumps({
+                          'success': True,
+                          'response': response_body,
+                          'sessionId': session_id
+                      })
+                  }
+
+              except Exception as e:
+                  print(f"Error invoking intake agent: {str(e)}")
+                  return {
+                      'statusCode': 500,
+                      'headers': headers,
+                      'body': json.dumps({
+                          'success': False,
+                          'error': str(e)
+                      })
+                  }
+
+  # Lambda Function: Invoke Review Agent
+  InvokeReviewAgentFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "LegalService-InvokeReviewAgent-${DeploymentID}"
+      Runtime: python3.12
+      Handler: index.lambda_handler
+      Role: !GetAtt AgentCoreProxyLambdaRole.Arn
+      Timeout: 30
+      MemorySize: 256
+      Environment:
+        Variables:
+          REVIEW_AGENT_ARN: "placeholder-will-be-updated-by-deployment-script"
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          from datetime import datetime
+
+          agentcore_client = boto3.client('bedrock-agentcore', region_name='us-east-1')
+          REVIEW_AGENT_ARN = os.environ.get('REVIEW_AGENT_ARN')
+
+          def lambda_handler(event, context):
+              headers = {
+                  'Content-Type': 'application/json',
+                  'Access-Control-Allow-Origin': '*',
+                  'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+                  'Access-Control-Allow-Methods': 'POST,OPTIONS'
+              }
+
+              try:
+                  if event.get('httpMethod') == 'OPTIONS':
+                      return {'statusCode': 200, 'headers': headers, 'body': ''}
+
+                  body = json.loads(event.get('body', '{}'))
+                  user_prompt = body.get('prompt', '')
+                  session_id = body.get('sessionId', f'session-{int(datetime.now().timestamp() * 1000000)}')
+
+                  if len(session_id) < 33:
+                      session_id = f"{session_id}-{'0' * (33 - len(session_id))}"
+
+                  if not user_prompt:
+                      return {
+                          'statusCode': 400,
+                          'headers': headers,
+                          'body': json.dumps({'success': False, 'error': 'Missing required field: prompt'})
+                      }
+
+                  agent_payload = json.dumps({"prompt": user_prompt}).encode('utf-8')
+
+                  response = agentcore_client.invoke_agent_runtime(
+                      agentRuntimeArn=REVIEW_AGENT_ARN,
+                      runtimeSessionId=session_id,
+                      contentType='application/json',
+                      accept='application/json',
+                      payload=agent_payload
+                  )
+
+                  response_body = response['response'].read()
+                  agent_response = response_body.decode('utf-8')
+
+                  return {
+                      'statusCode': 200,
+                      'headers': headers,
+                      'body': json.dumps({
+                          'success': True,
+                          'sessionId': response.get('runtimeSessionId', session_id),
+                          'response': agent_response,
+                          'timestamp': datetime.now().isoformat()
+                      })
+                  }
+
+              except Exception as e:
+                  print(f"Error invoking agent: {str(e)}")
+                  return {
+                      'statusCode': 500,
+                      'headers': headers,
+                      'body': json.dumps({'success': False, 'error': f'Failed to invoke agent: {str(e)}'})
+                  }
+
+  # Lambda Function: Approve Claim (Direct Action)
+  ApproveClaimFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "LegalService-ApproveClaim-${DeploymentID}"
+      Runtime: python3.12
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 30
+      MemorySize: 256
+      Environment:
+        Variables:
+          CLAIMS_TABLE: !Ref ClaimsTable
+          AUDIT_TABLE: !Ref AuditTrailTable
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          from datetime import datetime
+
+          dynamodb = boto3.resource('dynamodb')
+          claims_table = dynamodb.Table(os.environ['CLAIMS_TABLE'])
+          audit_table = dynamodb.Table(os.environ['AUDIT_TABLE'])
+
+          def lambda_handler(event, context):
+              headers = {
+                  'Content-Type': 'application/json',
+                  'Access-Control-Allow-Origin': '*',
+                  'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+                  'Access-Control-Allow-Methods': 'POST,OPTIONS'
+              }
+
+              try:
+                  if event.get('httpMethod') == 'OPTIONS':
+                      return {'statusCode': 200, 'headers': headers, 'body': ''}
+
+                  body = json.loads(event.get('body', '{}'))
+
+                  # Validate required fields
+                  required_fields = ['claimId', 'reviewerId']
+                  missing_fields = [field for field in required_fields if not body.get(field)]
+
+                  if missing_fields:
+                      return {
+                          'statusCode': 400,
+                          'headers': headers,
+                          'body': json.dumps({
+                              'success': False,
+                              'error': f'Missing required fields: {", ".join(missing_fields)}'
+                          })
+                      }
+
+                  claim_id = body['claimId']
+                  reviewer_id = body['reviewerId']
+                  notes = body.get('notes', 'Claim approved by reviewer')
+                  timestamp = datetime.utcnow().isoformat()
+
+                  # Check if claim exists
+                  response = claims_table.get_item(Key={'claimId': claim_id})
+                  if 'Item' not in response:
+                      return {
+                          'statusCode': 404,
+                          'headers': headers,
+                          'body': json.dumps({'success': False, 'error': 'Claim not found'})
+                      }
+
+                  # Update claim status
+                  claims_table.update_item(
+                      Key={'claimId': claim_id},
+                      UpdateExpression='SET #status = :status, finalDecision = :decision, decisionReason = :reason, reviewedDate = :reviewed, lastUpdated = :updated',
+                      ExpressionAttributeNames={'#status': 'status'},
+                      ExpressionAttributeValues={
+                          ':status': 'approved',
+                          ':decision': 'approve',
+                          ':reason': notes,
+                          ':reviewed': timestamp,
+                          ':updated': timestamp
+                      }
+                  )
+
+                  # Log to audit trail
+                  audit_record = {
+                      'auditId': f"AUDIT-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}",
+                      'claimId': claim_id,
+                      'action': 'approve',
+                      'performedBy': reviewer_id,
+                      'timestamp': timestamp,
+                      'details': {
+                          'notes': notes,
+                          'previousStatus': 'under_review',
+                          'newStatus': 'approved'
+                      }
+                  }
+                  audit_table.put_item(Item=audit_record)
+
+                  return {
+                      'statusCode': 200,
+                      'headers': headers,
+                      'body': json.dumps({
+                          'success': True,
+                          'claimId': claim_id,
+                          'status': 'approved',
+                          'message': f'Claim {claim_id} approved successfully'
+                      })
+                  }
+
+              except Exception as e:
+                  print(f"Error approving claim: {str(e)}")
+                  return {
+                      'statusCode': 500,
+                      'headers': headers,
+                      'body': json.dumps({'success': False, 'error': f'Failed to approve claim: {str(e)}'})
+                  }
+
+  # Lambda Function: Deny Claim (Direct Action)
+  DenyClaimFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "LegalService-DenyClaim-${DeploymentID}"
+      Runtime: python3.12
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 30
+      MemorySize: 256
+      Environment:
+        Variables:
+          CLAIMS_TABLE: !Ref ClaimsTable
+          AUDIT_TABLE: !Ref AuditTrailTable
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          from datetime import datetime
+
+          dynamodb = boto3.resource('dynamodb')
+          claims_table = dynamodb.Table(os.environ['CLAIMS_TABLE'])
+          audit_table = dynamodb.Table(os.environ['AUDIT_TABLE'])
+
+          def lambda_handler(event, context):
+              headers = {
+                  'Content-Type': 'application/json',
+                  'Access-Control-Allow-Origin': '*',
+                  'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+                  'Access-Control-Allow-Methods': 'POST,OPTIONS'
+              }
+
+              try:
+                  if event.get('httpMethod') == 'OPTIONS':
+                      return {'statusCode': 200, 'headers': headers, 'body': ''}
+
+                  body = json.loads(event.get('body', '{}'))
+
+                  # Validate required fields
+                  required_fields = ['claimId', 'reviewerId', 'reason']
+                  missing_fields = [field for field in required_fields if not body.get(field)]
+
+                  if missing_fields:
+                      return {
+                          'statusCode': 400,
+                          'headers': headers,
+                          'body': json.dumps({
+                              'success': False,
+                              'error': f'Missing required fields: {", ".join(missing_fields)}'
+                          })
+                      }
+
+                  claim_id = body['claimId']
+                  reviewer_id = body['reviewerId']
+                  reason = body['reason']
+                  timestamp = datetime.utcnow().isoformat()
+
+                  if not reason.strip():
+                      return {
+                          'statusCode': 400,
+                          'headers': headers,
+                          'body': json.dumps({'success': False, 'error': 'Denial reason is required'})
+                      }
+
+                  # Check if claim exists
+                  response = claims_table.get_item(Key={'claimId': claim_id})
+                  if 'Item' not in response:
+                      return {
+                          'statusCode': 404,
+                          'headers': headers,
+                          'body': json.dumps({'success': False, 'error': 'Claim not found'})
+                      }
+
+                  # Update claim status
+                  claims_table.update_item(
+                      Key={'claimId': claim_id},
+                      UpdateExpression='SET #status = :status, finalDecision = :decision, decisionReason = :reason, reviewedDate = :reviewed, lastUpdated = :updated',
+                      ExpressionAttributeNames={'#status': 'status'},
+                      ExpressionAttributeValues={
+                          ':status': 'denied',
+                          ':decision': 'deny',
+                          ':reason': reason,
+                          ':reviewed': timestamp,
+                          ':updated': timestamp
+                      }
+                  )
+
+                  # Log to audit trail
+                  audit_record = {
+                      'auditId': f"AUDIT-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}",
+                      'claimId': claim_id,
+                      'action': 'deny',
+                      'performedBy': reviewer_id,
+                      'timestamp': timestamp,
+                      'details': {
+                          'reason': reason,
+                          'previousStatus': 'under_review',
+                          'newStatus': 'denied'
+                      }
+                  }
+                  audit_table.put_item(Item=audit_record)
+
+                  return {
+                      'statusCode': 200,
+                      'headers': headers,
+                      'body': json.dumps({
+                          'success': True,
+                          'claimId': claim_id,
+                          'status': 'denied',
+                          'message': f'Claim {claim_id} denied'
+                      })
+                  }
+
+              except Exception as e:
+                  print(f"Error denying claim: {str(e)}")
+                  return {
+                      'statusCode': 500,
+                      'headers': headers,
+                      'body': json.dumps({'success': False, 'error': f'Failed to deny claim: {str(e)}'})
+                  }
+
+  # Lambda Function: Reassign Claim (Direct Action)
+  ReassignClaimFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "LegalService-ReassignClaim-${DeploymentID}"
+      Runtime: python3.12
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 30
+      MemorySize: 256
+      Environment:
+        Variables:
+          CLAIMS_TABLE: !Ref ClaimsTable
+          REVIEWERS_TABLE: !Ref ReviewersTable
+          AUDIT_TABLE: !Ref AuditTrailTable
+      Code:
+        ZipFile: |
+          """
+          Reassign Claim Lambda Function
+          Reassigns a claim to a different reviewer
+          Supports "next-available" option for intelligent auto-assignment
+          """
+          import json
+          import boto3
+          import os
+          import random
+          from datetime import datetime
+
+          # Initialize AWS clients
+          dynamodb = boto3.resource('dynamodb')
+
+          # Environment variables
+          CLAIMS_TABLE = os.environ.get('CLAIMS_TABLE', 'LegalService-Claims')
+          REVIEWERS_TABLE = os.environ.get('REVIEWERS_TABLE', 'LegalService-Reviewers')
+          AUDIT_TABLE = os.environ.get('AUDIT_TABLE', 'LegalService-AuditTrail')
+
+          claims_table = dynamodb.Table(CLAIMS_TABLE)
+          reviewers_table = dynamodb.Table(REVIEWERS_TABLE)
+          audit_table = dynamodb.Table(AUDIT_TABLE)
+
+          # Reviewer ID to display name mapping
+          REVIEWER_NAMES = {
+              'sarah-chen': 'Sarah Chen',
+              'mike-torres': 'Mike Torres',
+              'lisa-park': 'Lisa Park',
+              'reviewer-sarah-johnson': 'Sarah Johnson',
+              'reviewer-michael-chen': 'Michael Chen',
+              'reviewer-emily-rodriguez': 'Emily Rodriguez',
+              'reviewer-david-thompson': 'David Thompson',
+              'reviewer-jessica-martinez': 'Jessica Martinez'
+          }
+
+          # Reverse mapping: Display name to reviewer ID
+          DISPLAY_NAME_TO_ID = {
+              'Sarah Chen': 'sarah-chen',
+              'Mike Torres': 'mike-torres',
+              'Lisa Park': 'lisa-park',
+              'Sarah Johnson': 'reviewer-sarah-johnson',
+              'Michael Chen': 'reviewer-michael-chen',
+              'Emily Rodriguez': 'reviewer-emily-rodriguez',
+              'David Thompson': 'reviewer-david-thompson',
+              'Jessica Martinez': 'reviewer-jessica-martinez',
+              'Intelligent Reassignment (Recommended)': 'next-available'
+          }
+
+          def get_reviewer_display_name(reviewer_id):
+              """Convert reviewer ID to display name"""
+              return REVIEWER_NAMES.get(reviewer_id, reviewer_id)
+
+          def get_reviewer_id_from_display_name(display_name):
+              """Convert display name to reviewer ID"""
+              return DISPLAY_NAME_TO_ID.get(display_name, display_name.lower().replace(' ', '-'))
+
+          def find_next_available_reviewer(current_reviewer_id=None):
+              """Find the next available reviewer using data-driven selection."""
+              try:
+                  response = reviewers_table.scan()
+                  reviewers = response.get('Items', [])
+
+                  if not reviewers:
+                      return None
+
+                  # Filter out current reviewer and reviewers at capacity
+                  available_reviewers = []
+                  for reviewer in reviewers:
+                      reviewer_id = reviewer.get('reviewerId')
+                      current_workload = int(reviewer.get('currentWorkload', 0))
+                      max_capacity = int(reviewer.get('maxCapacity', 10))
+
+                      if reviewer_id == current_reviewer_id:
+                          continue
+                      if current_workload >= max_capacity:
+                          continue
+
+                      available_reviewers.append(reviewer)
+
+                  if not available_reviewers:
+                      return None
+
+                  # Sort by selection criteria
+                  def sort_key(r):
+                      current_workload = int(r.get('currentWorkload', 0))
+                      total_reviewed = int(r.get('totalClaimsReviewed', 0))
+                      accuracy = float(r.get('accuracy', 0.0))
+                      return (current_workload, total_reviewed, -accuracy)
+
+                  available_reviewers.sort(key=sort_key)
+
+                  # Check for ties at the top
+                  best_reviewer = available_reviewers[0]
+                  best_workload = int(best_reviewer.get('currentWorkload', 0))
+                  best_total = int(best_reviewer.get('totalClaimsReviewed', 0))
+                  best_accuracy = float(best_reviewer.get('accuracy', 0.0))
+
+                  # Find all reviewers with same workload, total reviewed, and accuracy
+                  tied_reviewers = [
+                      r for r in available_reviewers
+                      if (int(r.get('currentWorkload', 0)) == best_workload and
+                          int(r.get('totalClaimsReviewed', 0)) == best_total and
+                          abs(float(r.get('accuracy', 0.0)) - best_accuracy) < 0.001)
+                  ]
+
+                  # If there's a tie, randomly select
+                  if len(tied_reviewers) > 1:
+                      selected = random.choice(tied_reviewers)
+                  else:
+                      selected = best_reviewer
+
+                  return selected
+
+              except Exception as e:
+                  print(f"Error finding next available reviewer: {e}")
+                  return None
+
+          def lambda_handler(event, context):
+              """Reassign a claim to a different reviewer."""
+              try:
+                  body = json.loads(event.get('body', '{}'))
+
+                  claim_id = body.get('claimId')
+                  from_reviewer_id = body.get('fromReviewerId')
+                  to_reviewer_id = body.get('toReviewerId')
+                  reason = body.get('reason', 'Reassignment requested')
+
+                  if not claim_id or not to_reviewer_id:
+                      return {
+                          'statusCode': 400,
+                          'headers': {
+                              'Content-Type': 'application/json',
+                              'Access-Control-Allow-Origin': '*'
+                          },
+                          'body': json.dumps({
+                              'success': False,
+                              'error': 'claimId and toReviewerId are required'
+                          })
+                      }
+
+                  # Get claim details
+                  claim_response = claims_table.get_item(Key={'claimId': claim_id})
+                  claim = claim_response.get('Item')
+
+                  if not claim:
+                      return {
+                          'statusCode': 404,
+                          'headers': {
+                              'Content-Type': 'application/json',
+                              'Access-Control-Allow-Origin': '*'
+                          },
+                          'body': json.dumps({
+                              'success': False,
+                              'error': 'Claim not found'
+                          })
+                      }
+
+                  # Convert display name to reviewer ID if needed
+                  to_reviewer_id = get_reviewer_id_from_display_name(to_reviewer_id)
+
+                  # Get current assignee from claim
+                  current_assignee = claim.get('assignedTo')
+
+                  # If from_reviewer_id is provided, verify it matches current assignee
+                  if from_reviewer_id and current_assignee != from_reviewer_id:
+                      return {
+                          'statusCode': 400,
+                          'headers': {
+                              'Content-Type': 'application/json',
+                              'Access-Control-Allow-Origin': '*'
+                          },
+                          'body': json.dumps({
+                              'success': False,
+                              'error': f"Claim is currently assigned to {get_reviewer_display_name(current_assignee)}, not {get_reviewer_display_name(from_reviewer_id)}"
+                          })
+                      }
+
+                  # Handle "next-available" option (after conversion from display name)
+                  if to_reviewer_id == 'next-available':
+                      selected_reviewer = find_next_available_reviewer(current_assignee)
+
+                      if not selected_reviewer:
+                          return {
+                              'statusCode': 400,
+                              'headers': {
+                                  'Content-Type': 'application/json',
+                                  'Access-Control-Allow-Origin': '*'
+                              },
+                              'body': json.dumps({
+                                  'success': False,
+                                  'error': 'No available reviewers found. All reviewers are at capacity.'
+                              })
+                          }
+
+                      to_reviewer_id = selected_reviewer.get('reviewerId')
+                      to_reviewer = selected_reviewer
+                      reason = f"Auto-assigned to next available reviewer (Workload: {selected_reviewer.get('currentWorkload', 0)}/{selected_reviewer.get('maxCapacity', 10)})"
+                  else:
+                      # Check if target reviewer exists and has capacity
+                      to_reviewer_response = reviewers_table.get_item(Key={'reviewerId': to_reviewer_id})
+                      to_reviewer = to_reviewer_response.get('Item')
+
+                      if not to_reviewer:
+                          return {
+                              'statusCode': 404,
+                              'headers': {
+                                  'Content-Type': 'application/json',
+                                  'Access-Control-Allow-Origin': '*'
+                              },
+                              'body': json.dumps({
+                                  'success': False,
+                                  'error': f"Reviewer {to_reviewer_id} not found"
+                              })
+                          }
+
+                      current_workload = to_reviewer.get('currentWorkload', 0)
+                      max_capacity = to_reviewer.get('maxCapacity', 10)
+
+                      if current_workload >= max_capacity:
+                          return {
+                              'statusCode': 400,
+                              'headers': {
+                                  'Content-Type': 'application/json',
+                                  'Access-Control-Allow-Origin': '*'
+                              },
+                              'body': json.dumps({
+                                  'success': False,
+                                  'error': f"Reviewer {get_reviewer_display_name(to_reviewer_id)} is at full capacity ({current_workload}/{max_capacity})"
+                              })
+                          }
+
+                  timestamp = datetime.utcnow().isoformat()
+
+                  # Update claim assignment
+                  claims_table.update_item(
+                      Key={'claimId': claim_id},
+                      UpdateExpression='SET assignedTo = :new_reviewer, assignedDate = :date, lastUpdated = :updated',
+                      ExpressionAttributeValues={
+                          ':new_reviewer': to_reviewer_id,
+                          ':date': timestamp,
+                          ':updated': timestamp
+                      }
+                  )
+
+                  # Update from_reviewer workload (decrease) if there was a previous assignee
+                  if current_assignee:
+                      try:
+                          reviewers_table.update_item(
+                              Key={'reviewerId': current_assignee},
+                              UpdateExpression='SET currentWorkload = currentWorkload - :dec',
+                              ExpressionAttributeValues={
+                                  ':dec': 1
+                              }
+                          )
+                      except Exception as e:
+                          print(f"Error updating from_reviewer workload: {e}")
+
+                  # Update to_reviewer workload (increase)
+                  try:
+                      reviewers_table.update_item(
+                          Key={'reviewerId': to_reviewer_id},
+                          UpdateExpression='SET currentWorkload = currentWorkload + :inc, activeClaims = list_append(if_not_exists(activeClaims, :empty_list), :claim)',
+                          ExpressionAttributeValues={
+                              ':inc': 1,
+                              ':claim': [claim_id],
+                              ':empty_list': []
+                          }
+                      )
+                  except Exception as e:
+                      print(f"Error updating to_reviewer workload: {e}")
+
+                  # Log to audit trail
+                  audit_table.put_item(Item={
+                      'claimId': claim_id,
+                      'timestamp': timestamp,
+                      'action': 'claim_reassigned',
+                      'actor': current_assignee or 'system',
+                      'actorType': 'reviewer',
+                      'details': {
+                          'fromReviewer': current_assignee,
+                          'toReviewer': to_reviewer_id,
+                          'reason': reason
+                      }
+                  })
+
+                  reviewer_name = get_reviewer_display_name(to_reviewer_id)
+
+                  return {
+                      'statusCode': 200,
+                      'headers': {
+                          'Content-Type': 'application/json',
+                          'Access-Control-Allow-Origin': '*'
+                      },
+                      'body': json.dumps({
+                          'success': True,
+                          'claimId': claim_id,
+                          'assignedTo': to_reviewer_id,
+                          'assignedToName': reviewer_name,
+                          'message': f"Reassigned Claim {claim_id} to {reviewer_name}"
+                      })
+                  }
+
+              except Exception as e:
+                  print(f"Error in reassignClaim: {e}")
+                  return {
+                      'statusCode': 500,
+                      'headers': {
+                          'Content-Type': 'application/json',
+                          'Access-Control-Allow-Origin': '*'
+                      },
+                      'body': json.dumps({
+                          'success': False,
+                          'error': str(e)
+                      })
+                  }
+
+  # API Gateway Authorizer
+  AgentCoreApiRequestAuthorizer:
+    Type: AWS::ApiGateway::Authorizer
+    Properties:
+      Name: !Sub "LegalService-AgentCoreAuthorizer-${DeploymentID}"
+      Type: REQUEST
+      RestApiId: !Ref LegalServiceAPI
+      AuthorizerUri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AgentCoreAuthorizerLambda.Arn}/invocations"
+      IdentitySource: method.request.header.Authorization
+      AuthorizerResultTtlInSeconds: 0
+
+  # API Gateway Resources
+  InvokeIntakeAgentResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref LegalServiceAPI
+      ParentId: !GetAtt LegalServiceAPI.RootResourceId
+      PathPart: invoke-intake-agent
+
+  InvokeReviewAgentResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref LegalServiceAPI
+      ParentId: !GetAtt LegalServiceAPI.RootResourceId
+      PathPart: invoke-review-agent
+
+  ApproveClaimResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref LegalServiceAPI
+      ParentId: !GetAtt LegalServiceAPI.RootResourceId
+      PathPart: approve-claim
+
+  DenyClaimResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref LegalServiceAPI
+      ParentId: !GetAtt LegalServiceAPI.RootResourceId
+      PathPart: deny-claim
+
+  ReassignClaimResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref LegalServiceAPI
+      ParentId: !GetAtt LegalServiceAPI.RootResourceId
+      PathPart: reassign-claim
+
+  # API Gateway Methods: Invoke Intake Agent
+  InvokeIntakeAgentMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref LegalServiceAPI
+      ResourceId: !Ref InvokeIntakeAgentResource
+      HttpMethod: POST
+      AuthorizationType: CUSTOM
+      AuthorizerId: !Ref AgentCoreApiRequestAuthorizer
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${InvokeIntakeAgentFunction.Arn}/invocations"
+
+  InvokeIntakeAgentOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref LegalServiceAPI
+      ResourceId: !Ref InvokeIntakeAgentResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,x-api-key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
+  # API Gateway Methods: Invoke Review Agent
+  InvokeReviewAgentMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref LegalServiceAPI
+      ResourceId: !Ref InvokeReviewAgentResource
+      HttpMethod: POST
+      AuthorizationType: CUSTOM
+      AuthorizerId: !Ref AgentCoreApiRequestAuthorizer
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${InvokeReviewAgentFunction.Arn}/invocations"
+
+  InvokeReviewAgentOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref LegalServiceAPI
+      ResourceId: !Ref InvokeReviewAgentResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,x-api-key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
+  # API Gateway Methods: Approve Claim
+  ApproveClaimMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref LegalServiceAPI
+      ResourceId: !Ref ApproveClaimResource
+      HttpMethod: POST
+      AuthorizationType: CUSTOM
+      AuthorizerId: !Ref AgentCoreApiRequestAuthorizer
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApproveClaimFunction.Arn}/invocations"
+
+  ApproveClaimOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref LegalServiceAPI
+      ResourceId: !Ref ApproveClaimResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization'"
+              method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
+  # API Gateway Methods: Deny Claim
+  DenyClaimMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref LegalServiceAPI
+      ResourceId: !Ref DenyClaimResource
+      HttpMethod: POST
+      AuthorizationType: CUSTOM
+      AuthorizerId: !Ref AgentCoreApiRequestAuthorizer
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${DenyClaimFunction.Arn}/invocations"
+
+  DenyClaimOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref LegalServiceAPI
+      ResourceId: !Ref DenyClaimResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization'"
+              method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
+  # API Gateway Methods: Reassign Claim
+  ReassignClaimMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref LegalServiceAPI
+      ResourceId: !Ref ReassignClaimResource
+      HttpMethod: POST
+      AuthorizationType: CUSTOM
+      AuthorizerId: !Ref AgentCoreApiRequestAuthorizer
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ReassignClaimFunction.Arn}/invocations"
+
+  ReassignClaimOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref LegalServiceAPI
+      ResourceId: !Ref ReassignClaimResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization'"
+              method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+
+  # Lambda Permissions for AgentCore endpoints
+  InvokeIntakeAgentLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref InvokeIntakeAgentFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${LegalServiceAPI}/prod/POST/invoke-intake-agent"
+
+  InvokeReviewAgentLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref InvokeReviewAgentFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${LegalServiceAPI}/prod/POST/invoke-review-agent"
+
+  ApproveClaimLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ApproveClaimFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${LegalServiceAPI}/*"
+
+  DenyClaimLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref DenyClaimFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${LegalServiceAPI}/*"
+
+  ReassignClaimLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ReassignClaimFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${LegalServiceAPI}/*"
+
+  AgentCoreAuthorizerLambdaPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn: AgentCoreApiRequestAuthorizer
+    Properties:
+      FunctionName: !Ref AgentCoreAuthorizerLambda
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${LegalServiceAPI}/authorizers/${AgentCoreApiRequestAuthorizer}"
+
+  # API Gateway Deployment
+  ApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - SubmitClaimMethod
+      - ClaimsMethod
+      - ClaimIdMethod
+      - ApproveClaimMethod
+      - DenyClaimMethod
+      - ReassignClaimMethod
+      - InvokeIntakeAgentMethod
+      - InvokeReviewAgentMethod
+      - AgentCoreApiRequestAuthorizer
+    Properties:
+      RestApiId: !Ref LegalServiceAPI
+      StageName: prod
+      Description: "Deployment with authentication on submit-claim endpoint - 2025-10-18"
+
+
+Outputs:
+  ApiGatewayUrl:
+    Description: API Gateway endpoint URL
+    Value: !Sub "https://${LegalServiceAPI}.execute-api.${AWS::Region}.amazonaws.com/prod"
+
+  ClaimsTableName:
+    Description: Name of the Claims DynamoDB table
+    Value: !Ref ClaimsTable
+
+  ReviewersTableName:
+    Description: Name of the Reviewers DynamoDB table
+    Value: !Ref ReviewersTable
+
+  AuditTrailTableName:
+    Description: Name of the AuditTrail DynamoDB table
+    Value: !Ref AuditTrailTable
+
+  ApiTokenSecretArn:
+    Description: ARN of the API token secret
+    Value: !Ref ApiTokenSecret
+
+  AgentCoreApiTokenSecretArn:
+    Description: ARN of the AgentCore API Token Secret
+    Value: !Ref AgentCoreApiTokenSecret
+
+  InvokeIntakeAgentUrl:
+    Description: URL for invoking the Intake Agent
+    Value: !Sub "https://${LegalServiceAPI}.execute-api.${AWS::Region}.amazonaws.com/prod/invoke-intake-agent"
+
+  InvokeReviewAgentUrl:
+    Description: URL for invoking the Review Agent
+    Value: !Sub "https://${LegalServiceAPI}.execute-api.${AWS::Region}.amazonaws.com/prod/invoke-review-agent"
+
+  AgentCoreRuntimeRoleArn:
+    Description: ARN of the AgentCore Runtime Execution Role (use this when deploying agents)
+    Value: !GetAtt AgentCoreRuntimeExecutionRole.Arn

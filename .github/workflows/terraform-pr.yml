@@ -1,0 +1,115 @@
+name: Terraform PR check
+
+on:
+  pull_request:
+    paths:
+      - 'terraform/**'
+      - '.github/workflows/terraform-*.yml'
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+env:
+  AWS_REGION: us-east-1
+  TF_DIR: terraform
+
+jobs:
+  fmt-validate-lint:
+    name: fmt + validate + tflint + trivy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.14.8
+
+      - name: terraform fmt
+        run: terraform -chdir=${{ env.TF_DIR }} fmt -check -recursive
+
+      - name: terraform validate (top-level)
+        run: |
+          terraform -chdir=${{ env.TF_DIR }} init -backend=false -upgrade
+          terraform -chdir=${{ env.TF_DIR }} validate
+
+      - name: Verify modules are self-contained
+        run: ${{ env.TF_DIR }}/scripts/verify_self_contained.sh
+
+      - uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: v0.61.0
+
+      - name: tflint
+        run: |
+          tflint --init
+          tflint --recursive --chdir ${{ env.TF_DIR }}
+
+      - name: Trivy IaC scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: config
+          scan-ref: ${{ env.TF_DIR }}
+          format: table
+          exit-code: 1
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          # Skip the agents module's null_resource provisioner scripts
+          skip-dirs: terraform/modules/agents/scripts
+
+  plan:
+    name: terraform plan (dev)
+    runs-on: ubuntu-latest
+    # Plan does need credentials — use the OIDC role provisioned by
+    # terraform/bootstrap/github-oidc/. Customer must apply that bootstrap
+    # once and store the ARN in repo variable AWS_OIDC_ROLE_ARN.
+    if: ${{ vars.AWS_OIDC_ROLE_ARN != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.14.8
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_OIDC_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Note about agents module
+        run: |
+          echo "::notice::Plan does NOT include module.agents — agentcore launch is laptop-only per locked design decision (TF-5)."
+
+      - name: terraform init (dev backend)
+        run: terraform -chdir=${{ env.TF_DIR }} init -backend-config=env/dev.tfbackend
+        env:
+          # Customer provides these via repo variables
+          TF_VAR_aws_region: ${{ env.AWS_REGION }}
+
+      - name: terraform plan (excluding agents)
+        id: plan
+        run: |
+          terraform -chdir=${{ env.TF_DIR }} plan \
+            -no-color \
+            -target=module.data \
+            -target=module.api_handler \
+            -target=module.agent_invoker \
+            -target=module.authorizer \
+            -target=module.api \
+            -target=module.observability \
+            > plan.txt
+          echo "exitcode=$?" >> $GITHUB_OUTPUT
+
+      - name: Post plan as PR comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const plan = fs.readFileSync('plan.txt', 'utf8').slice(0, 60000);
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `### Terraform plan (dev, excluding \`module.agents\`)\n\n<details><summary>Click to expand</summary>\n\n\`\`\`hcl\n${plan}\n\`\`\`\n\n</details>`
+            });

@@ -18,8 +18,8 @@ let lastInitialMessage = null; // Store the last initial message for refresh
  * Check if agent ID is a placeholder value
  */
 function isPlaceholderAgentId(agentId) {
-    return !agentId || 
-           agentId === 'your-glean-agent-id' || 
+    return !agentId ||
+           agentId === 'your-glean-agent-id' ||
            agentId.trim() === '' ||
            agentId === 'legal-claims-assistant';
 }
@@ -44,15 +44,15 @@ const reviewers = {
  */
 function selectRole(role) {
     selectedRole = role;
-    
+
     // Save state to sessionStorage
     sessionStorage.setItem('reviewer_state', JSON.stringify({ role: role }));
-    
+
     // Hide landing page
     document.getElementById('landing-page').classList.add('hidden');
     document.getElementById('back-to-landing').classList.add('visible');
     document.getElementById('dashboard-view').classList.add('active');
-    
+
     if (role === 'admin') {
         // Admin mode - show all claims
         isAdminMode = true;
@@ -89,12 +89,12 @@ function openAssessorModal() {
  */
 async function updateAssessorStats() {
     let allClaimsData = [];
-    
+
     // Try to get all claims from API first, then fall back to sample data
     try {
-        const apiConfigured = window.demoConfig.apiBaseUrl && 
+        const apiConfigured = window.demoConfig.apiBaseUrl &&
                             window.demoConfig.apiBaseUrl !== 'https://xxx.execute-api.us-east-1.amazonaws.com/prod';
-        
+
         if (window.apiClient && apiConfigured) {
             console.log('Fetching all claims from API for stats...');
             const response = await window.apiClient.getAllClaims({});
@@ -110,9 +110,9 @@ async function updateAssessorStats() {
         console.error('Error fetching claims for stats:', error);
         allClaimsData = window.sampleClaims || [];
     }
-    
+
     console.log('Updating assessor stats from', allClaimsData.length, 'total claims');
-    
+
     // Calculate stats for each assessor
     const assessorStats = {
         'sarah-chen': { active: 0, total: 247 },
@@ -122,7 +122,7 @@ async function updateAssessorStats() {
         'jordan-kim': { active: 0, total: 203 },
         'taylor-brooks': { active: 0, total: 278 }
     };
-    
+
     // Count active claims for each assessor
     allClaimsData.forEach(claim => {
         const assessorId = claim.assignedTo;
@@ -132,18 +132,18 @@ async function updateAssessorStats() {
             }
         }
     });
-    
+
     console.log('Calculated stats:', assessorStats);
-    
+
     // Update the DOM for each assessor tile
     Object.keys(assessorStats).forEach(assessorId => {
         const stats = assessorStats[assessorId];
         const tile = document.querySelector(`[onclick="selectAssessor('${assessorId}')"]`);
-        
+
         if (tile) {
             const activeValue = tile.querySelector('.assessor-stat-value');
             const totalValue = tile.querySelectorAll('.assessor-stat-value')[1];
-            
+
             if (activeValue) {
                 activeValue.textContent = stats.active;
                 console.log(`Updated ${assessorId} active to ${stats.active}`);
@@ -178,12 +178,12 @@ function closeAssessorModalOnBackdrop(event) {
 function selectAssessor(assessorId) {
     // Close modal
     closeAssessorModal();
-    
+
     // Update assessor
     window.demoConfig.reviewerId = assessorId;
     applyReviewerSelection(assessorId);
     updateCurrentAssessorDisplay(assessorId);
-    
+
     // Reload claims for the selected assessor
     loadClaims();
 }
@@ -207,12 +207,12 @@ function updateCurrentAssessorDisplay(assessorId) {
 function returnToLanding() {
     // Show landing page
     document.getElementById('landing-page').classList.remove('hidden');
-    
+
     // Hide all other views
     document.getElementById('back-to-landing').classList.remove('visible');
     document.getElementById('dashboard-view').classList.remove('active');
     document.getElementById('header-actions').classList.remove('visible');
-    
+
     // Reset state
     selectedRole = null;
     currentView = 'landing';
@@ -224,7 +224,7 @@ function returnToLanding() {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Reviewer portal initializing... Version 2.0');
     console.log('Sample claims loaded:', window.sampleClaims ? window.sampleClaims.length : 0, 'claims');
-    
+
     // Verify claims data
     if (window.sampleClaims && window.sampleClaims.length > 0) {
         const claimsByAssessor = {};
@@ -236,10 +236,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         console.log('Claims by assessor:', claimsByAssessor);
     }
-    
+
     // Load saved agent ID
     loadAgentId();
-    
+
     // Restore previous state if exists
     const savedState = sessionStorage.getItem('reviewer_state');
     if (savedState) {
@@ -257,9 +257,9 @@ function loadAgentId() {
     // Agent ID is now hardcoded in config - don't override from localStorage
     // Clear any old localStorage values to prevent conflicts
     localStorage.removeItem('glean_agent_id');
-    
+
     const agentIdInput = document.getElementById('agent-id-input');
-    
+
     // Agent ID input was removed, so check if it exists
     if (agentIdInput && window.demoConfig.agentId) {
         agentIdInput.value = window.demoConfig.agentId;
@@ -271,29 +271,29 @@ function loadAgentId() {
  */
 function updateAgentId() {
     const agentIdInput = document.getElementById('agent-id-input');
-    
+
     // Agent ID input was removed, so check if it exists
     if (!agentIdInput) {
         console.log('Agent ID is hardcoded:', window.demoConfig.agentId);
         return;
     }
-    
+
     const newAgentId = agentIdInput.value.trim();
-    
+
     if (!newAgentId) {
         alert('Please enter a valid Agent ID');
         return;
     }
-    
+
     localStorage.setItem('glean_agent_id', newAgentId);
     window.demoConfig.agentId = newAgentId;
-    
+
     // Reinitialize chat if in detail view
     if (currentView === 'detail' && currentClaim) {
         gleanChatInitialized = false;
         initializeGleanChat(currentClaim);
     }
-    
+
     console.log('Agent ID updated:', newAgentId);
 }
 
@@ -303,7 +303,7 @@ function updateAgentId() {
 function loadReviewerSelection() {
     const savedSelection = localStorage.getItem('selected_reviewer') || 'sarah-chen';
     const selectElement = document.getElementById('reviewer-select');
-    
+
     if (selectElement) {
         selectElement.value = savedSelection;
         applyReviewerSelection(savedSelection);
@@ -316,13 +316,13 @@ function loadReviewerSelection() {
 function switchReviewer() {
     const selectElement = document.getElementById('reviewer-select');
     const selectedValue = selectElement.value;
-    
+
     // Save selection
     localStorage.setItem('selected_reviewer', selectedValue);
-    
+
     // Apply selection
     applyReviewerSelection(selectedValue);
-    
+
     // Reload claims
     loadClaims();
 }
@@ -352,27 +352,27 @@ function applyReviewerSelection(selection) {
  */
 async function loadClaims() {
     const claimsList = document.getElementById('claims-list');
-    
+
     // Show loading state
     claimsList.innerHTML = `
         <div class="loading-overlay">
             <div class="loading-spinner"></div>
         </div>
     `;
-    
+
     try {
         // Check if API is configured
-        const apiConfigured = window.demoConfig.apiBaseUrl && 
+        const apiConfigured = window.demoConfig.apiBaseUrl &&
                             window.demoConfig.apiBaseUrl !== 'https://xxx.execute-api.us-east-1.amazonaws.com/prod';
-        
+
         if (window.apiClient && apiConfigured) {
             console.log('Loading claims from API:', window.demoConfig.apiBaseUrl);
-            
+
             // In admin mode, don't filter by reviewer
             const filters = isAdminMode ? {} : { reviewerId: window.demoConfig.reviewerId };
-            
+
             const response = await window.apiClient.getAllClaims(filters);
-            
+
             if (response.success && response.claims) {
                 allClaims = response.claims;
                 const modeText = isAdminMode ? 'all claims' : `claims for ${window.demoConfig.reviewerName}`;
@@ -384,7 +384,7 @@ async function loadClaims() {
             // Fallback to sample data
             console.log('Using sample data (API not configured)');
             const sampleData = window.sampleClaims || [];
-            
+
             // Filter by reviewer if not in admin mode
             if (isAdminMode) {
                 allClaims = sampleData;
@@ -394,29 +394,29 @@ async function loadClaims() {
                 console.log(`Loaded ${allClaims.length} claims for ${window.demoConfig.reviewerName}`);
             }
         }
-        
+
         // Update KPIs
         updateKPIs();
-        
+
         // Render claims list
         renderClaimsList();
-        
+
     } catch (error) {
         console.error('Error loading claims:', error);
-        
+
         // Show error notification
         showNotification('Failed to load claims from API. Using sample data.', 'warning');
-        
+
         // Fallback to sample data
         const sampleData = window.sampleClaims || [];
-        
+
         // Filter by reviewer if not in admin mode
         if (isAdminMode) {
             allClaims = sampleData;
         } else {
             allClaims = sampleData.filter(c => c.assignedTo === window.demoConfig.reviewerId);
         }
-        
+
         updateKPIs();
         renderClaimsList();
     }
@@ -426,26 +426,26 @@ async function loadClaims() {
  * Update KPI cards
  */
 function updateKPIs() {
-    const activeClaims = allClaims.filter(c => 
+    const activeClaims = allClaims.filter(c =>
         c.status === 'assigned' || c.status === 'under_review'
     );
-    
+
     const todayClaims = allClaims.filter(c => {
         const assignedDate = new Date(c.assignedDate || c.submittedDate);
         const today = new Date();
         return assignedDate.toDateString() === today.toDateString();
     });
-    
+
     if (isAdminMode) {
         // Admin mode - show system-wide stats
         const approvedClaims = allClaims.filter(c => c.status === 'approved');
         const deniedClaims = allClaims.filter(c => c.status === 'denied');
-        
+
         document.getElementById('kpi-active').textContent = activeClaims.length;
         document.getElementById('kpi-today').textContent = todayClaims.length;
         document.getElementById('kpi-total').textContent = allClaims.length;
         document.getElementById('kpi-avg-time').textContent = `${approvedClaims.length}/${deniedClaims.length}`;
-        
+
         // Update KPI labels for admin mode
         document.querySelector('#kpi-active').parentElement.querySelector('p').textContent = 'Active in system';
         document.querySelector('#kpi-today').parentElement.querySelector('p').textContent = 'Submitted today';
@@ -456,12 +456,12 @@ function updateKPIs() {
     } else {
         // Reviewer mode - show individual stats
         const reviewer = window.sampleReviewers?.find(r => r.reviewerId === window.demoConfig.reviewerId);
-        
+
         document.getElementById('kpi-active').textContent = activeClaims.length;
         document.getElementById('kpi-today').textContent = todayClaims.length;
         document.getElementById('kpi-total').textContent = reviewer?.totalClaimsReviewed || 247;
         document.getElementById('kpi-avg-time').textContent = reviewer?.avgReviewTime ? `${reviewer.avgReviewTime}d` : '2.3d';
-        
+
         // Reset KPI labels for reviewer mode
         document.querySelector('#kpi-active').parentElement.querySelector('p').textContent = 'Currently assigned to you';
         document.querySelector('#kpi-today').parentElement.querySelector('p').textContent = 'New assignments';
@@ -477,7 +477,7 @@ function updateKPIs() {
  */
 function renderClaimsList() {
     const claimsList = document.getElementById('claims-list');
-    
+
     // Update section header based on mode
     const sectionTitle = document.querySelector('.section-header h2');
     if (sectionTitle) {
@@ -487,7 +487,7 @@ function renderClaimsList() {
             sectionTitle.textContent = `My Claims (${window.demoConfig.reviewerName})`;
         }
     }
-    
+
     // Filter claims by status
     let filteredClaims = allClaims;
     if (currentFilter === 'pending') {
@@ -497,9 +497,9 @@ function renderClaimsList() {
     } else if (currentFilter === 'completed') {
         filteredClaims = allClaims.filter(c => c.status === 'approved' || c.status === 'denied');
     }
-    
+
     // Note: allClaims is already filtered by assessor in loadClaims()
-    
+
     if (filteredClaims.length === 0) {
         claimsList.innerHTML = `
             <div class="empty-state">
@@ -510,7 +510,7 @@ function renderClaimsList() {
         `;
         return;
     }
-    
+
     claimsList.innerHTML = filteredClaims.map(claim => `
         <div class="claim-card" onclick="openClaimDetail('${claim.claimId}')">
             <div class="claim-card-header">
@@ -577,13 +577,13 @@ function renderClaimsList() {
  */
 function filterClaims(filter) {
     currentFilter = filter;
-    
+
     // Update button states
     document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.classList.remove('active');
     });
     event.target.classList.add('active');
-    
+
     renderClaimsList();
 }
 
@@ -596,20 +596,20 @@ function openClaimDetail(claimId) {
         console.error('Claim not found:', claimId);
         return;
     }
-    
+
     currentClaim = claim;
     currentView = 'detail';
-    
+
     // Hide dashboard, show detail
     document.getElementById('dashboard-view').classList.add('hidden');
     document.getElementById('detail-view').classList.add('active');
-    
+
     // Update detail title
     document.getElementById('detail-claim-id').textContent = `${claim.claimId} - ${capitalizeFirst(claim.claimType)} Claim`;
-    
+
     // Render claim info panel
     renderClaimInfoPanel(claim);
-    
+
     // Initialize Glean chat with auto-review
     setTimeout(() => initializeGleanChat(claim), 500);
 }
@@ -619,7 +619,7 @@ function openClaimDetail(claimId) {
  */
 function renderClaimInfoPanel(claim) {
     const panel = document.getElementById('claim-info-panel');
-    
+
     panel.innerHTML = `
         <div class="claim-info-section">
             <h3>Claimant Information</h3>
@@ -640,7 +640,7 @@ function renderClaimInfoPanel(claim) {
                 <div class="info-row-value">${claim.claimantInfo.address}</div>
             </div>
         </div>
-        
+
         <div class="claim-info-section">
             <h3>Claim Details</h3>
             <div class="info-row">
@@ -664,7 +664,7 @@ function renderClaimInfoPanel(claim) {
                 <div class="info-row-value">${claim.status.replace('_', ' ').toUpperCase()}</div>
             </div>
         </div>
-        
+
         <div class="claim-info-section">
             <h3>Incident Description</h3>
             <div class="info-row">
@@ -683,7 +683,7 @@ function renderClaimInfoPanel(claim) {
                 </div>
             ` : ''}
         </div>
-        
+
         ${claim.documents && claim.documents.length > 0 ? `
             <div class="claim-info-section">
                 <h3>Documents</h3>
@@ -697,7 +697,7 @@ function renderClaimInfoPanel(claim) {
                 </div>
             </div>
         ` : ''}
-        
+
         <div class="claim-info-section">
             <h3>Timeline</h3>
             <div class="info-row">
@@ -717,7 +717,7 @@ function renderClaimInfoPanel(claim) {
                 </div>
             ` : ''}
         </div>
-        
+
         ${claim.aiRecommendation ? `
             <div class="claim-info-section">
                 <h3>AI Insight</h3>
@@ -746,23 +746,23 @@ function initializeGleanChat(claim) {
         console.log('Glean chat already initialized');
         return;
     }
-    
+
     if (!window.EmbeddedSearch) {
         console.error('Glean WebSDK not loaded');
         setTimeout(() => initializeGleanChat(claim), 500);
         return;
     }
-    
+
     const agentId = window.demoConfig.agentId;
     const container = document.getElementById('glean-agent-detail');
     if (!container) {
         console.error('Chat container not found');
         return;
     }
-    
+
     // Clear existing content
     container.innerHTML = '';
-    
+
     // Check if agent ID is a placeholder
     if (isPlaceholderAgentId(agentId)) {
         container.innerHTML = `
@@ -773,11 +773,11 @@ function initializeGleanChat(claim) {
                     </svg>
                     <h3 style="color: #1f2937; margin-bottom: 0.5rem; font-family: Inter, sans-serif;">Glean Agent Not Configured</h3>
                     <p style="color: #6b7280; margin-bottom: 1.5rem; font-family: Inter, sans-serif; line-height: 1.5;">
-                        To complete the Glean implementation steps, you require access to a Glean deployment. 
+                        To complete the Glean implementation steps, you require access to a Glean deployment.
                         If you don't have access, feel free to utilize the AgentCore agents directly below.
                     </p>
                     <p style="color: #9ca3af; margin-bottom: 1.5rem; font-family: Inter, sans-serif; font-size: 0.875rem; line-height: 1.5;">
-                        <strong>Note:</strong> Using AgentCore directly will not utilize the Glean conversational agents, 
+                        <strong>Note:</strong> Using AgentCore directly will not utilize the Glean conversational agents,
                         knowledge graph, and other Glean-specific features, but you can still test the core AI functionality.
                     </p>
                     <button onclick="showAgentCoreChatDetail()" style="display: inline-block; padding: 0.75rem 1.5rem; background: #2563eb; color: white; border: none; border-radius: 0.5rem; font-weight: 600; font-family: Inter, sans-serif; cursor: pointer; font-size: 1rem;">
@@ -789,14 +789,14 @@ function initializeGleanChat(claim) {
         console.warn('Placeholder agent ID detected. Showing AgentCore fallback option.');
         return;
     }
-    
+
     try {
         // Get auth token
         const authToken = window.getGleanAuthToken ? window.getGleanAuthToken() : null;
-        
+
         // Build initial message with AI analysis
         const initialMessage = buildReviewMessage(claim);
-        
+
         // Render Glean chat
         window.EmbeddedSearch.renderChat(container, {
             applicationId: agentId,
@@ -811,10 +811,10 @@ function initializeGleanChat(claim) {
             enableFeedback: true,
             enableCopy: true
         });
-        
+
         gleanChatInitialized = true;
         console.log('Glean chat initialized with auto-review');
-        
+
     } catch (error) {
         console.error('Error initializing Glean chat:', error);
     }
@@ -826,7 +826,7 @@ function initializeGleanChat(claim) {
 function buildReviewMessage(claim) {
     const recommendation = claim.aiRecommendation ? claim.aiRecommendation.toUpperCase() : 'PENDING';
     const confidence = claim.aiConfidence ? Math.round(claim.aiConfidence * 100) : 0;
-    
+
     return `I've analyzed claim ${claim.claimId}. Here's my assessment:
 
 **RECOMMENDATION: ${recommendation}**
@@ -854,7 +854,7 @@ You can:
 function backToDashboard() {
     currentView = 'dashboard';
     currentClaim = null;
-    
+
     document.getElementById('detail-view').classList.remove('active');
     document.getElementById('dashboard-view').classList.remove('hidden');
 }
@@ -920,9 +920,9 @@ function formatDate(dateString) {
 
 function formatDateTime(dateString) {
     const date = new Date(dateString);
-    return date.toLocaleString('en-US', { 
-        month: 'short', 
-        day: 'numeric', 
+    return date.toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
         year: 'numeric',
         hour: 'numeric',
         minute: '2-digit'
@@ -956,7 +956,7 @@ function showNotification(message, type = 'info') {
         `;
         document.body.appendChild(notification);
     }
-    
+
     // Set notification style based on type
     const styles = {
         info: { bg: '#dbeafe', color: '#1e40af', icon: 'fa-info-circle' },
@@ -964,7 +964,7 @@ function showNotification(message, type = 'info') {
         warning: { bg: '#fef3c7', color: '#92400e', icon: 'fa-exclamation-triangle' },
         error: { bg: '#fee2e2', color: '#991b1b', icon: 'fa-times-circle' }
     };
-    
+
     const style = styles[type] || styles.info;
     notification.style.backgroundColor = style.bg;
     notification.style.color = style.color;
@@ -973,7 +973,7 @@ function showNotification(message, type = 'info') {
         <span>${message}</span>
     `;
     notification.style.display = 'flex';
-    
+
     // Auto-hide after 5 seconds
     setTimeout(() => {
         notification.style.animation = 'slideOut 0.3s ease-out';
@@ -1023,18 +1023,18 @@ let userChoseAgentCore = false; // Track if user has chosen to use AgentCore
 function showChatOverlay(initialMessage = null) {
     const chatOverlay = document.getElementById('chat-overlay');
     if (!chatOverlay) return;
-    
+
     // Toggle the overlay if it's already showing and no initial message
     if (chatOverlay.classList.contains('show') && !initialMessage) {
         chatOverlay.classList.remove('show');
         return;
     }
-    
+
     // Show the overlay
     if (!chatOverlay.classList.contains('show')) {
         chatOverlay.classList.add('show');
     }
-    
+
     // Initialize chat if not already done
     if (!chatInitialized) {
         setTimeout(() => {
@@ -1053,33 +1053,33 @@ function renderGleanChatOverlay(initialMessage = null) {
         setTimeout(() => renderGleanChatOverlay(initialMessage), 500);
         return;
     }
-    
+
     const container = document.getElementById('glean-agent-overlay');
     if (!container) {
         console.error('Chat overlay container not found');
         setTimeout(() => renderGleanChatOverlay(initialMessage), 100);
         return;
     }
-    
+
     // Store the initial message if provided
     if (initialMessage) {
         lastInitialMessage = initialMessage;
     }
-    
+
     const agentId = window.demoConfig.agentId;
-    
+
     // Check if agent ID is a placeholder
     if (isPlaceholderAgentId(agentId)) {
         // If user has already chosen AgentCore, skip fallback and go directly to chat
         if (userChoseAgentCore) {
             // Check if chat UI already exists
             const existingChat = document.getElementById('agentcore-messages-overlay');
-            
+
             if (!existingChat) {
                 // Chat doesn't exist yet, create it
                 showAgentCoreChatOverlay();
             }
-            
+
             // Send the initial message if provided
             if (initialMessage) {
                 setTimeout(() => {
@@ -1092,10 +1092,10 @@ function renderGleanChatOverlay(initialMessage = null) {
             }
             return;
         }
-        
+
         // Store the initial message for AgentCore fallback
         pendingInitialMessage = initialMessage;
-        
+
         container.innerHTML = `
             <div id="agentcore-fallback-container-overlay" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 2rem; text-align: center; background: #f8f9fa;">
                 <div style="max-width: 600px;">
@@ -1104,11 +1104,11 @@ function renderGleanChatOverlay(initialMessage = null) {
                     </svg>
                     <h3 style="color: #1f2937; margin-bottom: 0.5rem; font-family: Inter, sans-serif;">Glean Agent Not Configured</h3>
                     <p style="color: #6b7280; margin-bottom: 1.5rem; font-family: Inter, sans-serif; line-height: 1.5;">
-                        To complete the Glean implementation steps, you require access to a Glean deployment. 
+                        To complete the Glean implementation steps, you require access to a Glean deployment.
                         If you don't have access, feel free to utilize the AgentCore agents directly below.
                     </p>
                     <p style="color: #9ca3af; margin-bottom: 1.5rem; font-family: Inter, sans-serif; font-size: 0.875rem; line-height: 1.5;">
-                        <strong>Note:</strong> Using AgentCore directly will not utilize the Glean conversational agents, 
+                        <strong>Note:</strong> Using AgentCore directly will not utilize the Glean conversational agents,
                         knowledge graph, and other Glean-specific features, but you can still test the core AI functionality.
                     </p>
                     <button onclick="showAgentCoreChatOverlay()" style="display: inline-block; padding: 0.75rem 1.5rem; background: #2563eb; color: white; border: none; border-radius: 0.5rem; font-weight: 600; font-family: Inter, sans-serif; cursor: pointer; font-size: 1rem;">
@@ -1120,17 +1120,17 @@ function renderGleanChatOverlay(initialMessage = null) {
         console.warn('Placeholder agent ID detected. Showing AgentCore fallback option.');
         return;
     }
-    
+
     const config = {
         agentId: agentId,
         enable3PCookieAccessRequest: true,
         historyMode: "memory"
     };
-    
+
     if (initialMessage) {
         config.initialMessage = initialMessage;
     }
-    
+
     try {
         // Pass the DOM element itself, not the ID string
         window.EmbeddedSearch.renderChat(container, config);
@@ -1144,7 +1144,7 @@ function reloadGleanChatWithInitialMessage(message) {
     const container = document.getElementById('glean-agent-overlay');
     if (container) {
         const agentId = window.demoConfig.agentId;
-        
+
         // Check if placeholder - handle AgentCore flow
         if (isPlaceholderAgentId(agentId)) {
             // If user has already chosen AgentCore, refresh the chat with new message
@@ -1168,10 +1168,10 @@ function reloadGleanChatWithInitialMessage(message) {
             }
             return;
         }
-        
+
         // For real Glean, clear and reload
         container.innerHTML = '';
-        
+
         // Pass the DOM element itself, not the ID string
         window.EmbeddedSearch.renderChat(container, {
             agentId: agentId,
@@ -1188,10 +1188,10 @@ function reloadGleanChatWithInitialMessage(message) {
 function showAgentCoreChatDetail() {
     const container = document.getElementById('glean-agent-detail');
     if (!container) return;
-    
+
     const claim = currentClaim;
     const initialMsg = claim ? `Analyzing claim ${claim.claimId}: ${claim.description}` : 'How can I help you review this claim?';
-    
+
     container.innerHTML = `
         <div style="display: flex; flex-direction: column; height: 100%; background: white;">
             <div style="padding: 1rem; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; gap: 0.5rem;">
@@ -1212,10 +1212,10 @@ function showAgentCoreChatDetail() {
             </div>
             <div style="padding: 1rem; border-top: 1px solid #e5e7eb;">
                 <div style="display: flex; gap: 0.5rem;">
-                    <input type="text" id="agentcore-input-detail" placeholder="Type your message..." 
+                    <input type="text" id="agentcore-input-detail" placeholder="Type your message..."
                         style="flex: 1; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-family: Inter, sans-serif;"
                         onkeypress="if(event.key === 'Enter') sendAgentCoreMessageDetail()">
-                    <button onclick="sendAgentCoreMessageDetail()" 
+                    <button onclick="sendAgentCoreMessageDetail()"
                         style="padding: 0.75rem 1.5rem; background: #2563eb; color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-family: Inter, sans-serif;">
                         Send
                     </button>
@@ -1231,10 +1231,10 @@ function showAgentCoreChatDetail() {
 function showAgentCoreChatOverlay() {
     // Mark that user has chosen AgentCore
     userChoseAgentCore = true;
-    
+
     const container = document.getElementById('glean-agent-overlay');
     if (!container) return;
-    
+
     container.innerHTML = `
         <div style="display: flex; flex-direction: column; height: 100%; background: white;">
             <div style="padding: 1rem; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; gap: 0.5rem;">
@@ -1255,10 +1255,10 @@ function showAgentCoreChatOverlay() {
             </div>
             <div style="padding: 1rem; border-top: 1px solid #e5e7eb;">
                 <div style="display: flex; gap: 0.5rem;">
-                    <input type="text" id="agentcore-input-overlay" placeholder="Type your message..." 
+                    <input type="text" id="agentcore-input-overlay" placeholder="Type your message..."
                         style="flex: 1; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-family: Inter, sans-serif;"
                         onkeypress="if(event.key === 'Enter') sendAgentCoreMessageOverlay()">
-                    <button onclick="sendAgentCoreMessageOverlay()" 
+                    <button onclick="sendAgentCoreMessageOverlay()"
                         style="padding: 0.75rem 1.5rem; background: #2563eb; color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-family: Inter, sans-serif;">
                         Send
                     </button>
@@ -1266,12 +1266,12 @@ function showAgentCoreChatOverlay() {
             </div>
         </div>
     `;
-    
+
     // If there's a pending initial message, auto-send it
     if (pendingInitialMessage) {
         const messageToSend = pendingInitialMessage;
         pendingInitialMessage = null; // Clear it after capturing
-        
+
         // Wait for DOM to be ready, then send the message
         setTimeout(() => {
             const input = document.getElementById('agentcore-input-overlay');
@@ -1308,21 +1308,21 @@ function backToFallbackMessageOverlay() {
 async function sendAgentCoreMessageDetail() {
     const input = document.getElementById('agentcore-input-detail');
     const messagesContainer = document.getElementById('agentcore-messages-detail');
-    
+
     if (!input || !messagesContainer) return;
-    
+
     const message = input.value.trim();
     if (!message) return;
-    
+
     // Add user message
     const userMsg = document.createElement('div');
     userMsg.style.cssText = 'background: #2563eb; color: white; padding: 1rem; border-radius: 0.5rem; font-family: Inter, sans-serif; align-self: flex-end; max-width: 80%;';
     userMsg.innerHTML = `<strong>You:</strong> ${escapeHtmlReviewer(message)}`;
     messagesContainer.appendChild(userMsg);
-    
+
     input.value = '';
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    
+
     // Show loading
     const loadingMsg = document.createElement('div');
     loadingMsg.id = 'loading-msg-detail';
@@ -1330,7 +1330,7 @@ async function sendAgentCoreMessageDetail() {
     loadingMsg.innerHTML = '<strong>AI Assistant:</strong> <em>Thinking...</em>';
     messagesContainer.appendChild(loadingMsg);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    
+
     try {
         const response = await fetch(`${window.demoConfig.apiBaseUrl}/invoke-review-agent`, {
             method: 'POST',
@@ -1342,28 +1342,28 @@ async function sendAgentCoreMessageDetail() {
                 prompt: message
             })
         });
-        
+
         const data = await response.json();
         loadingMsg.remove();
-        
+
         const aiMsg = document.createElement('div');
         aiMsg.style.cssText = 'background: #f3f4f6; padding: 1rem; border-radius: 0.5rem; font-family: Inter, sans-serif; color: #1f2937;';
         const responseText = data.response || data.message || 'I received your message.';
         aiMsg.innerHTML = `<strong>AI Assistant:</strong> ${cleanAgentCoreResponse(responseText)}`;
         messagesContainer.appendChild(aiMsg);
-        
+
     } catch (error) {
         console.error('Error sending message:', error);
         loadingMsg.remove();
-        
+
         const errorMsg = document.createElement('div');
         errorMsg.style.cssText = 'background: #fee2e2; padding: 1rem; border-radius: 0.5rem; font-family: Inter, sans-serif; color: #991b1b;';
-        
+
         // Check if it's a CORS error
         if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
             errorMsg.innerHTML = `
                 <strong>Connection Error:</strong> Unable to reach the AgentCore API.<br><br>
-                <strong>Note:</strong> The backend may need to be updated to support direct browser access. 
+                <strong>Note:</strong> The backend may need to be updated to support direct browser access.
                 For the best experience, please configure Glean Agents as described in the setup documentation.
             `;
         } else {
@@ -1371,7 +1371,7 @@ async function sendAgentCoreMessageDetail() {
         }
         messagesContainer.appendChild(errorMsg);
     }
-    
+
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
@@ -1381,21 +1381,21 @@ async function sendAgentCoreMessageDetail() {
 async function sendAgentCoreMessageOverlay() {
     const input = document.getElementById('agentcore-input-overlay');
     const messagesContainer = document.getElementById('agentcore-messages-overlay');
-    
+
     if (!input || !messagesContainer) return;
-    
+
     const message = input.value.trim();
     if (!message) return;
-    
+
     // Add user message
     const userMsg = document.createElement('div');
     userMsg.style.cssText = 'background: #2563eb; color: white; padding: 1rem; border-radius: 0.5rem; font-family: Inter, sans-serif; align-self: flex-end; max-width: 80%;';
     userMsg.innerHTML = `<strong>You:</strong> ${escapeHtmlReviewer(message)}`;
     messagesContainer.appendChild(userMsg);
-    
+
     input.value = '';
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    
+
     // Show loading
     const loadingMsg = document.createElement('div');
     loadingMsg.id = 'loading-msg-overlay';
@@ -1403,7 +1403,7 @@ async function sendAgentCoreMessageOverlay() {
     loadingMsg.innerHTML = '<strong>AI Assistant:</strong> <em>Thinking...</em>';
     messagesContainer.appendChild(loadingMsg);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    
+
     try {
         const response = await fetch(`${window.demoConfig.apiBaseUrl}/invoke-review-agent`, {
             method: 'POST',
@@ -1415,28 +1415,28 @@ async function sendAgentCoreMessageOverlay() {
                 prompt: message
             })
         });
-        
+
         const data = await response.json();
         loadingMsg.remove();
-        
+
         const aiMsg = document.createElement('div');
         aiMsg.style.cssText = 'background: #f3f4f6; padding: 1rem; border-radius: 0.5rem; font-family: Inter, sans-serif; color: #1f2937;';
         const responseText = data.response || data.message || 'I received your message.';
         aiMsg.innerHTML = `<strong>AI Assistant:</strong> ${cleanAgentCoreResponse(responseText)}`;
         messagesContainer.appendChild(aiMsg);
-        
+
     } catch (error) {
         console.error('Error sending message:', error);
         loadingMsg.remove();
-        
+
         const errorMsg = document.createElement('div');
         errorMsg.style.cssText = 'background: #fee2e2; padding: 1rem; border-radius: 0.5rem; font-family: Inter, sans-serif; color: #991b1b;';
-        
+
         // Check if it's a CORS error
         if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
             errorMsg.innerHTML = `
                 <strong>Connection Error:</strong> Unable to reach the AgentCore API.<br><br>
-                <strong>Note:</strong> The backend may need to be updated to support direct browser access. 
+                <strong>Note:</strong> The backend may need to be updated to support direct browser access.
                 For the best experience, please configure Glean Agents as described in the setup documentation.
             `;
         } else {
@@ -1444,7 +1444,7 @@ async function sendAgentCoreMessageOverlay() {
         }
         messagesContainer.appendChild(errorMsg);
     }
-    
+
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
@@ -1459,45 +1459,45 @@ function escapeHtmlReviewer(text) {
 
 function cleanAgentCoreResponse(text) {
     if (!text) return text;
-    
+
     // Remove <thinking> tags and their content
     text = text.replace(/<thinking>.*?<\/thinking>/gs, '');
-    
+
     // Remove escaped quotes
     text = text.replace(/\\"/g, '"');
     text = text.replace(/\\'/g, "'");
-    
+
     // Convert escaped newlines to actual newlines
     text = text.replace(/\\n/g, '\n');
-    
+
     // Remove leading/trailing whitespace first
     text = text.trim();
-    
+
     // Remove wrapping quotes if the entire response is quoted
     if ((text.startsWith('"') && text.endsWith('"')) || (text.startsWith("'") && text.endsWith("'"))) {
         text = text.slice(1, -1).trim();
     }
-    
+
     // Convert markdown headers (### Header) to HTML
     text = text.replace(/^### (.+)$/gm, '<strong style="font-size: 1.1em; display: block; margin-top: 0.5em; margin-bottom: 0.5em;">$1</strong>');
     text = text.replace(/^## (.+)$/gm, '<strong style="font-size: 1.2em; display: block; margin-top: 0.5em; margin-bottom: 0.5em;">$1</strong>');
     text = text.replace(/^# (.+)$/gm, '<strong style="font-size: 1.3em; display: block; margin-top: 0.5em; margin-bottom: 0.5em;">$1</strong>');
-    
+
     // Convert markdown bold (**text**) to HTML
     text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    
+
     // Convert markdown italic (*text*) to HTML
     text = text.replace(/\*(.+?)\*/g, '<em>$1</em>');
-    
+
     // Convert markdown lists (- item or * item) to HTML
     text = text.replace(/^[\-\*] (.+)$/gm, '• $1');
-    
+
     // Convert numbered lists (1. item) - keep as is but ensure proper spacing
     text = text.replace(/^(\d+)\. /gm, '$1. ');
-    
+
     // Convert newlines to <br> for HTML display
     text = text.replace(/\n/g, '<br>');
-    
+
     return text;
 }
 
@@ -1507,14 +1507,14 @@ function initChatOverlay() {
     const chatExpand = document.getElementById('chat-expand');
     const chatRefresh = document.getElementById('chat-refresh');
     const resizeHandle = document.getElementById('resize-handle');
-    
+
     // Minimize button
     if (chatMinimize) {
         chatMinimize.addEventListener('click', () => {
             chatOverlay.classList.remove('show');
         });
     }
-    
+
     // Expand/collapse button
     if (chatExpand) {
         chatExpand.addEventListener('click', () => {
@@ -1530,19 +1530,19 @@ function initChatOverlay() {
             }
         });
     }
-    
+
     // Refresh button
     if (chatRefresh) {
         chatRefresh.addEventListener('click', () => {
             // Reset AgentCore choice on refresh
             userChoseAgentCore = false;
-            
+
             // Reset title to original
             const chatTitle = document.querySelector('.chat-title');
             if (chatTitle) {
                 chatTitle.innerHTML = '<i class="fas fa-robot"></i> AI Review Assistant';
             }
-            
+
             // Reset switch button
             const fallbackBtn = document.getElementById('chat-fallback');
             if (fallbackBtn) {
@@ -1550,7 +1550,7 @@ function initChatOverlay() {
                 fallbackBtn.title = 'Switch to AgentCore Direct (for judges without Glean access)';
                 fallbackBtn.onclick = showAgentCoreFallbackPrompt;
             }
-            
+
             const container = document.getElementById('glean-agent-overlay');
             if (container) {
                 container.innerHTML = '';
@@ -1561,12 +1561,12 @@ function initChatOverlay() {
             }
         });
     }
-    
+
     // Resize functionality
     if (resizeHandle && chatOverlay) {
         let isResizing = false;
         let startX, startY, startWidth, startHeight;
-        
+
         resizeHandle.addEventListener('mousedown', (e) => {
             isResizing = true;
             startX = e.clientX;
@@ -1575,20 +1575,20 @@ function initChatOverlay() {
             startHeight = chatOverlay.offsetHeight;
             e.preventDefault();
         });
-        
+
         document.addEventListener('mousemove', (e) => {
             if (!isResizing || chatExpanded) return;
-            
+
             const deltaX = startX - e.clientX;
             const deltaY = startY - e.clientY;
-            
+
             const newWidth = Math.max(400, Math.min(startWidth + deltaX, window.innerWidth - 40));
             const newHeight = Math.max(400, Math.min(startHeight + deltaY, window.innerHeight - 120));
-            
+
             chatOverlay.style.width = newWidth + 'px';
             chatOverlay.style.height = newHeight + 'px';
         });
-        
+
         document.addEventListener('mouseup', () => {
             isResizing = false;
         });
@@ -1612,11 +1612,11 @@ function toggleAIRecommendation(event) {
  */
 function handleApprove(claimId) {
     console.log('Approve claim:', claimId);
-    
+
     // Find the claim to get AI insight
     const claim = allClaims.find(c => c.claimId === claimId);
     let message = `Approve claim ${claimId}`;
-    
+
     if (claim && claim.aiRecommendation) {
         const confidence = Math.round(claim.aiConfidence * 100);
         if (claim.aiRecommendation === 'approve') {
@@ -1625,17 +1625,17 @@ function handleApprove(claimId) {
             message = `Approve claim ${claimId} even though the AI Insight recommends denying.`;
         }
     }
-    
+
     showChatOverlay(message);
 }
 
 function handleDeny(claimId) {
     console.log('Deny claim:', claimId);
-    
+
     // Find the claim to get AI insight
     const claim = allClaims.find(c => c.claimId === claimId);
     let message = `Deny claim ${claimId}`;
-    
+
     if (claim && claim.aiRecommendation) {
         const confidence = Math.round(claim.aiConfidence * 100);
         if (claim.aiRecommendation === 'deny') {
@@ -1644,7 +1644,7 @@ function handleDeny(claimId) {
             message = `Deny claim ${claimId} even though the AI Insight recommends approving.`;
         }
     }
-    
+
     showChatOverlay(message);
 }
 
@@ -1658,22 +1658,22 @@ function handleAIAssessment(claimId) {
  */
 async function refreshClaims() {
     const refreshBtn = document.querySelector('.refresh-btn');
-    
+
     // Add refreshing state
     if (refreshBtn) {
         refreshBtn.classList.add('refreshing');
         refreshBtn.disabled = true;
     }
-    
+
     try {
         console.log('Refreshing claims data...');
-        
+
         // Reload claims from API
         await loadClaims();
-        
+
         // Show success feedback
         console.log('Claims refreshed successfully');
-        
+
         // Brief delay to show the animation
         setTimeout(() => {
             if (refreshBtn) {
@@ -1683,7 +1683,7 @@ async function refreshClaims() {
         }, 500);
     } catch (error) {
         console.error('Error refreshing claims:', error);
-        
+
         // Remove refreshing state on error
         if (refreshBtn) {
             refreshBtn.classList.remove('refreshing');
@@ -1698,14 +1698,14 @@ async function refreshClaims() {
 function showAgentCoreFallbackPrompt() {
     const container = document.getElementById('glean-agent-overlay');
     if (!container) return;
-    
+
     // Update the switch button to go back to Glean from the intermediary page
     const fallbackBtn = document.getElementById('chat-fallback');
     if (fallbackBtn) {
         fallbackBtn.title = 'Back to Glean';
         fallbackBtn.onclick = switchBackToGlean;
     }
-    
+
     container.innerHTML = `
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 2rem; text-align: center; background: #f8f9fa;">
             <div style="max-width: 600px;">
@@ -1727,7 +1727,7 @@ function showAgentCoreFallbackPrompt() {
                     </ul>
                 </div>
                 <p style="color: #6b7280; margin-bottom: 1.5rem; font-family: Inter, sans-serif; font-size: 0.875rem; line-height: 1.5;">
-                    <strong>Note:</strong> This option is provided for judges who don't have Glean access. 
+                    <strong>Note:</strong> This option is provided for judges who don't have Glean access.
                     If you have Glean configured, we recommend using the full Glean experience.
                 </p>
                 <div style="display: flex; gap: 1rem; justify-content: center;">
@@ -1749,13 +1749,13 @@ function showAgentCoreFallbackPrompt() {
 function switchToAgentCoreDirect() {
     const container = document.getElementById('glean-agent-overlay');
     if (!container) return;
-    
+
     // Update chat title
     const chatTitle = document.querySelector('.chat-title');
     if (chatTitle) {
         chatTitle.innerHTML = '<i class="fas fa-robot"></i> AgentCore Direct Chat';
     }
-    
+
     // Update the switch button to show "Switch to Glean" and make it visible
     const fallbackBtn = document.getElementById('chat-fallback');
     if (fallbackBtn) {
@@ -1763,7 +1763,7 @@ function switchToAgentCoreDirect() {
         fallbackBtn.title = 'Switch back to Glean';
         fallbackBtn.onclick = switchBackToGlean;
     }
-    
+
     container.innerHTML = `
         <div style="display: flex; flex-direction: column; height: 100%; background: white;">
             <div style="padding: 0.75rem 1rem; background: #fef3c7; border-bottom: 1px solid #fbbf24; display: flex; align-items: center; justify-content: space-between;">
@@ -1781,10 +1781,10 @@ function switchToAgentCoreDirect() {
             </div>
             <div style="padding: 1rem; border-top: 1px solid #e5e7eb;">
                 <div style="display: flex; gap: 0.5rem;">
-                    <input type="text" id="agentcore-input-overlay" placeholder="Type your message..." 
+                    <input type="text" id="agentcore-input-overlay" placeholder="Type your message..."
                         style="flex: 1; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-family: Inter, sans-serif;"
                         onkeypress="if(event.key === 'Enter') sendAgentCoreMessageOverlay()">
-                    <button onclick="sendAgentCoreMessageOverlay()" 
+                    <button onclick="sendAgentCoreMessageOverlay()"
                         style="padding: 0.75rem 1.5rem; background: #2563eb; color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-family: Inter, sans-serif;">
                         Send
                     </button>
@@ -1792,7 +1792,7 @@ function switchToAgentCoreDirect() {
             </div>
         </div>
     `;
-    
+
     console.log('Switched to AgentCore Direct mode');
 }
 
@@ -1802,13 +1802,13 @@ function switchToAgentCoreDirect() {
 function switchBackToGlean() {
     const container = document.getElementById('glean-agent-overlay');
     if (!container) return;
-    
+
     // Update chat title back to original
     const chatTitle = document.querySelector('.chat-title');
     if (chatTitle) {
         chatTitle.innerHTML = '<i class="fas fa-robot"></i> AI Review Assistant';
     }
-    
+
     // Reset the switch button to show "Switch to AgentCore" and make it visible
     const fallbackBtn = document.getElementById('chat-fallback');
     if (fallbackBtn) {
@@ -1816,10 +1816,10 @@ function switchBackToGlean() {
         fallbackBtn.title = 'Switch to AgentCore Direct (for judges without Glean access)';
         fallbackBtn.onclick = showAgentCoreFallbackPrompt;
     }
-    
+
     // Clear the container first
     container.innerHTML = '';
-    
+
     // Reset and reinitialize properly
     chatInitialized = false;
     renderGleanChatOverlay(lastInitialMessage);

@@ -1,0 +1,26 @@
+# Trivy ignore list — every entry must be justified by a comment.
+#
+# Format: AVD-<id> on its own line, with the justification immediately above.
+
+# AWS-0132: S3 should use a Customer Managed Key (CMK) for encryption.
+# Justification: terraform/bootstrap/state-backend/main.tf uses AES256 (SSE-S3)
+# for simplicity. Switching to a CMK adds significant overhead — every Terraform
+# operator needs kms:Decrypt + Encrypt on the key — for a single-tenant state
+# bucket whose contents are already low-risk (no application secrets are stored
+# in tfstate, they live in Secrets Manager). Customers in a high-compliance
+# environment can upgrade by swapping to aws_kms_key + bucket_server_side_encryption.
+AVD-AWS-0132
+
+# AWS-0135: SQS queue should be encrypted with a CMK (we use alias/aws/sqs).
+# Justification: per-Lambda DLQs in modules/lambda_function/main.tf hold copies
+# of the original event payload that failed processing. AWS-managed encryption
+# (alias/aws/sqs) is appropriate for this data class — the original event was
+# already accepted by API Gateway over TLS. Customer can swap to a CMK
+# (e.g. module.data.kms_key_arn) if a compliance regime requires it.
+AVD-AWS-0135
+
+# AWS-0136: SNS topic should be encrypted with a CMK (we use alias/aws/sns).
+# Justification: alerts SNS topic in modules/observability/main.tf carries
+# only operational alarm notifications (Lambda error counts, DDB throttling).
+# It does not transit PII or claim data. AWS-managed encryption is appropriate.
+AVD-AWS-0136

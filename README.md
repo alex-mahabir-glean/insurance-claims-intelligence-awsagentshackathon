@@ -1,466 +1,187 @@
-# AI-Powered Legal Service Management System
+# AI-Powered Insurance Claims Intelligence
 
-An intelligent insurance claim management system that combines [Glean](https://www.glean.com/)'s enterprise knowledge capabilities with Amazon Bedrock AgentCore's orchestration power.
+An accelerator for an intelligent insurance claim management system that combines [Glean](https://www.glean.com/)'s enterprise knowledge capabilities with Amazon Bedrock AgentCore's orchestration power. Built for the [AWS AI Agent Global Hackathon 2025](https://aws.amazon.com/ai/generative-ai/agents/).
 
----
+> 🛠️ **Solution Library accelerator** — fork it, deploy it in your own AWS account, customize it for your business.
 
-## 📑 Table of Contents
+## 📑 Table of contents
 
-- [🎯 Overview](#-overview)
-- [🎨 What You'll Deploy](#-what-youll-deploy)
-- [🏗️ Architecture](#️-architecture)
-- [📊 Sample Data](#-sample-data)
-- [💡 Key Features](#-key-features)
-- [🚀 Quick Start - Automated Deployment](#-quick-start---automated-deployment)
-  - [Prerequisites](#prerequisites)
-  - [Step 1: Configure Deployment](#step-1-configure-deployment)
-  - [Step 2: Authenticate to AWS](#step-2-authenticate-to-aws)
-  - [Step 3: Deploy AWS Agents & Backend Infrastructure](#step-3-deploy-aws-agents--backend-infrastructure)
-  - [Step 4: Test the AWS Agents & Backend](#step-4-test-the-aws-agents--backend)
-  - [Step 5: Configure Glean Agents](#step-5-configure-glean-agents)
-- [🔧 Manual Configuration](#-manual-configuration)
-- [📁 Project Structure](#-project-structure)
-- [🔧 Advanced Usage](#-advanced-usage)
-- [🌐 Observability](#-observability)
-- [🏆 Hackathon Compliance](#-hackathon-compliance)
-- [🛠️ Technologies Used](#️-technologies-used)
-- [📝 License](#-license)
-- [👥 Team](#-team)
-- [📞 Support](#-support)
+- [What you'll deploy](#-what-youll-deploy)
+- [Architecture](#️-architecture)
+- [Quick start (Terraform)](#-quick-start-terraform)
+- [Project layout](#-project-layout)
+- [Customizing](#-customizing)
+- [Observability](#-observability)
+- [Migrating from the legacy CFN](#-migrating-from-the-legacy-cfn)
+- [Glean integration](#-glean-integration)
+- [Hackathon compliance](#-hackathon-compliance)
+- [License & team](#-license--team)
 
 ---
 
-## 🎯 Overview
+## 🎨 What you'll deploy
 
-An **intelligent, AI-native, agent-driven insurance claims platform** that transforms how claims are submitted, routed to reviewers, processed, reviewed by AI, and managed by reviewers. This system leverages autonomous AI agents to handle complex workflows—from natural language claim intake to intelligent reviewer assignment and AI-powered assessment—while maintaining human oversight for final decisions.
+Two intelligent web portals with embedded AI agents, powered by a Terraform-managed AWS backend that intelligently triages incoming claims, transparently routes them to the optimal reviewer (balancing expertise and workload), provides AI-powered recommendations with confidence scoring, and maintains a complete audit trail across the entire claim lifecycle.
 
-**Why Agent-Driven?** Traditional rule-based systems rarely adapt to the nuanced, context-dependent nature of insurance claims. Our multi-agent architecture uses specialized AI agents that collaborate to:
-- **Understand context** through conversational interfaces powered by Glean's enterprise knowledge graph
-- **Make intelligent decisions** using Amazon Nova and optionally other LLM for claim analysis and routing
-- **Adapt dynamically** to workload patterns, reviewer expertise, and claim complexity
-- **Maintain transparency** with explainable AI recommendations and complete audit trails
-
-**Powered by cutting-edge agent technologies:**
-
-- **Glean Conversational Agents** - Natural language interface with enterprise and employee context awareness via Glean's Enterprise and Personal knowledge graph
-- **Glean Embedded Agents via the Glean WebSDK** - Intuitive user interface with user-appropriate visuals, like in-context forms and actions
-- **Strands Agents SDK** - Sophisticated agent orchestration, business logic, and decision-making frameworks
-- **Amazon Bedrock AgentCore Runtime** - Serverless, scalable agent hosting with built-in observability
-- **AWS Cloud Infrastructure** - Production-grade API Gateway, Lambda functions, and DynamoDB state management
-
----
-
-## 🎨 What You'll Deploy
-
-Two intelligent web portals with embedded AI agents, powered by a fully functional backend that intelligently reviews incoming claims, transparently routes them to the optimal reviewer (balancing expertise and workload), provides AI-powered recommendations with confidence scoring, and manages complete state across the entire claim lifecycle:
-
-<table>
-<tr>
-<td width="50%">
-
-**Submitter Portal** - Conversational claim filing
-<img src="assets/js/images/submitter-portal-initial-screenshot.png" width="100%">
-
-</td>
-<td width="50%">
-
-**Reviewer Dashboard** - AI-assisted claim review
-<img src="assets/js/images/reviewer-portal-initial-screenshot.png" width="100%">
-
-</td>
-</tr>
-<tr>
-<td width="50%">
-
-**AI Intake Agent** - Natural language claim processing
-<img src="assets/js/images/submitter-portal-intake-screenshot.png" width="100%">
-
-</td>
-<td width="50%">
-
-**Smart Review Interface** - AI recommendations + human decisions
-<img src="assets/js/images/reviewer-portal-reviewer-screenshot.png" width="100%">
-
-</td>
-</tr>
-</table>
-
----
+| | |
+|---|---|
+| **Submitter portal** — conversational claim filing | **Reviewer dashboard** — AI-assisted claim review |
+| <img src="assets/js/images/submitter-portal-initial-screenshot.png" width="100%"> | <img src="assets/js/images/reviewer-portal-initial-screenshot.png" width="100%"> |
 
 ## 🏗️ Architecture
 
-![Architecture Diagram](assets/js/images/architecture-diagram.png)
-
-### High-Level Flow
+![Architecture](assets/js/images/architecture-diagram.png)
 
 ```
-Frontend (Intelligent Insurance Claim Platform WebApps - Submitter & Reviewer Portals)
+Frontend (HTML + JS, served locally or via CloudFront — see TF-9 #41)
     ↓
-Glean Claims Intake, Insights & Management Conversational Agents
+Glean Conversational Agents (optional) → Glean Actions
     ↓
-Glean Enterprise Knowledge Graph (Contextual Understanding & Knowledge Retrieval)
+Amazon API Gateway (HTTP API v2) — TF-4
     ↓
-Custom Glean Actions to AgentCore
+Lambda authorizer (TF-3) → 3 application Lambdas (TF-3 — Option B topology)
+    ├── api_handler   (CRUD: submit / list / approve / deny / reassign)
+    └── agent_invoker (Bedrock AgentCore invocation)
     ↓
-API Gateway + Lambda Functions (Orchestration Layer)
-    ↓
-Amazon Bedrock AgentCore Runtime
-    ├── Intake Agent (Strands SDK)
-    │   ├── Intelligent Claim Processing
-    │   ├── Smart Reviewer Assignment (workload + expertise balancing)
-    │   ├── Amazon Nova (LLM)
-    │   └── Glean Enterprise Context
-    └── Review Agent (Strands SDK)
-        ├── Intelligent Claim Assessment
-        ├── AI Recommendation Engine (confidence scoring)
-        ├── Amazon Nova (LLM)
-        └── Glean Enterprise Context
-    ↓
-┌──────────────────────────────────────────────────────────────┐
-│  Data & State Layer                                          │
-│  • DynamoDB (Claim Storage, State Management, & Audit Trail) │
-│  • Glean Enterprise Context (Knowledge Retrieval)            │
-│  • Amazon Bedrock (Model Inference - Amazon Nova)            │
-└──────────────────────────────────────────────────────────────┘
+Bedrock AgentCore Runtime (TF-5)        DynamoDB (TF-2)
+    ├── Intake agent (Strands SDK)       ├── Claims (+ GSIs, PITR, KMS)
+    └── Review agent (Strands SDK)       ├── Reviewers
+    ↓                                    └── AuditTrail (PITR, optional TTL)
+Amazon Bedrock — Amazon Nova Pro
 ```
 
----
+Cross-cutting: per-Lambda + API + DDB alarms, dashboard, and Bedrock spend budget via the **observability** module (TF-6); GitHub Actions CI/CD via OIDC (TF-7).
 
-## 📊 Sample Data
+## 🚀 Quick start (Terraform)
 
-The system includes pre-loaded sample data:
+> Full walkthrough lives in [`docs/customer-deployment.md`](docs/customer-deployment.md).
 
-**Claims:**
-- CL-2025-0001: Vehicle accident (hit-and-run) - AI: Approve (94%)
-- CL-2025-0045: Property damage (flooding) - AI: Deny (87%)
-- CL-2025-0067: Vehicle hail damage - AI: Approve (91%)
-- CL-2025-1015012634: Additional test claim
-
-**Reviewers:**
-- Sarah Chen (3 active claims, 247 total reviewed, 96.8% accuracy)
-- Mike Torres (5 active claims, 189 total reviewed, 94.5% accuracy)
-- Lisa Park (7 active claims, 312 total reviewed, 97.2% accuracy)
-
----
-
-## 💡 Key Features
-
-### 🤖 Intelligent Automation
-- **Conversational claim filing** - Natural language interaction via Glean or web interface
-- **AI-powered analysis** - Automatic claim review with confidence scoring
-- **Smart assignment** - Workload-balanced reviewer assignment
-- **Fraud detection** - AI identifies potential fraud indicators
-
-### 🏢 Enterprise-Grade
-- **Serverless architecture** - Scalable and cost-effective
-- **Complete audit trail** - Full compliance tracking in DynamoDB
-- **Session isolation** - Secure multi-user support via AgentCore
-- **Observability** - CloudWatch metrics and traces
-
-### 🎯 Human-in-Loop Design
-- AI provides recommendations, humans make final decisions
-- Confidence scores guide reviewer attention
-- Transparent reasoning for all AI recommendations
-
----
-
-## 🚀 Quick Start - Automated Deployment
-
-> <img src="assets/js/images/kirologo.png" width="80" align="left" style="margin-right: 10px;"> **Want to use [Kiro](https://kiro.dev/) to help you deploy this project?** Try this prompt:
-> 
-> ```
-> Deploy the AI-Powered Legal Service Management System from this repository. 
-> Read the entire README.md and deploy.sh scripts to understand the deployment steps.
-> 
-> Configure AWS credentials, set up the config.env file with the appropriate AWS region 
-> and deployment preferences, run the deploy.sh script, and monitor the deployment progress.
-> 
-> After deployment, serve the web pages locally using serve.sh and test the AWS infrastructure 
-> with the verify-deployment.sh script.
-> 
-> Then guide me through setting up Glean Actions by importing the generated OpenAPI specs 
-> from glean/generated/, configuring API authentication with the API Gateway URL and API Key 
-> from AWS Secrets Manager (generated by CloudFormation), and importing the appropriate 
-> Glean Agents to my Glean deployment (note: Glean access is a separate requirement).
-> ```
-
-### Prerequisites
-
-- **AWS Account** with appropriate permissions
-- **AWS CLI** configured
-- **Python 3.10+** (Python 3.12 recommended for AgentCore)
-- **Glean account** (optional, for conversational interface)
-
----
-
-### ⚠️ Security Notice
-
-**The web interfaces are designed for local development and testing.** For local testing, simply run `./serve.sh` and access via `http://localhost:8000`.
-
-**For production deployments**, see **[AWS_HOSTING.md](AWS_HOSTING.md)** for a complete secure hosting setup with CloudFront, Cognito authentication, and Lambda@Edge. As with everything else hosted publicly, you should review the code before deploying.
-
----
-
-### Step 1: Configure Deployment
-
-Copy the configuration template and customize it:
+**Prereqs:** `terraform >= 1.6`, `aws` CLI v2, `python` 3.12, `pip install bedrock-agentcore-starter-toolkit`.
 
 ```bash
-cp config.template.env config.env
+git clone https://github.com/alex-mahabir-glean/insurance-claims-intelligence-awsagentshackathon.git
+cd insurance-claims-intelligence-awsagentshackathon
+
+# 1. One-time backend bootstrap (creates S3 + DynamoDB lock table)
+make bootstrap-backend
+
+# 2. Per-env config
+cp terraform/env/dev.tfbackend.example terraform/env/dev.tfbackend   # paste the bucket name from step 1
+cp terraform/terraform.tfvars.example terraform/terraform.tfvars
+
+# 3. Deploy
+make init ENV=dev
+make plan
+make apply        # first apply ~10-15 min (CodeBuild builds 2 agent images)
+
+# 4. Reseed sample data + verify
+make load-sample-data
+make verify
 ```
 
-Edit `config.env`:
+Expected output of `make verify`:
+```
+ok  GET /claims (no auth) → 401  (SEC-3 enforced)
+ok  GET /claims (authed)  → 200  (4 claims returned)
+ok  DynamoDB LegalService-Claims-legal
+ok  DynamoDB LegalService-Reviewers-legal
+ok  DynamoDB LegalService-AuditTrail-legal
+All checks passed.
+```
+
+## 📁 Project layout
+
+```
+terraform/                         All Infrastructure-as-Code lives here
+├── main.tf, variables.tf, outputs.tf, versions.tf
+├── env/                           Per-environment backend configs
+├── bootstrap/
+│   ├── state-backend/             One-shot S3 + DynamoDB lock table
+│   └── github-oidc/               One-shot OIDC role for GitHub Actions
+├── modules/                       Reusable building blocks
+│   ├── data/                      DynamoDB + KMS + Secrets + PITR
+│   ├── lambda_function/           Lambda + log group + DLQ + alarms
+│   ├── api/                       HTTP API v2 + authorizer + CORS + WAF
+│   ├── agents/                    AgentCore Runtime via null_resource + scoped IAM
+│   └── observability/             Alarms + SNS + dashboard + budget
+├── lambdas/                       Lambda handler source (3 dirs — Option B topology)
+│   ├── api_handler/               CRUD endpoints (Powertools APIGatewayHttpResolver + Pydantic)
+│   ├── agent_invoker/             Bedrock invocation
+│   └── authorizer/                HTTP API v2 simple authorizer
+├── agents/                        AgentCore agent source (intake, review)
+└── scripts/                       Helpers (load_sample_data, verify_deployment, generate_glean_specs)
+
+archive/                           Legacy CloudFormation + bash glue (reference only)
+docs/
+├── customer-deployment.md         Full step-by-step walkthrough
+└── migration-runbook.md           CloudFormation → Terraform cutover plan
+.github/workflows/                 PR check + dev apply + manual prod apply
+glean/                             Glean Action OpenAPI specs (input + generated/)
+assets/, *.html                    Frontend
+```
+
+## 🔧 Customizing
+
+This is an accelerator. Fork the repo, change what you need:
+
+- **Tags:** `local.common_tags` in `terraform/main.tf` (single source of truth).
+- **Region:** `aws_region` in `terraform.tfvars`. Match your `.tfbackend`.
+- **Agents:** `terraform/agents/{intake,review}/agent.py`. `make plan` detects file-hash changes and queues a redeploy.
+- **Lambda code:** `terraform/lambdas/<name>/index.py`. Re-run `make apply`.
+- **CORS allowlist:** `var.allowed_origins` (add your hosting domain).
+- **WAF:** `var.enable_waf = true` to attach the AWS Common + KnownBadInputs rule sets.
+- **Bedrock budget:** `var.monthly_bedrock_budget_usd`. Default $50/month, 0 disables.
+
+## 🔭 Observability
+
+After `make apply`, open the CloudWatch dashboard:
+
 ```bash
-AWS_REGION=us-east-1
-AWS_PROFILE=your-aws-profile-name
-STACK_NAME=legal-service-stack
-DEPLOYMENT_ID=legal
-
-# For Glean embedded agents (configure after AWS deployment)
-GLEAN_INTAKE_AGENT_ID=
-GLEAN_REVIEW_AGENT_ID=
+terraform -chdir=terraform output -raw dashboard_url
 ```
 
-### Step 2: Authenticate to AWS
+Per-Lambda alarms (errors, throttles, p99 duration), per-DDB-table alarms (UserErrors, ThrottledRequests), API stage alarms (4xx, 5xx, p99 IntegrationLatency), Bedrock spend budget — all wired to a single SNS topic. Subscribe `var.alert_email` for email or attach Slack via AWS Chatbot post-apply.
 
-If using AWS SSO, login first:
+## 🔁 Migrating from the legacy CFN
+
+If you have an existing deployment from the original CloudFormation stack:
 
 ```bash
-aws sso login --profile your-aws-profile-name
+# Run through docs/migration-runbook.md — destroy CFN, then make apply.
 ```
 
-### Step 3: Deploy AWS Agents & Backend Infrastructure
+The schema is preserved (table names, key shapes) so sample data reloads on either side. AgentCore Runtime ARNs change; frontend `config.js` regenerates from `terraform output`.
 
-Run the automated deployment script:
+The legacy CFN template is preserved for reference under [`archive/cloudformation/`](archive/cloudformation/legal-service-stack.yaml).
+
+## 🤝 Glean integration
+
+Generate Glean-ready OpenAPI Action specs after deploy:
 
 ```bash
-./deploy.sh
+make glean-specs   # writes to glean/generated/
 ```
 
-**That's it!** ☕ The script will:
-- ✅ Deploy all AWS infrastructure (API Gateway, Lambda, DynamoDB)
-- ✅ Load sample data (4 claims, 3 reviewers)
-- ✅ Deploy AI agents to Bedrock AgentCore (built with Strands SDK)
-- ✅ Configure all integrations
-- ✅ Update HTML files with your API URLs
+Follow [`GLEAN_SETUP.md`](GLEAN_SETUP.md) to import them and create the conversational agents.
 
-**Deployment time:** ~8-10 minutes
+## 🏆 Hackathon compliance
 
-**Note**: The script automatically:
-- Creates an S3 bucket for CloudFormation templates if needed (template is >51KB)
-- Generates `config.js` with your API Gateway URL and Glean agent IDs (gitignored)
-- Generates Glean-ready OpenAPI specs in `glean/generated/`
+- ✅ Amazon Bedrock as the LLM (Nova Pro)
+- ✅ AWS services (Bedrock AgentCore, Lambda, API Gateway, DynamoDB, KMS, Secrets Manager, CloudWatch, SQS, SNS, IAM)
+- ✅ AgentCore Runtime as the primitive
+- ✅ Reasoning LLMs for claim analysis
+- ✅ Autonomous capabilities (smart-assignment, recommendations)
+- ✅ External integrations (Glean Actions, Bedrock)
+- ✅ **Customer-deployable IaC** — Terraform modules customers can fork
 
-### Step 4: Test the AWS Agents & Backend
+## 📝 License & team
 
-Verify that the AWS infrastructure is working correctly:
+MIT — see [LICENSE](LICENSE).
 
-```bash
-# Run the verification script to test all endpoints
-./verify-deployment.sh
-
-# Or test individual components:
-./deployment/test_api_endpoint.sh
-python3 deployment/test_agent_invocation.py
-```
-
-You can also test the web portals:
-```bash
-./serve.sh
-```
-Then open:
-- http://localhost:8000/submitter.html - File claims
-- http://localhost:8000/reviewer.html - Review and manage claims
-
-### Step 5: Configure Glean Agents
-
-> **ℹ️ Note:** This step requires access to a Glean workspace with admin permissions. If you don't have Glean access, you can still use the system through the web interface (submitter.html and reviewer.html) which connects directly to the AgentCore agents.
-
-The deployment automatically generates Glean-ready OpenAPI specifications in `glean/generated/` with your API Gateway URL already configured!
-
-Follow the detailed instructions in **[GLEAN_SETUP.md](GLEAN_SETUP.md)** to:
-- Import Glean Actions
-- Create Glean Agents
-- Configure authentication
+Built with <3 by [Glean](https://www.glean.com/) with help from [Kiro](https://kiro.dev/) and a Well-Architected review by Claude.
 
 ---
 
-## 🔧 Manual Configuration
+## ⚠️ Security note
 
-If you need to manually update your local configuration:
-
-```bash
-# Copy the template
-cp config.template.js config.js
-
-# Edit config.js with your values from deployment-outputs.json
-nano config.js
-```
-
-The HTML portals automatically load from `config.js` (which is gitignored).
-
----
-
-## 📁 Project Structure
-
-```
-aws-ai-agent-hackathon/
-├── deploy.sh                          # 🚀 Main deployment script
-├── generate-glean-specs.sh            # Generate Glean OpenAPI specs
-├── config.template.env                # Configuration template
-├── GLEAN_SETUP.md                     # Glean integration guide
-├── submitter.html                     # Claimant submission portal
-├── reviewer.html                      # Case management dashboard
-├── backend/
-│   ├── agents/
-│   │   ├── intake_agent_agentcore.py  # Claim intake agent
-│   │   └── review_agent_agentcore.py  # Claim review agent
-│   ├── cloudformation/
-│   │   └── legal-service-stack.yaml   # Infrastructure as Code
-│   ├── lambda/
-│   │   ├── submitClaim.py             # Submit claim handler
-│   │   ├── getClaims.py               # Get claims handler
-│   │   ├── approveClaim.py            # Approve claim handler
-│   │   ├── denyClaim.py               # Deny claim handler
-│   │   ├── reassignClaim.py           # Reassign claim handler
-│   │   ├── invoke_intake_agent.py     # Intake agent proxy
-│   │   └── invoke_review_agent.py     # Review agent proxy
-│   ├── data/
-│   │   ├── load_sample_data.py        # Data loading script
-│   │   ├── sample-claims.json         # Sample claims
-│   │   └── sample-reviewers.json      # Sample reviewers
-│   └── openapi/
-│       └── legal-service-api.yaml     # Complete API specification
-├── glean/
-│   ├── openapi-*.json                 # Glean Action specifications
-│   └── GLEAN_AGENT_CONFIGURATION.md   # Agent configuration details
-└── deployment/
-    └── agentcore-deploy/              # AgentCore deployment artifacts
-```
-
----
-
-## 🔧 Advanced Usage
-
-### Updating Agents
-
-After modifying agent code in `backend/agents/`:
-
-```bash
-cd deployment
-source agentcore-venv/bin/activate
-cd agentcore-deploy/intake-agent
-agentcore launch  # Redeploy intake agent
-
-cd ../review-agent
-agentcore launch  # Redeploy review agent
-```
-
-### Viewing Logs
-
-```bash
-# View Lambda logs
-aws logs tail /aws/lambda/LegalService-SubmitClaim-legal --follow
-
-# View AgentCore logs
-aws logs tail /aws/bedrock/agentcore/legal_intake_agent_legal --follow
-```
-
-### Cleanup
-
-To remove all deployed resources:
-
-```bash
-./cleanup.sh
-```
-
-This will:
-- Delete both AgentCore agents
-- Delete the CloudFormation stack
-- Remove all AWS resources (DynamoDB, Lambda, API Gateway, etc.)
-
----
-
-## 📈 Monitoring & Observability
-
-### CloudWatch Dashboards
-
-View metrics in AWS Console:
-- **AgentCore Runtime**: Agent invocations, latency, errors
-- **Lambda Functions**: Execution duration, error rates
-- **API Gateway**: Request count, 4xx/5xx errors
-- **DynamoDB**: Read/write capacity, throttling
-
-### Audit Trail
-
-All actions are logged:
-```bash
-aws dynamodb scan \
-  --table-name LegalService-AuditTrail-legal \
-  --region us-east-1
-```
-
-### AgentCore Observability
-
-Access the AgentCore Agent Runtime console here:
-```
-https://us-east-1.console.aws.amazon.com/bedrock-agentcore/agents
-```
-
----
-
-## 🏆 Hackathon Compliance
-
-### ✅ Requirements Met
-
-1. **LLM from Amazon Bedrock** ✅ - Uses Amazon Nova via Bedrock
-2. **AWS Services** ✅ - Bedrock AgentCore, Lambda, API Gateway, DynamoDB
-3. **AgentCore Primitive** ✅ - Strands Agents SDK with AgentCore Runtime
-4. **Reasoning LLMs** ✅ - Amazon Nova for decision-making
-5. **Autonomous Capabilities** ✅ - Auto-assignment, AI recommendations
-6. **External Integrations** ✅ - DynamoDB, Glean API
-
-### 🎯 Key Differentiators
-
-1. **Integration Excellence** - Seamless Glean + AgentCore integration
-2. **Real-World Applicability** - Solves actual enterprise problem
-3. **Clean Architecture** - Simple, reproducible, well-documented
-4. **Intelligent Automation** - Smart reviewer assignment algorithm
-5. **Human-in-Loop Design** - AI assists, humans decide
-6. **Complete Observability** - Full audit trail and monitoring
-
----
-
-## 🛠️ Technologies Used
-
-- **Amazon Bedrock AgentCore Runtime** - Serverless agent hosting
-- **Strands Agents SDK** - Agent framework
-- **Amazon Bedrock** - Amazon Nova LLM
-- **AWS Lambda** - Serverless compute (Python 3.12)
-- **Amazon API Gateway** - REST API
-- **Amazon DynamoDB** - NoSQL database
-- **AWS CloudFormation** - Infrastructure as Code
-- **Glean API** - Enterprise search and actions (optional)
-
----
-
-## 📝 License
-
-MIT License - See [LICENSE](LICENSE) file for details.
-
-This project is created for the AWS AI Agent Global Hackathon 2025.
-
----
-
-## 👥 Team
-
-Built with <3 by [Glean](https://www.glean.com/) with help from [Kiro](https://kiro.dev/)
-
----
-
-## 📞 Support
-
-For issues or questions:
-1. Check [GLEAN_SETUP.md](GLEAN_SETUP.md) for Glean integration help
-2. Review CloudWatch logs for errors
-3. Check `deployment-outputs.json` for deployment details
+The default authentication is a shared bearer token. **Before exposing this publicly**, swap to Cognito JWT (tracked under [SEC-2 #2](https://github.com/alex-mahabir-glean/insurance-claims-intelligence-awsagentshackathon/issues/2)) and turn on WAF (`var.enable_waf = true`). The HTML portals at the repo root are intended for local development; production hosting (CloudFront + Cognito + Lambda@Edge) is documented in [AWS_HOSTING.md](AWS_HOSTING.md) and tracked for Terraform-ization under [TF-9 #41](https://github.com/alex-mahabir-glean/insurance-claims-intelligence-awsagentshackathon/issues/41).

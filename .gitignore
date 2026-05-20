@@ -63,3 +63,30 @@ hosting/
 # Backup files
 *.bak
 *.tmp
+
+# Terraform (TF-1)
+terraform/.terraform/
+terraform/**/.terraform/
+terraform/**/.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# Per-env / per-deploy local files (only .example committed)
+# Re-include terraform/env/ which is otherwise caught by the venv "env/" rule above.
+!terraform/env/
+terraform/env/*.tfbackend
+!terraform/env/*.tfbackend.example
+terraform/terraform.tfvars
+!terraform/terraform.tfvars.example
+
+# Claude Code session state
+.claude/

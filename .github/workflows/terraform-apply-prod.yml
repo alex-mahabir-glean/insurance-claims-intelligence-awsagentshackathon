@@ -1,0 +1,46 @@
+name: Terraform apply (prod)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "apply prod" to confirm'
+        required: true
+        default: ''
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  AWS_REGION: us-east-1
+  TF_DIR: terraform
+
+jobs:
+  apply:
+    name: apply to prod
+    runs-on: ubuntu-latest
+    # GitHub Environment "prod" should be configured with required reviewers.
+    environment: prod
+    if: ${{ github.event.inputs.confirm == 'apply prod' && vars.AWS_OIDC_ROLE_ARN_PROD != '' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.14.8
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_OIDC_ROLE_ARN_PROD }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: terraform init
+        run: terraform -chdir=${{ env.TF_DIR }} init -backend-config=env/prod.tfbackend
+
+      - name: terraform plan
+        run: terraform -chdir=${{ env.TF_DIR }} plan -out=plan.tfplan
+
+      - name: terraform apply
+        run: terraform -chdir=${{ env.TF_DIR }} apply -auto-approve plan.tfplan

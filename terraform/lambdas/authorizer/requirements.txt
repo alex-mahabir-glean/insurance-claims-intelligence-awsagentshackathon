@@ -1,0 +1,5 @@
+# Powertools comes from the AWS-managed Layer.
+# boto3 is in the runtime.
+aws-lambda-powertools>=3.0.0
+boto3>=1.34.0
+pytest>=8.0
