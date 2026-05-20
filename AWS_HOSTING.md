@@ -1,13 +1,14 @@
 # Production Hosting with CloudFront, Cognito & Lambda@Edge
 
-> ⚠️ **Migration in progress (TF-9 #41).** This optional production hosting stack
-> is currently still CloudFormation-based. The core application stack moved to
-> Terraform under PRs #42–#48; the hosting layer is being migrated separately
-> under [TF-9 #41](https://github.com/alex-mahabir-glean/insurance-claims-intelligence-awsagentshackathon/issues/41).
+> ℹ️ **This optional hosting stack is still CloudFormation-based.** The core
+> application stack lives under `terraform/`; this hosting layer (CloudFront +
+> Cognito + Lambda@Edge) has not been Terraform-ized yet — tracked under
+> [TF-9 #41](https://github.com/alex-mahabir-glean/insurance-claims-intelligence-awsagentshackathon/issues/41).
 >
-> Until that lands, the instructions below remain correct for the hosting layer
-> only — but the core API URL + auth token are now produced by `terraform output`,
-> not by `deploy.sh`. See `docs/customer-deployment.md` for the new flow.
+> The instructions below remain correct for the hosting layer. The core
+> API URL + auth token come from `terraform output`; see
+> [`docs/customer-deployment.md`](docs/customer-deployment.md) for the
+> rest of the deploy flow.
 
 This document describes the optional production hosting setup that provides secure, authenticated access to the web application via CloudFront with Cognito authentication and Lambda@Edge.
 

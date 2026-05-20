@@ -84,20 +84,3 @@ s3://tfstate-<accountId>-<region>/
 ```
 
 Switch via `make init ENV=staging` or `terraform init -backend-config=env/staging.tfbackend`.
-
-## Migration status
-
-This project is mid-migration from CloudFormation to Terraform. Sub-tickets:
-
-| | |
-|---|---|
-| TF-1 (#33) | Bootstrap (this PR) |
-| TF-2 (#34) | Data module |
-| TF-3 (#35) | Lambdas module + handlers |
-| TF-4 (#36) | API Gateway (HTTP API v2) |
-| TF-5 (#37) | AgentCore agents |
-| TF-6 (#38) | Observability |
-| TF-7 (#39) | CI/CD |
-| TF-8 (#40) | Decommission CFN |
-
-Tracked under epic #32.

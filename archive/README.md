@@ -1,8 +1,7 @@
 # Legacy artifacts (pre-Terraform)
 
 This directory holds the previous CloudFormation + bash deployment that
-was superseded by the Terraform migration tracked under epic #32 and
-landed in PRs #42–#48.
+was superseded by the Terraform implementation under `terraform/`.
 
 ## What's here
 
@@ -27,6 +26,6 @@ landed in PRs #42–#48.
 ## Production hosting (CloudFront/Cognito)
 
 `AWS_HOSTING.md` (still at the repo root) describes the optional
-production hosting stack. It is also CloudFormation-based and is being
-migrated to Terraform under TF-9 (#41). Until that lands, the existing
-content there is correct.
+production hosting stack. It is also CloudFormation-based and has not
+been Terraform-ized yet — tracked under TF-9 (#41). The existing
+instructions there remain correct for that hosting layer.

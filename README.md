@@ -12,7 +12,6 @@ An accelerator for an intelligent insurance claim management system that combine
 - [Project layout](#-project-layout)
 - [Customizing](#-customizing)
 - [Observability](#-observability)
-- [Migrating from the legacy CFN](#-migrating-from-the-legacy-cfn)
 - [Glean integration](#-glean-integration)
 - [Hackathon compliance](#-hackathon-compliance)
 - [License & team](#-license--team)
@@ -113,8 +112,7 @@ terraform/                         All Infrastructure-as-Code lives here
 
 archive/                           Legacy CloudFormation + bash glue (reference only)
 docs/
-├── customer-deployment.md         Full step-by-step walkthrough
-└── migration-runbook.md           CloudFormation → Terraform cutover plan
+└── customer-deployment.md         Full step-by-step walkthrough
 .github/workflows/                 PR check + dev apply + manual prod apply
 glean/                             Glean Action OpenAPI specs (input + generated/)
 assets/, *.html                    Frontend
@@ -141,18 +139,6 @@ terraform -chdir=terraform output -raw dashboard_url
 ```
 
 Per-Lambda alarms (errors, throttles, p99 duration), per-DDB-table alarms (UserErrors, ThrottledRequests), API stage alarms (4xx, 5xx, p99 IntegrationLatency), Bedrock spend budget — all wired to a single SNS topic. Subscribe `var.alert_email` for email or attach Slack via AWS Chatbot post-apply.
-
-## 🔁 Migrating from the legacy CFN
-
-If you have an existing deployment from the original CloudFormation stack:
-
-```bash
-# Run through docs/migration-runbook.md — destroy CFN, then make apply.
-```
-
-The schema is preserved (table names, key shapes) so sample data reloads on either side. AgentCore Runtime ARNs change; frontend `config.js` regenerates from `terraform output`.
-
-The legacy CFN template is preserved for reference under [`archive/cloudformation/`](archive/cloudformation/legal-service-stack.yaml).
 
 ## 🤝 Glean integration
 
